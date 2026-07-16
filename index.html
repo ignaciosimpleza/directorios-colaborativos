@@ -456,39 +456,11 @@ canvas { display:block; }
   <!-- ═══════════ DASHBOARD ═══════════ -->
   <div id="sec-dashboard" class="section active">
     <div class="page-header">
-      <h1>Dashboard</h1>
-      <p>Resumen del Grupo El Faro · Activo desde febrero 2022</p>
+      <h1 id="home-title">Dashboard</h1>
+      <p id="home-subtitle">Resumen del Grupo El Faro · Activo desde febrero 2022</p>
     </div>
-    <div class="proxima-banner">
-      <div>
-        <div class="pb-date">📅 Próxima reunión · Lunes 29 de junio de 2026</div>
-        <div class="pb-empresa">El Motivo S.A.</div>
-        <div class="pb-desc">Adriana Ponzio · Esteban, Federico & Simón Vissio · Río Cuarto, Córdoba</div>
-      </div>
-      <div class="pb-days"><div class="num">2</div><div class="txt">días</div></div>
-    </div>
-    <div class="stat-grid">
-      <div class="stat-card c1">
-        <div class="val">27</div>
-        <div class="lbl">Reuniones realizadas</div>
-        <div class="sub">Último año (jun 2025–jun 2026)</div>
-      </div>
-      <div class="stat-card c2">
-        <div class="val">9</div>
-        <div class="lbl">Empresas en el grupo</div>
-        <div class="sub">2 incorporadas en 2025–2026</div>
-      </div>
-      <div class="stat-card c3">
-        <div class="val">17</div>
-        <div class="lbl">Procesos estratégicos</div>
-        <div class="sub">Presentaciones del último año</div>
-      </div>
-      <div class="stat-card c4">
-        <div class="val">95</div>
-        <div class="lbl">Devoluciones registradas</div>
-        <div class="sub">Promedio 5.6 por proceso</div>
-      </div>
-    </div>
+    <div class="proxima-banner" id="home-banner"></div>
+    <div class="stat-grid" id="home-stats"></div>
     <div class="two-col">
       <div class="card">
         <div class="card-title">Actividad reciente</div>
@@ -923,25 +895,59 @@ function openEmpresa(id) {
 // ══════════════════════════════════════════════════════════════
 // DASHBOARD
 // ══════════════════════════════════════════════════════════════
+// Contenido editable de la portada (persistido en Turso bajo la key 'home')
+let HOME = {
+  title: 'Dashboard',
+  subtitle: 'Resumen del Grupo El Faro · Activo desde febrero 2022',
+  banner: {
+    fecha: '📅 Próxima reunión · Lunes 29 de junio de 2026',
+    empresa: 'El Motivo S.A.',
+    desc: 'Adriana Ponzio · Esteban, Federico & Simón Vissio · Río Cuarto, Córdoba',
+    dias: '2'
+  },
+  stats: [
+    { val:'27', lbl:'Reuniones realizadas', sub:'Último año (jun 2025–jun 2026)' },
+    { val:'9',  lbl:'Empresas en el grupo', sub:'2 incorporadas en 2025–2026' },
+    { val:'17', lbl:'Procesos estratégicos', sub:'Presentaciones del último año' },
+    { val:'95', lbl:'Devoluciones registradas', sub:'Promedio 5.6 por proceso' },
+  ],
+  actividad: [
+    { text:'<strong>Tricampo S.A.</strong> presentó su nueva estructura gerencial y Marco Estratégico 2024-2028', time:'22 jun 2026' },
+    { text:'<strong>Beheran Sarciat SA</strong> consultó al grupo sobre el rediseño de la reunión anual de accionistas', time:'1 jun 2026' },
+    { text:'<strong>Donato Álvarez SRL</strong> realizó su primera presentación: empresa citrícola de 3ª generación en Tucumán', time:'4 may 2026' },
+    { text:'<strong>Estudio Becker</strong> presentó avances de líneas estratégicas: socio operativo y expansión geográfica', time:'27 abr 2026' },
+    { text:'<strong>MACSA Agro</strong> inició el proceso de construcción de visión con la cuarta generación familiar', time:'13 abr 2026' },
+    { text:'<strong>Rubro Agropecuario SRL</strong> presentó avances en implementación de Sinagro y gestión por unidades', time:'20 abr 2026' }
+  ],
+};
+
 function initDashboard() {
+  renderHome();
   renderActividadReciente();
   renderProximasReuniones();
   renderHistorial();
 }
 
+function renderHome() {
+  const t = document.getElementById('home-title');    if (t) t.textContent = HOME.title || 'Dashboard';
+  const s = document.getElementById('home-subtitle'); if (s) s.textContent = HOME.subtitle || '';
+  const b = document.getElementById('home-banner');
+  if (b) {
+    const bn = HOME.banner || {};
+    b.innerHTML = `<div><div class="pb-date">${esc(bn.fecha)}</div><div class="pb-empresa">${esc(bn.empresa)}</div><div class="pb-desc">${esc(bn.desc)}</div></div><div class="pb-days"><div class="num">${esc(bn.dias)}</div><div class="txt">días</div></div>`;
+  }
+  const g = document.getElementById('home-stats');
+  if (g) g.innerHTML = (HOME.stats || []).map((st, i) =>
+    `<div class="stat-card c${(i % 4) + 1}"><div class="val">${esc(st.val)}</div><div class="lbl">${esc(st.lbl)}</div><div class="sub">${esc(st.sub)}</div></div>`
+  ).join('');
+}
+
 function renderActividadReciente() {
-  const items = [
-    { bg:'#e8f4f0', text:'<strong>Tricampo S.A.</strong> presentó su nueva estructura gerencial y Marco Estratégico 2024-2028', time:'22 jun 2026' },
-    { bg:'#f0eaf8', text:'<strong>Beheran Sarciat SA</strong> consultó al grupo sobre el rediseño de la reunión anual de accionistas', time:'1 jun 2026' },
-    { bg:'#fef5e0', text:'<strong>Donato Álvarez SRL</strong> realizó su primera presentación: empresa citrícola de 3ª generación en Tucumán', time:'4 may 2026' },
-    { bg:'#e6f0f9', text:'<strong>Estudio Becker</strong> presentó avances de líneas estratégicas: socio operativo y expansión geográfica', time:'27 abr 2026' },
-    { bg:'#e0f4f0', text:'<strong>MACSA Agro</strong> inició el proceso de construcción de visión con la cuarta generación familiar', time:'13 abr 2026' },
-    { bg:'#fde9e7', text:'<strong>Rubro Agropecuario SRL</strong> presentó avances en implementación de Sinagro y gestión por unidades', time:'20 abr 2026' }
-  ];
+  const palette = ['#e8f4f0','#f0eaf8','#fef5e0','#e6f0f9','#e0f4f0','#fde9e7'];
   const el = document.getElementById('actividad-reciente');
   if (!el) return;
-  el.innerHTML = items.map(i =>
-    `<div class="activity-item"><div class="act-icon" style="background:${i.bg}">📋</div><div><div class="act-text">${i.text}</div><div class="act-time">${i.time}</div></div></div>`
+  el.innerHTML = (HOME.actividad || []).map((i, idx) =>
+    `<div class="activity-item"><div class="act-icon" style="background:${palette[idx % palette.length]}">📋</div><div><div class="act-text">${i.text}</div><div class="act-time">${esc(i.time)}</div></div></div>`
   ).join('');
 }
 
@@ -1271,6 +1277,10 @@ async function loadContentFromDB() {
     if (Array.isArray(c.conceptos)) CONCEPTOS = c.conceptos;
     if (Array.isArray(c.minutas))   MINUTAS_GENERALES = c.minutas;
     if (Array.isArray(c.recursos))  RECURSOS = c.recursos;
+    if (c.home && typeof c.home === 'object') {
+      HOME = Object.assign({}, HOME, c.home);
+      if (!HOME.banner) HOME.banner = {};
+    }
   } catch (e) {
     console.warn('No se pudo cargar el contenido de Turso (se usan los datos por defecto):', e);
   }
@@ -1380,6 +1390,39 @@ const SCHEMAS = {
     ],
     newItem: () => ({ id: Date.now(), icon:'📌', categoria:'herramienta', titulo:'Nuevo recurso', desc:'', link:'#' }),
   },
+  // ── Portada (persisten todos bajo la key 'home') ──
+  home: {
+    title: 'Portada y banner', singleton: true, persistKey: 'home', persistData: () => HOME,
+    getData: () => ({ title: HOME.title, subtitle: HOME.subtitle, bannerFecha: HOME.banner?.fecha, bannerEmpresa: HOME.banner?.empresa, bannerDesc: HOME.banner?.desc, bannerDias: HOME.banner?.dias }),
+    setData: v => { HOME.title = v.title; HOME.subtitle = v.subtitle; HOME.banner = { fecha: v.bannerFecha, empresa: v.bannerEmpresa, desc: v.bannerDesc, dias: v.bannerDias }; },
+    fields: [
+      { name:'title', label:'Título de la portada', type:'text' },
+      { name:'subtitle', label:'Subtítulo', type:'text' },
+      { name:'bannerFecha', label:'Banner · Fecha', type:'text' },
+      { name:'bannerEmpresa', label:'Banner · Empresa', type:'text' },
+      { name:'bannerDesc', label:'Banner · Detalle', type:'textarea' },
+      { name:'bannerDias', label:'Banner · Días restantes', type:'text' },
+    ],
+  },
+  home_stats: {
+    title: 'Tarjetas de indicadores', titleField: 'lbl', persistKey: 'home', persistData: () => HOME,
+    getData: () => HOME.stats, setData: v => { HOME.stats = v; },
+    fields: [
+      { name:'val', label:'Número', type:'text' },
+      { name:'lbl', label:'Etiqueta', type:'text' },
+      { name:'sub', label:'Detalle', type:'text' },
+    ],
+    newItem: () => ({ val:'0', lbl:'Nuevo indicador', sub:'' }),
+  },
+  home_actividad: {
+    title: 'Actividad reciente', titleField: 'time', persistKey: 'home', persistData: () => HOME,
+    getData: () => HOME.actividad, setData: v => { HOME.actividad = v; },
+    fields: [
+      { name:'text', label:'Texto (permite <strong>…</strong>)', type:'textarea' },
+      { name:'time', label:'Fecha', type:'text' },
+    ],
+    newItem: () => ({ text:'<strong>Empresa</strong> novedad…', time:'' }),
+  },
 };
 
 const RENDER_AFTER = {
@@ -1390,10 +1433,14 @@ const RENDER_AFTER = {
   conceptos: () => renderEventos(),
   minutas: () => renderRecursosSec(),
   recursos: () => renderRecursos('todos'),
+  home: () => renderHome(),
+  home_stats: () => renderHome(),
+  home_actividad: () => renderActividadReciente(),
 };
 
 // Datasets editables por sección del dashboard
 const SECTION_DATASETS = {
+  dashboard: [{ key:'home', label:'Portada y banner' }, { key:'home_stats', label:'Tarjetas de indicadores' }, { key:'home_actividad', label:'Actividad reciente' }],
   empresas: [{ key:'empresas', label:'Empresas' }],
   procesos: [{ key:'procesos', label:'Procesos' }],
   eventos:  [{ key:'hitos', label:'Hitos' }, { key:'proximos', label:'Próximos eventos' }, { key:'conceptos', label:'Marco conceptual' }],
@@ -1433,9 +1480,14 @@ function closeChooser() { document.getElementById('chooser-modal').classList.rem
 function openEditor(key) {
   const schema = SCHEMAS[key];
   if (!schema) return;
-  editorState = { key, schema, items: JSON.parse(JSON.stringify(schema.getData() || [])) };
+  const raw = schema.getData();
+  const items = schema.singleton
+    ? [JSON.parse(JSON.stringify(raw || {}))]
+    : JSON.parse(JSON.stringify(raw || []));
+  editorState = { key, schema, singleton: !!schema.singleton, items };
   document.getElementById('editor-title').textContent = 'Editar · ' + schema.title;
   document.getElementById('editor-msg').textContent = '';
+  document.querySelector('#editor-modal .btn-add').style.display = schema.singleton ? 'none' : '';
   renderEditor();
   document.getElementById('editor-modal').classList.add('open');
 }
@@ -1470,14 +1522,14 @@ function renderSubRow(f, idx, ri, row) {
 }
 
 function renderEditor() {
-  const { schema, items } = editorState;
+  const { schema, items, singleton } = editorState;
   const body = document.getElementById('editor-body');
   body.innerHTML = items.length ? items.map((it, idx) => `
     <div class="ed-item">
-      <div class="ed-item-head">
+      ${singleton ? '' : `<div class="ed-item-head">
         <span>#${idx + 1}${it[schema.titleField] ? ' · ' + esc(it[schema.titleField]) : ''}</span>
         <button class="ed-del" onclick="removeEditorItem(${idx})">Eliminar</button>
-      </div>
+      </div>`}
       ${schema.fields.map(f => renderField(f, it[f.name], idx)).join('')}
     </div>`).join('') : '<div class="ed-empty">Sin elementos todavía. Usá “＋ Agregar elemento”.</div>';
 }
@@ -1523,13 +1575,16 @@ function removeSubRow(idx, fname, ri) {
 async function saveEditor() {
   if (!editorState) return;
   readEditorDOM();
-  const { key, schema, items } = editorState;
+  const { key, schema, items, singleton } = editorState;
   const saveBtn = document.getElementById('editor-save');
   const msg = document.getElementById('editor-msg');
   saveBtn.disabled = true; msg.textContent = 'Guardando…';
   try {
-    await saveContentToDB(key, items);
-    schema.setData(JSON.parse(JSON.stringify(items)));
+    // Actualiza el estado en memoria primero (por si persistData deriva de él)
+    schema.setData(JSON.parse(JSON.stringify(singleton ? items[0] : items)));
+    const persistKey = schema.persistKey || key;
+    const payload = schema.persistData ? schema.persistData() : (singleton ? items[0] : items);
+    await saveContentToDB(persistKey, payload);
     if (RENDER_AFTER[key]) RENDER_AFTER[key]();
     msg.textContent = 'Guardado ✓';
     setTimeout(() => closeEditor(), 500);
@@ -1544,10 +1599,12 @@ async function saveEditor() {
 // ══════════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════════
-window.addEventListener('load', async () => {
+async function boot() {
   await loadContentFromDB();
   initDashboard();
-});
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
 </script>
 </body>
 </html>
