@@ -1,0 +1,10 @@
+{
+  "name": "grupoelfaro",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Gestión de calendario de reuniones - Grupo El Faro (Turso + Vercel)",
+  "dependencies": {
+    "@libsql/client": "^0.17.4"
+  }
+}
