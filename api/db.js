@@ -47,6 +47,13 @@ function ensureSchema() {
         fixed INTEGER DEFAULT 0,
         PRIMARY KEY (group_id, date)
       )`,
+      // Almacén genérico de contenido editable del dashboard (blobs JSON por sección)
+      `CREATE TABLE IF NOT EXISTS content (
+        group_id TEXT NOT NULL,
+        key TEXT NOT NULL,
+        data TEXT,
+        PRIMARY KEY (group_id, key)
+      )`,
     ], 'write').catch(err => { schemaReady = null; throw err; });
   }
   return schemaReady;
@@ -101,11 +108,16 @@ export default async function handler(req, res) {
     // ---------- LECTURA ----------
     if (req.method === 'GET') {
       const groupId = req.query.group_id || 'default';
-      const [cfg, cos, mtg] = await Promise.all([
+      const [cfg, cos, mtg, cnt] = await Promise.all([
         client.execute({ sql: 'SELECT * FROM config WHERE group_id = ?', args: [groupId] }),
         client.execute({ sql: 'SELECT * FROM companies WHERE group_id = ? ORDER BY sort_order ASC', args: [groupId] }),
         client.execute({ sql: 'SELECT * FROM meetings WHERE group_id = ? ORDER BY date ASC', args: [groupId] }),
+        client.execute({ sql: 'SELECT key, data FROM content WHERE group_id = ?', args: [groupId] }),
       ]);
+      const content = {};
+      for (const r of cnt.rows) {
+        try { content[r.key] = JSON.parse(r.data); } catch { content[r.key] = null; }
+      }
       return res.status(200).json({
         config: cfg.rows[0] || null,
         companies: cos.rows.map(r => ({
@@ -118,6 +130,7 @@ export default async function handler(req, res) {
           date: r.date, assignment: r.assignment,
           obs: r.obs || '', topic: r.topic || '', fixed: !!r.fixed,
         })),
+        content,
       });
     }
 
@@ -177,6 +190,17 @@ export default async function handler(req, res) {
 
         case 'deleteCompany': {
           await client.execute({ sql: 'DELETE FROM companies WHERE group_id = ? AND id = ?', args: [groupId, body.id] });
+          return res.status(200).json({ ok: true });
+        }
+
+        case 'saveContent': {
+          const key = String(body.key || '');
+          if (!key) return res.status(400).json({ error: 'Falta "key"' });
+          await client.execute({
+            sql: `INSERT INTO content (group_id, key, data) VALUES (?, ?, ?)
+                  ON CONFLICT(group_id, key) DO UPDATE SET data = excluded.data`,
+            args: [groupId, key, JSON.stringify(body.data ?? null)],
+          });
           return res.status(200).json({ ok: true });
         }
 

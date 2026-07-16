@@ -81,6 +81,42 @@ body.editing .edit-toggle { background:var(--verde-menta); color:#1E2A2E; }
 .btn-primary { flex:1; background:var(--verde-menta); border:0; color:#1E2A2E; font-weight:700; font-size:13px; padding:9px; border-radius:10px; cursor:pointer; font-family:inherit; }
 .hidden { display:none !important; }
 
+/* ── BOTÓN EDITAR SECCIÓN ── */
+.page-header { position: relative; }
+.section-edit-btn { position:absolute; top:0; right:0; display:inline-flex; align-items:center; gap:5px; background:var(--verde-menta); color:#1E2A2E; border:0; font-size:11px; font-weight:700; padding:6px 12px; border-radius:20px; cursor:pointer; font-family:inherit; }
+.section-edit-btn:hover { opacity:.9; }
+.card-edit-btn { background:var(--verde-menta); color:#1E2A2E; border:0; font-size:10.5px; font-weight:700; padding:4px 10px; border-radius:16px; cursor:pointer; font-family:inherit; margin-left:8px; }
+
+/* ── EDITOR GENÉRICO ── */
+.editor-box { background:#fff; border-radius:16px; width:100%; max-width:720px; max-height:88vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+.editor-head { display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--beige-suave); }
+.editor-title { font-size:16px; font-weight:700; color:var(--navy,#1E2A2E); }
+.editor-x { background:none; border:0; font-size:16px; color:var(--gris-medio); cursor:pointer; }
+.editor-body { padding:16px 22px; overflow-y:auto; flex:1; }
+.editor-foot { display:flex; align-items:center; gap:10px; padding:14px 22px; border-top:1px solid var(--beige-suave); }
+.editor-foot .btn-ghost, .editor-foot .btn-primary { flex:0 0 auto; padding:9px 18px; }
+.editor-msg { font-size:12px; color:var(--gris-medio); }
+.btn-add { background:#eef4f2; color:#1a7a55; border:1px dashed #b2e8d4; font-weight:700; font-size:12px; padding:8px 14px; border-radius:10px; cursor:pointer; font-family:inherit; }
+.ed-item { border:1px solid var(--beige-suave); border-radius:12px; padding:14px; margin-bottom:14px; background:#fcfaf7; }
+.ed-item-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.ed-item-head span { font-size:12px; font-weight:700; color:var(--azul-pizarra); }
+.ed-del { background:#fdecea; color:var(--terracota); border:0; font-size:11px; font-weight:700; padding:4px 10px; border-radius:8px; cursor:pointer; font-family:inherit; }
+.ed-field { margin-bottom:10px; }
+.ed-field > label { display:block; font-size:11px; font-weight:600; color:var(--gris-oscuro,#616A6B); margin-bottom:4px; }
+.ed-field input[type=text], .ed-field textarea, .ed-field select { width:100%; border:1px solid var(--beige-suave); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; outline:none; background:#fff; }
+.ed-field input[type=color] { width:44px; height:32px; padding:2px; border:1px solid var(--beige-suave); border-radius:8px; background:#fff; cursor:pointer; }
+.ed-field textarea { resize:vertical; min-height:56px; line-height:1.4; }
+.ed-hint { font-size:10px; color:var(--gris-medio); margin-top:3px; }
+.ed-sub { border:1px dashed var(--beige-suave); border-radius:10px; padding:10px; margin-top:4px; }
+.ed-subrow { display:flex; gap:6px; margin-bottom:6px; align-items:center; flex-wrap:wrap; }
+.ed-subrow input { flex:1; min-width:90px; border:1px solid var(--beige-suave); border-radius:7px; padding:6px 8px; font-size:12px; font-family:inherit; }
+.ed-subdel { background:#fdecea; color:var(--terracota); border:0; font-size:12px; padding:5px 9px; border-radius:7px; cursor:pointer; }
+.ed-subadd { background:#eef4f2; color:#1a7a55; border:1px dashed #b2e8d4; font-weight:700; font-size:11px; padding:5px 10px; border-radius:8px; cursor:pointer; font-family:inherit; }
+.ed-empty { text-align:center; color:var(--gris-medio); font-size:13px; padding:30px 0; }
+.chooser-list { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+.chooser-list button { text-align:left; background:#fcfaf7; border:1px solid var(--beige-suave); border-radius:10px; padding:11px 13px; font-size:13px; font-weight:600; color:var(--navy,#1E2A2E); cursor:pointer; font-family:inherit; }
+.chooser-list button:hover { border-color:var(--azul-pizarra); }
+
 /* ── MAIN ── */
 #main { margin-left: 220px; margin-top: 56px; flex: 1; overflow-y: auto; padding: 24px 28px; }
 .section { display: none; animation: fadeIn 0.22s ease; }
@@ -558,11 +594,39 @@ canvas { display:block; }
   </div>
 </div>
 
+<!-- ═══════════ MODAL EDITOR GENÉRICO ═══════════ -->
+<div id="editor-modal" class="modal-overlay" onclick="if(event.target===this) closeEditor()">
+  <div class="editor-box">
+    <div class="editor-head">
+      <div class="editor-title" id="editor-title">Editar</div>
+      <button class="editor-x" onclick="closeEditor()" title="Cerrar">✕</button>
+    </div>
+    <div class="editor-body" id="editor-body"></div>
+    <div class="editor-foot">
+      <button class="btn-add" onclick="addEditorItem()">＋ Agregar elemento</button>
+      <div style="flex:1"></div>
+      <span id="editor-msg" class="editor-msg"></span>
+      <button class="btn-ghost" onclick="closeEditor()">Cancelar</button>
+      <button class="btn-primary" id="editor-save" onclick="saveEditor()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Chooser de datasets (secciones con más de un editable) -->
+<div id="chooser-modal" class="modal-overlay" onclick="if(event.target===this) closeChooser()">
+  <div class="modal-box">
+    <div class="modal-title">¿Qué querés editar?</div>
+    <div class="modal-sub">Elegí el contenido a editar en esta sección.</div>
+    <div id="chooser-list" class="chooser-list"></div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeChooser()">Cancelar</button></div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════════════════════
 // DATOS
 // ══════════════════════════════════════════════════════════════
-const EMPRESAS = [
+let EMPRESAS = [
   { id:1, nombre:'Agropecuaria El Sueño', sigla:'AES', color:'#27AE60', sector:'Agropecuaria diversificada', zona:'NOA / Córdoba', referentes:'Sebastián Valdez & Paola Graña', ingreso:'2022', descripcion:'Empresa de primera generación fundada en 2011. Diversificada en gerenciamiento agropecuario, agricultura de grano, cultivo de pecán e inversiones inmobiliarias.', tags:['Granos','Pecán','Inmobiliario','Gerenciamiento'],
     historia:'Fundada en 2011 por Sebastián Valdez y Paola Graña, la empresa comenzó como un escritorio de asesoramiento agropecuario y fue incorporando actividades productivas propias. La diversificación hacia el pecán representa la apuesta de largo plazo, con horizonte de producción plena en 2030. El gerenciamiento de terceros es la actividad que más escala sin comprometer capital propio.',
     lineasEstrategicas:['Consolidar el escritorio de gerenciamiento agropecuario como actividad core','Escalar la superficie bajo cultivo de pecán','Ordenamiento patrimonial y societario familiar','Delegar la operación para liberar capacidad de dirección'],
@@ -645,7 +709,7 @@ const EMPRESAS = [
   }
 ];
 
-const PROCESOS = [
+let PROCESOS = [
   { empresaId:1, titulo:'Estrategias de Crecimiento 2025/2026', fecha:'29 Sep 2025', resumen:'Hoja de ruta: pecán, gerenciamiento de terceros y ordenamiento patrimonial. El grupo aportó foco en la brecha entre ambición y estructura.' },
   { empresaId:1, titulo:'Validación de diagnóstico y delegación operativa', fecha:'23 Jun 2025', resumen:'16ª reunión del proceso. Validación del diagnóstico Simpleza y discusión de la estrategia de delegación para liberar tiempo de dirección.' },
   { empresaId:2, titulo:'Nueva Visión 2030 y Proyecto Inmobiliario', fecha:'15 Sep 2025', resumen:'Visión renovada a 5 años: crecimiento agrícola, consolidación familiar y proyecto inmobiliario como diversificación.' },
@@ -666,7 +730,7 @@ const PROCESOS = [
 ];
 
 // Todas las reuniones del periodo jun 2025 – ago 2026
-const REUNIONES_HISTORIAL = [
+let REUNIONES_HISTORIAL = [
   { fecha:'23 Jun', año:'2025', empresa:'Agropecuaria El Sueño', tipo:'empresa' },
   { fecha:'14 Jul', año:'2025', empresa:'Estudio Becker', tipo:'empresa' },
   { fecha:'4 Ago', año:'2025', empresa:'Tricampo S.A.', tipo:'empresa' },
@@ -693,7 +757,7 @@ const REUNIONES_HISTORIAL = [
 ];
 
 // Reuniones 2026 para calendario
-const REUNIONES_2026 = [
+let REUNIONES_2026 = [
   // Mayo
   { mes:'mayo', dia:'4', empresa:'Donato Álvarez SRL', tipo:'empresa', pasada:true },
   { mes:'mayo', dia:'11', empresa:'Coyuntura de Negocio', tipo:'especial', pasada:true },
@@ -712,7 +776,7 @@ const REUNIONES_2026 = [
   { mes:'julio', dia:'27', empresa:'Rubro Agropecuario SRL', tipo:'empresa', pasada:false }
 ];
 
-const HITOS = [
+let HITOS = [
   { fecha:'Feb 2022', titulo:'Inicio del Grupo El Faro', desc:'Primera reunión del Grupo IV con las empresas fundadoras. Facilitado por Cecilia Panizzo y Federico C. Guyot (Simpleza).', tipo:'pasada' },
   { fecha:'Dic 2022', titulo:'Cierre del primer año', desc:'25 reuniones realizadas. Primeras presentaciones empresariales y devoluciones del ciclo.', tipo:'pasada' },
   { fecha:'Oct 2024', titulo:'Directorio Ampliado', desc:'Jornada presencial de directorio ampliado. Tricampo presentó análisis patrimonial y flujo de fondos.', tipo:'pasada' },
@@ -721,7 +785,7 @@ const HITOS = [
   { fecha:'Jun 2026', titulo:'Más de 150 reuniones realizadas', desc:'El grupo supera las 150 reuniones acumuladas desde su inicio. Más de 200 devoluciones registradas.', tipo:'pasada' }
 ];
 
-const PROXIMOS_EVENTOS = [
+let PROXIMOS_EVENTOS = [
   { fecha:'29 Jun 2026', titulo:'Presentación El Motivo S.A.', desc:'Adriana Ponzio, Esteban & Federico Vissio presentan avances en la visión 2030 y el proyecto inmobiliario.', empresa:'El Motivo S.A.' },
   { fecha:'6 Jul 2026', titulo:'Presentación Agropecuaria El Sueño', desc:'Sebastián Valdez y Paola Graña actualizan al grupo sobre el ciclo agrícola, pecán y líneas estratégicas.', empresa:'Agropecuaria El Sueño' },
   { fecha:'13 Jul 2026', titulo:'Presentación Altos de Bermúdez SA', desc:'Alfredo Moreno presenta avances en el feedlot y el proceso de sucesión.', empresa:'Altos de Bermúdez SA' },
@@ -730,7 +794,7 @@ const PROXIMOS_EVENTOS = [
   { fecha:'3 Ago 2026', titulo:'Presentación Estudio Becker', desc:'Tomás Becker presenta avances de sus líneas estratégicas: incorporación de socio y expansión.', empresa:'Estudio Becker' }
 ];
 
-const CONCEPTOS = [
+let CONCEPTOS = [
   { icon:'🏛️', titulo:'Directorio Colaborativo', formula:'empresa × grupo = aprendizaje', desc:'Espacio de dirección donde cada empresa aporta y recibe perspectivas externas para tomar mejores decisiones.' },
   { icon:'📋', titulo:'Proceso Estratégico', formula:'consulta → aportes → acción', desc:'Presentación de una empresa sobre un desafío estratégico concreto para recibir devoluciones del grupo.' },
   { icon:'🔄', titulo:'Devolución', formula:'escucha + experiencia → aporte', desc:'Respuesta honesta de un par empresario. No es consejo, es perspectiva desde la propia experiencia de gestión.' },
@@ -739,7 +803,7 @@ const CONCEPTOS = [
   { icon:'🤝', titulo:'Acuerdo de Accionistas', formula:'derechos + obligaciones + mecanismos', desc:'Documento que regula la relación entre socios: roles, retiros, decisiones y protocolos ante situaciones especiales.' }
 ];
 
-const MINUTAS_GENERALES = [
+let MINUTAS_GENERALES = [
   { nombre:'Minuta 22 junio 2026 — Tricampo S.A.', fecha:'22 Jun 2026', url:'#' },
   { nombre:'Minuta 8 junio 2026 — Técnica: Análisis de Negocios', fecha:'8 Jun 2026', url:'#' },
   { nombre:'Minuta 1 junio 2026 — Beheran Sarciat SA', fecha:'1 Jun 2026', url:'#' },
@@ -747,7 +811,7 @@ const MINUTAS_GENERALES = [
   { nombre:'Minuta 27 abril 2026 — Estudio Becker', fecha:'27 Abr 2026', url:'#' }
 ];
 
-const RECURSOS = [
+let RECURSOS = [
   { id:1, categoria:'herramienta', icon:'📊', titulo:'Tablero de Indicadores de Empresa', desc:'Planilla de seguimiento de indicadores clave por empresa: resultado económico, patrimonio, superficie, cabezas y liquidez.', link:'#' },
   { id:2, categoria:'herramienta', icon:'📅', titulo:'Plantilla de Minuta de Reunión', desc:'Estructura estándar para registrar los temas, devoluciones y compromisos de cada reunión semanal.', link:'#' },
   { id:3, categoria:'metodologia', icon:'🧭', titulo:'Metodología Simpleza — Resumen ejecutivo', desc:'Descripción del proceso de directorio colaborativo, sus etapas, herramientas y principios de funcionamiento.', link:'#' },
@@ -1188,9 +1252,302 @@ function renderRecursos(filtro, btn) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// CONTENIDO EDITABLE (persistido en Turso vía /api/db)
+// ══════════════════════════════════════════════════════════════
+const API_BASE = '/api/db';
+const GROUP_ID = 'grupo4';
+
+// Carga el contenido guardado en Turso y sobreescribe los datos por defecto.
+async function loadContentFromDB() {
+  try {
+    const r = await fetch(`${API_BASE}?group_id=${encodeURIComponent(GROUP_ID)}`);
+    if (!r.ok) return;
+    const j = await r.json();
+    const c = (j && j.content) || {};
+    if (Array.isArray(c.empresas))  EMPRESAS = c.empresas;
+    if (Array.isArray(c.procesos))  PROCESOS = c.procesos;
+    if (Array.isArray(c.hitos))     HITOS = c.hitos;
+    if (Array.isArray(c.proximos))  PROXIMOS_EVENTOS = c.proximos;
+    if (Array.isArray(c.conceptos)) CONCEPTOS = c.conceptos;
+    if (Array.isArray(c.minutas))   MINUTAS_GENERALES = c.minutas;
+    if (Array.isArray(c.recursos))  RECURSOS = c.recursos;
+  } catch (e) {
+    console.warn('No se pudo cargar el contenido de Turso (se usan los datos por defecto):', e);
+  }
+}
+
+async function saveContentToDB(key, data) {
+  const r = await fetch(API_BASE, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'saveContent', group_id: GROUP_ID, password: EDIT_PASSWORD, key, data })
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
+  return j;
+}
+
+// ══════════════════════════════════════════════════════════════
+// EDITOR GENÉRICO DIRIGIDO POR ESQUEMA
+// ══════════════════════════════════════════════════════════════
+function esc(s){ return String(s ?? '').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+
+const SCHEMAS = {
+  empresas: {
+    title: 'Empresas del grupo', titleField: 'nombre',
+    getData: () => EMPRESAS, setData: v => { EMPRESAS = v; },
+    fields: [
+      { name:'nombre', label:'Nombre', type:'text' },
+      { name:'sigla', label:'Sigla (2-3 letras)', type:'text' },
+      { name:'color', label:'Color', type:'color' },
+      { name:'sector', label:'Sector', type:'text' },
+      { name:'zona', label:'Zona', type:'text' },
+      { name:'referentes', label:'Referentes', type:'text' },
+      { name:'ingreso', label:'Año de ingreso', type:'text' },
+      { name:'descripcion', label:'Descripción', type:'textarea' },
+      { name:'historia', label:'Historia', type:'textarea' },
+      { name:'tags', label:'Tags', type:'strlist' },
+      { name:'lineasEstrategicas', label:'Líneas estratégicas', type:'strlist' },
+      { name:'pdfs', label:'Documentos', type:'objlist', sub:[
+        { name:'nombre', label:'Nombre' }, { name:'fecha', label:'Fecha' },
+        { name:'tipo', label:'Tipo' }, { name:'url', label:'URL' }
+      ] },
+    ],
+    newItem: () => ({ id: Date.now(), nombre:'Nueva empresa', sigla:'', color:'#6C868C', sector:'', zona:'', referentes:'', ingreso:'', descripcion:'', historia:'', tags:[], lineasEstrategicas:[], pdfs:[] }),
+  },
+  procesos: {
+    title: 'Procesos estratégicos', titleField: 'titulo',
+    getData: () => PROCESOS, setData: v => { PROCESOS = v; },
+    fields: [
+      { name:'empresaId', label:'Empresa', type:'empresaSelect' },
+      { name:'titulo', label:'Título', type:'text' },
+      { name:'fecha', label:'Fecha', type:'text' },
+      { name:'resumen', label:'Resumen', type:'textarea' },
+    ],
+    newItem: () => ({ empresaId: (EMPRESAS[0]||{}).id || 1, titulo:'Nuevo proceso', fecha:'', resumen:'' }),
+  },
+  hitos: {
+    title: 'Hitos del grupo', titleField: 'titulo',
+    getData: () => HITOS, setData: v => { HITOS = v; },
+    fields: [
+      { name:'fecha', label:'Fecha', type:'text' },
+      { name:'titulo', label:'Título', type:'text' },
+      { name:'desc', label:'Descripción', type:'textarea' },
+    ],
+    newItem: () => ({ fecha:'', titulo:'Nuevo hito', desc:'', tipo:'pasada' }),
+  },
+  proximos: {
+    title: 'Próximos eventos', titleField: 'titulo',
+    getData: () => PROXIMOS_EVENTOS, setData: v => { PROXIMOS_EVENTOS = v; },
+    fields: [
+      { name:'fecha', label:'Fecha', type:'text' },
+      { name:'titulo', label:'Título', type:'text' },
+      { name:'desc', label:'Descripción', type:'textarea' },
+      { name:'empresa', label:'Empresa', type:'text' },
+    ],
+    newItem: () => ({ fecha:'', titulo:'Nuevo evento', desc:'', empresa:'' }),
+  },
+  conceptos: {
+    title: 'Marco conceptual', titleField: 'titulo',
+    getData: () => CONCEPTOS, setData: v => { CONCEPTOS = v; },
+    fields: [
+      { name:'icon', label:'Ícono (emoji)', type:'text' },
+      { name:'titulo', label:'Título', type:'text' },
+      { name:'formula', label:'Fórmula', type:'text' },
+      { name:'desc', label:'Descripción', type:'textarea' },
+    ],
+    newItem: () => ({ icon:'📌', titulo:'Nuevo concepto', formula:'', desc:'' }),
+  },
+  minutas: {
+    title: 'Minutas generales', titleField: 'nombre',
+    getData: () => MINUTAS_GENERALES, setData: v => { MINUTAS_GENERALES = v; },
+    fields: [
+      { name:'nombre', label:'Nombre', type:'text' },
+      { name:'fecha', label:'Fecha', type:'text' },
+      { name:'url', label:'URL / enlace', type:'text' },
+    ],
+    newItem: () => ({ nombre:'Nueva minuta', fecha:'', url:'#' }),
+  },
+  recursos: {
+    title: 'Recursos del grupo', titleField: 'titulo',
+    getData: () => RECURSOS, setData: v => { RECURSOS = v; },
+    fields: [
+      { name:'icon', label:'Ícono (emoji)', type:'text' },
+      { name:'categoria', label:'Categoría', type:'select', options:['herramienta','metodologia','documento'] },
+      { name:'titulo', label:'Título', type:'text' },
+      { name:'desc', label:'Descripción', type:'textarea' },
+      { name:'link', label:'Enlace', type:'text' },
+    ],
+    newItem: () => ({ id: Date.now(), icon:'📌', categoria:'herramienta', titulo:'Nuevo recurso', desc:'', link:'#' }),
+  },
+};
+
+const RENDER_AFTER = {
+  empresas: () => renderEmpresas(),
+  procesos: () => renderProcesos(),
+  hitos: () => renderEventos(),
+  proximos: () => renderEventos(),
+  conceptos: () => renderEventos(),
+  minutas: () => renderRecursosSec(),
+  recursos: () => renderRecursos('todos'),
+};
+
+// Datasets editables por sección del dashboard
+const SECTION_DATASETS = {
+  empresas: [{ key:'empresas', label:'Empresas' }],
+  procesos: [{ key:'procesos', label:'Procesos' }],
+  eventos:  [{ key:'hitos', label:'Hitos' }, { key:'proximos', label:'Próximos eventos' }, { key:'conceptos', label:'Marco conceptual' }],
+  recursos: [{ key:'minutas', label:'Minutas generales' }, { key:'recursos', label:'Recursos' }],
+};
+
+let editorState = null;
+
+// Hook llamado por setEditing(): agrega/quita los botones "Editar" por sección
+function onEditingChange(on) {
+  document.querySelectorAll('.section-edit-btn').forEach(b => b.remove());
+  if (!on) return;
+  for (const [sec, sets] of Object.entries(SECTION_DATASETS)) {
+    const ph = document.querySelector(`#sec-${sec} .page-header`);
+    if (!ph) continue;
+    const btn = document.createElement('button');
+    btn.className = 'section-edit-btn';
+    btn.innerHTML = '✏️ Editar';
+    btn.onclick = () => sets.length === 1 ? openEditor(sets[0].key) : openChooser(sets);
+    ph.appendChild(btn);
+  }
+}
+
+function openChooser(sets) {
+  const list = document.getElementById('chooser-list');
+  list.innerHTML = '';
+  sets.forEach(s => {
+    const b = document.createElement('button');
+    b.textContent = s.label;
+    b.onclick = () => { closeChooser(); openEditor(s.key); };
+    list.appendChild(b);
+  });
+  document.getElementById('chooser-modal').classList.add('open');
+}
+function closeChooser() { document.getElementById('chooser-modal').classList.remove('open'); }
+
+function openEditor(key) {
+  const schema = SCHEMAS[key];
+  if (!schema) return;
+  editorState = { key, schema, items: JSON.parse(JSON.stringify(schema.getData() || [])) };
+  document.getElementById('editor-title').textContent = 'Editar · ' + schema.title;
+  document.getElementById('editor-msg').textContent = '';
+  renderEditor();
+  document.getElementById('editor-modal').classList.add('open');
+}
+function closeEditor() { document.getElementById('editor-modal').classList.remove('open'); editorState = null; }
+
+function renderField(f, val, idx) {
+  const id = `f-${idx}-${f.name}`;
+  if (f.type === 'textarea')
+    return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><textarea id="${id}" data-idx="${idx}" data-field="${f.name}">${esc(val)}</textarea></div>`;
+  if (f.type === 'color')
+    return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><input type="color" id="${id}" data-idx="${idx}" data-field="${f.name}" value="${esc(val || '#6C868C')}"></div>`;
+  if (f.type === 'select')
+    return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><select id="${id}" data-idx="${idx}" data-field="${f.name}">${(f.options||[]).map(o => `<option value="${esc(o)}"${o===val?' selected':''}>${esc(o)}</option>`).join('')}</select></div>`;
+  if (f.type === 'empresaSelect')
+    return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><select id="${id}" data-idx="${idx}" data-field="${f.name}" data-num="1">${EMPRESAS.map(e => `<option value="${e.id}"${e.id==val?' selected':''}>${esc(e.nombre)}</option>`).join('')}</select></div>`;
+  if (f.type === 'strlist')
+    return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><textarea id="${id}" data-idx="${idx}" data-field="${f.name}" data-list="1">${esc((Array.isArray(val)?val:[]).join('\n'))}</textarea><div class="ed-hint">Un elemento por línea.</div></div>`;
+  if (f.type === 'objlist') {
+    const rows = (Array.isArray(val) ? val : []);
+    return `<div class="ed-field"><label>${esc(f.label)}</label><div class="ed-sub" data-objlist="${idx}-${f.name}">${
+      rows.map((row, ri) => renderSubRow(f, idx, ri, row)).join('')
+    }<button type="button" class="ed-subadd" onclick="addSubRow(${idx}, '${f.name}')">＋ Agregar</button></div></div>`;
+  }
+  // text por defecto
+  return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><input type="text" id="${id}" data-idx="${idx}" data-field="${f.name}" value="${esc(val)}"></div>`;
+}
+
+function renderSubRow(f, idx, ri, row) {
+  return `<div class="ed-subrow" data-row="${ri}">${
+    f.sub.map(sf => `<input type="text" placeholder="${esc(sf.label)}" data-subfield="${sf.name}" value="${esc(row[sf.name])}">`).join('')
+  }<button type="button" class="ed-subdel" onclick="removeSubRow(${idx}, '${f.name}', ${ri})">✕</button></div>`;
+}
+
+function renderEditor() {
+  const { schema, items } = editorState;
+  const body = document.getElementById('editor-body');
+  body.innerHTML = items.length ? items.map((it, idx) => `
+    <div class="ed-item">
+      <div class="ed-item-head">
+        <span>#${idx + 1}${it[schema.titleField] ? ' · ' + esc(it[schema.titleField]) : ''}</span>
+        <button class="ed-del" onclick="removeEditorItem(${idx})">Eliminar</button>
+      </div>
+      ${schema.fields.map(f => renderField(f, it[f.name], idx)).join('')}
+    </div>`).join('') : '<div class="ed-empty">Sin elementos todavía. Usá “＋ Agregar elemento”.</div>';
+}
+
+// Lee los valores actuales del DOM hacia editorState.items (antes de re-render/guardar)
+function readEditorDOM() {
+  const { schema, items } = editorState;
+  items.forEach((it, idx) => {
+    schema.fields.forEach(f => {
+      if (f.type === 'strlist') {
+        const el = document.querySelector(`[data-idx="${idx}"][data-field="${f.name}"]`);
+        if (el) it[f.name] = el.value.split('\n').map(s => s.trim()).filter(Boolean);
+      } else if (f.type === 'objlist') {
+        const cont = document.querySelector(`[data-objlist="${idx}-${f.name}"]`);
+        if (cont) it[f.name] = [...cont.querySelectorAll('.ed-subrow')].map(rowEl => {
+          const o = {};
+          f.sub.forEach(sf => { const el = rowEl.querySelector(`[data-subfield="${sf.name}"]`); o[sf.name] = el ? el.value : ''; });
+          return o;
+        });
+      } else {
+        const el = document.querySelector(`[data-idx="${idx}"][data-field="${f.name}"]`);
+        if (el) it[f.name] = el.dataset.num ? (parseInt(el.value) || el.value) : el.value;
+      }
+    });
+  });
+}
+
+function addEditorItem() { readEditorDOM(); editorState.items.push(editorState.schema.newItem()); renderEditor(); }
+function removeEditorItem(idx) { readEditorDOM(); editorState.items.splice(idx, 1); renderEditor(); }
+function addSubRow(idx, fname) {
+  readEditorDOM();
+  const f = editorState.schema.fields.find(x => x.name === fname);
+  const empty = {}; f.sub.forEach(sf => empty[sf.name] = '');
+  (editorState.items[idx][fname] = editorState.items[idx][fname] || []).push(empty);
+  renderEditor();
+}
+function removeSubRow(idx, fname, ri) {
+  readEditorDOM();
+  editorState.items[idx][fname].splice(ri, 1);
+  renderEditor();
+}
+
+async function saveEditor() {
+  if (!editorState) return;
+  readEditorDOM();
+  const { key, schema, items } = editorState;
+  const saveBtn = document.getElementById('editor-save');
+  const msg = document.getElementById('editor-msg');
+  saveBtn.disabled = true; msg.textContent = 'Guardando…';
+  try {
+    await saveContentToDB(key, items);
+    schema.setData(JSON.parse(JSON.stringify(items)));
+    if (RENDER_AFTER[key]) RENDER_AFTER[key]();
+    msg.textContent = 'Guardado ✓';
+    setTimeout(() => closeEditor(), 500);
+  } catch (e) {
+    console.error('Error al guardar contenido:', e);
+    msg.textContent = 'Error: ' + e.message;
+  } finally {
+    saveBtn.disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════════
-window.addEventListener('load', initDashboard);
+window.addEventListener('load', async () => {
+  await loadContentFromDB();
+  initDashboard();
+});
 </script>
 </body>
 </html>
