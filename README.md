@@ -1,9 +1,19 @@
-# Grupo El Faro — Calendario de Reuniones
+# Grupo El Faro — Dashboard
 
-App de una sola página (`index.html`) desplegada en Vercel. Los datos se guardan
-en **Turso** (libSQL) a través de una función serverless (`/api/db.js`) que usa
-las **variables de entorno de Vercel**. El token de Turso vive solo en el
-servidor y nunca se expone en el navegador.
+Sitio del Grupo El Faro desplegado en Vercel. Estructura:
+
+- **`index.html`** → dashboard principal (portada, empresas, procesos, calendario,
+  eventos, recursos). Es la home del sitio.
+- **`gestion.html`** → app de gestión de calendario (Turso), embebida dentro del
+  dashboard en la sección **Calendario** como un segmento con sus propias
+  pestañas (Calendario / Empresas / Configuración).
+- **`api/db.js`** → función serverless que conecta a **Turso** (libSQL) usando las
+  **variables de entorno de Vercel**. El token de Turso vive solo en el servidor y
+  nunca se expone en el navegador.
+
+La **edición** se desbloquea con un único login (botón "Modo edición" en la barra
+superior, clave `faro26`). Ese login habilita la edición en todo el sitio y le
+pasa el modo edición a la app embebida automáticamente.
 
 ## Puesta en marcha
 
