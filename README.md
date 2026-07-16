@@ -15,6 +15,32 @@ La **edición** se desbloquea con un único login (botón "Modo edición" en la 
 superior, clave `faro26`). Ese login habilita la edición en todo el sitio y le
 pasa el modo edición a la app embebida automáticamente.
 
+## Edición del contenido
+
+En modo edición, cada sección del dashboard muestra un botón **✏️ Editar** que
+abre un formulario para agregar, editar o eliminar su contenido. Todo se guarda
+en Turso (tabla `content`, un blob JSON por sección) y queda visible para todos:
+
+- **Portada**: título, banner de próxima reunión, tarjetas de indicadores y
+  actividad reciente.
+- **Empresas**: fichas completas (datos, historia, líneas estratégicas, documentos).
+- **Procesos**, **Eventos** (hitos, próximos, marco conceptual) y **Recursos**
+  (minutas y recursos).
+- **Calendario**: se edita dentro del segmento embebido (app de gestión con Turso).
+
+La tabla `content` se crea sola; no hay que hacer nada en Turso.
+
+## Logo de Simpleza
+
+El dashboard referencia el imagotipo de Simpleza en `assets/simpleza-logo.png`
+(se muestra en el sidebar, sobre fondo oscuro). Para que aparezca:
+
+1. Subí el archivo **PNG con fondo transparente** a `assets/simpleza-logo.png`.
+2. Si el PNG tiene fondo blanco, exportá una versión con transparencia (el
+   sidebar es oscuro, así que un imagotipo blanco transparente se ve perfecto).
+
+Si el archivo no existe, el sitio simplemente no muestra el logo (no rompe nada).
+
 ## Puesta en marcha
 
 ### 1. Crear la base en Turso
