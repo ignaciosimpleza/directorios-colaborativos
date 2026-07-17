@@ -121,9 +121,37 @@ body.editing .edit-toggle { background:var(--verde-menta); color:#1E2A2E; }
 #main { margin-left: 220px; margin-top: 56px; flex: 1; overflow-y: auto; padding: 24px 28px; }
 .section { display: none; animation: fadeIn 0.22s ease; }
 .section.active { display: block; }
-/* Sección que aloja la app embebida a pantalla completa */
-.section-full.active { display: block; }
-.app-frame { width: 100%; height: calc(100vh - 104px); border: 0; border-radius: 12px; background: var(--crema-fondo); display: block; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+/* ── CALENDARIO NATIVO ── */
+.cal-config { margin-bottom: 16px; }
+.cal-config-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:12px; }
+.cal-config-grid label, .cal-range { display:flex; flex-direction:column; gap:4px; font-size:11px; font-weight:600; color:var(--gris-oscuro,#616A6B); }
+.cal-config-grid input, .cal-config-grid select, .cal-range input, .cal-input { border:1px solid var(--beige-suave); border-radius:8px; padding:7px 9px; font-size:13px; font-family:inherit; background:#fff; outline:none; }
+.cal-config-actions { display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+.cal-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.cal-toolbar .cal-input { min-width:180px; }
+.cal-status { font-size:12px; color:var(--gris-medio); margin-left:auto; }
+.btn-cal-primary, .btn-cal-add { background:var(--verde-menta); color:#1E2A2E; border:0; font-weight:700; font-size:12.5px; padding:8px 14px; border-radius:9px; cursor:pointer; font-family:inherit; }
+.btn-cal-danger { background:#fdecea; color:var(--terracota); border:0; font-weight:700; font-size:12.5px; padding:8px 14px; border-radius:9px; cursor:pointer; font-family:inherit; }
+.cal-month { margin-bottom:22px; }
+.cal-month-title { font-size:13px; font-weight:700; color:var(--navy,#1E2A2E); text-transform:capitalize; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid var(--beige-suave); }
+.cal-row { display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid var(--beige-suave); border-radius:10px; margin-bottom:8px; background:#fff; }
+.cal-row.past { opacity:.62; }
+.cal-row.next { border-color:var(--verde-menta); box-shadow:0 0 0 2px rgba(50,232,169,0.18); }
+.cal-date { flex:0 0 96px; font-size:12px; font-weight:700; color:var(--gris-oscuro,#616A6B); line-height:1.2; }
+.cal-date small { display:block; font-size:10px; font-weight:500; color:var(--gris-medio); text-transform:capitalize; }
+.cal-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+.cal-assign { flex:0 0 210px; font-size:13.5px; font-weight:700; color:var(--navy,#1E2A2E); }
+.cal-topic { flex:1; font-size:12.5px; color:var(--gris-medio); min-width:120px; }
+.cal-next-chip { background:#e8f8f2; color:#1a7a55; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; }
+.cal-row .cal-input, .cal-row select, .cal-row input[type=text] { padding:6px 8px; font-size:13px; }
+.cal-assign-sel { flex:0 0 210px; }
+.cal-topic-inp { flex:1; min-width:120px; }
+.cal-row-actions { display:flex; gap:6px; flex-shrink:0; }
+.cal-pin, .cal-del { border:0; border-radius:7px; padding:5px 8px; cursor:pointer; font-size:13px; }
+.cal-pin { background:#f1f5f4; color:var(--gris-oscuro,#616A6B); }
+.cal-pin.on { background:var(--amarillo-pastel); color:#7a5c00; }
+.cal-del { background:#fdecea; color:var(--terracota); }
+.cal-empty { text-align:center; color:var(--gris-medio); font-size:13px; padding:40px 0; }
 @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
 
 /* ── PAGE HEADER ── */
@@ -501,9 +529,51 @@ canvas { display:block; }
     <div id="procesos-content"></div>
   </div>
 
-  <!-- ═══════════ CALENDARIO (app editable con Turso, embebida) ═══════════ -->
-  <div id="sec-calendario" class="section section-full">
-    <iframe id="app-frame" class="app-frame" src="gestion.html?embed=1" title="Gestión de calendario"></iframe>
+  <!-- ═══════════ CALENDARIO (nativo, unificado con Empresas, Turso) ═══════════ -->
+  <div id="sec-calendario" class="section">
+    <div class="page-header">
+      <h1>Calendario de Reuniones</h1>
+      <p>Reuniones del grupo · <span id="cal-dow-label">Lunes</span> · asignadas a las empresas del grupo</p>
+    </div>
+
+    <!-- Configuración de generación (solo edición) -->
+    <div class="card cal-config" id="cal-config" style="display:none">
+      <div class="card-title">⚙️ Generación automática</div>
+      <div class="cal-config-grid">
+        <label>Día de reunión
+          <select id="cfg-dow" onchange="calSaveConfig()">
+            <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option>
+            <option value="4">Jueves</option><option value="5">Viernes</option>
+          </select>
+        </label>
+        <label>Cadencia por empresa (días)
+          <input type="number" id="cfg-cadence" min="7" step="7" onchange="calSaveConfig()">
+        </label>
+        <label>Ratio novedades
+          <input type="number" id="cfg-nov" min="0" step="1" onchange="calSaveConfig()">
+        </label>
+        <label>Ratio técnica
+          <input type="number" id="cfg-tec" min="0" step="1" onchange="calSaveConfig()">
+        </label>
+      </div>
+      <div class="cal-config-actions">
+        <label class="cal-range">Desde <input type="date" id="cfg-from"></label>
+        <label class="cal-range">Hasta <input type="date" id="cfg-to"></label>
+        <button class="btn-cal-primary" onclick="calGenerate()">↻ Generar futuras</button>
+        <button class="btn-cal-danger" onclick="calResetAll()">Borrar todo</button>
+      </div>
+      <div class="ed-hint">Genera reuniones semanales rotando las empresas activas por mayor tiempo sin presentar, respetando las reuniones fijadas (📌) y feriados.</div>
+    </div>
+
+    <!-- Barra de filtros / acciones -->
+    <div class="cal-toolbar">
+      <input type="text" id="cal-search" class="cal-input" placeholder="Buscar empresa o tema…" oninput="renderCalendarNative()">
+      <select id="cal-year" class="cal-input" onchange="renderCalendarNative()"><option value="all">Todos los años</option></select>
+      <button class="btn-cal-add" id="cal-add-btn" style="display:none" onclick="calAddMeeting()">＋ Agregar reunión</button>
+      <span id="cal-status" class="cal-status"></span>
+    </div>
+
+    <div id="cal-list"></div>
   </div>
 
   <!-- ═══════════ EVENTOS ═══════════ -->
@@ -834,20 +904,9 @@ function setEditing(on) {
   document.body.classList.toggle('editing', on);
   const lbl = document.getElementById('edit-toggle-label');
   if (lbl) lbl.textContent = on ? 'Editando · Salir' : 'Modo edición';
-  syncFrameEdit();
+  if (typeof calApplyEditMode === 'function') calApplyEditMode();
   if (typeof onEditingChange === 'function') onEditingChange(on); // hook para secciones editables
 }
-function syncFrameEdit() {
-  const f = document.getElementById('app-frame');
-  if (f && f.contentWindow) {
-    try { f.contentWindow.postMessage({ type: 'faro-edit', on: dashEditing }, '*'); } catch (e) {}
-  }
-}
-// El iframe avisa cuando cargó; re-sincronizamos el estado de edición
-window.addEventListener('message', (ev) => {
-  const d = ev.data || {};
-  if (d.type === 'faro-ready') syncFrameEdit();
-});
 
 // ══════════════════════════════════════════════════════════════
 // NAVEGACIÓN
@@ -881,7 +940,7 @@ function navigate(section, data) {
   if (section === 'empresas') renderEmpresas();
   if (section === 'empresa-detalle' && data) renderEmpresaDetalle(data);
   if (section === 'procesos') renderProcesos();
-  if (section === 'calendario') syncFrameEdit();
+  if (section === 'calendario') renderCalendarNative();
   if (section === 'eventos') renderEventos();
   if (section === 'recursos') renderRecursosSec();
 }
@@ -1063,42 +1122,12 @@ function renderEmpresaDetalle(empresa) {
                   <div class="pdf-item-name">${pdf.nombre}</div>
                   <div class="pdf-item-date">${pdf.fecha} · ${pdf.tipo}</div>
                 </div>
-                <div class="pdf-item-action" onclick="mostrarPdfPlaceholder('${pdf.nombre}','${pdf.fecha}')">Ver PDF</div>
+                <div class="pdf-item-action" onclick="openLink('${jsq(pdf.url)}')">Abrir</div>
               </div>`).join('')}
-          </div>
-        </div>
-        <div class="pdf-section" style="margin-top:18px">
-          <div class="pdf-header">
-            <div class="pdf-header-title">📋 Visor de documento</div>
-            <div class="pdf-header-meta">Seleccioná un PDF arriba</div>
-          </div>
-          <div class="pdf-embed-wrap" id="pdf-viewer-${empresa.id}">
-            <div class="pdf-embed-placeholder">
-              <div class="pep-icon">📂</div>
-              <div class="pep-title">Ningún documento seleccionado</div>
-              <div class="pep-sub">Seleccioná un documento de la lista superior<br>para visualizarlo aquí. Los PDFs se pueden<br>reemplazar semanalmente sin modificar el HTML.</div>
-            </div>
           </div>
         </div>
       </div>
     </div>`;
-}
-
-function mostrarPdfPlaceholder(nombre, fecha) {
-  const empresaId = currentEmpresaId;
-  const el = document.getElementById('pdf-viewer-' + empresaId);
-  if (!el) return;
-  el.innerHTML = `
-    <div class="pdf-embed-placeholder">
-      <div class="pep-icon">📄</div>
-      <div class="pep-title">${nombre}</div>
-      <div class="pep-sub">Fecha: ${fecha}<br><br>Para mostrar el PDF real, reemplazá la URL<br>en el array <code>pdfs</code> de la empresa correspondiente<br>con la ruta o URL del archivo PDF.<br><br>Ejemplo: <code>url: './pdfs/el-sueno-sep2025.pdf'</code></div>
-      <button class="pep-btn" onclick="abrirPdfExterno()">📎 Abrir PDF externo</button>
-    </div>`;
-}
-
-function abrirPdfExterno() {
-  alert('Configurá la URL del PDF en el array de datos de la empresa para que el botón abra el archivo real.');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1147,58 +1176,6 @@ function toggleProceso(listId, header) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// CALENDARIO — 3 meses
-// ══════════════════════════════════════════════════════════════
-function renderCalendario() {
-  const meses = [
-    { key:'mayo', nombre:'Mayo 2026', actual:false },
-    { key:'junio', nombre:'Junio 2026', actual:true },
-    { key:'julio', nombre:'Julio 2026', actual:false }
-  ];
-
-  const tipoClass = r => {
-    if (r.proxima) return 'tipo-empresa proxima';
-    if (!r.pasada) return 'tipo-empresa';
-    return 'tipo-' + r.tipo + (r.pasada ? ' pasada' : '');
-  };
-
-  const tipoLabel = r => ({
-    empresa: r.pasada ? '🏢 Presentación realizada' : '🏢 Presentación empresarial',
-    especial: '⭐ Reunión especial',
-    interna: '🔒 Reunión interna',
-    feriado: '🗓️ Feriado / sin reunión'
-  })[r.tipo] || '';
-
-  const el = document.getElementById('cal-meses');
-  if (!el) return;
-
-  el.innerHTML = meses.map(mes => {
-    const reuniones = REUNIONES_2026.filter(r => r.mes === mes.key);
-    return `
-      <div class="mes-card ${mes.actual ? 'mes-actual' : ''}">
-        <div class="mes-header">
-          <h3>${mes.nombre}</h3>
-          ${mes.actual ? '<span class="mes-badge">Mes actual</span>' : ''}
-        </div>
-        <div class="mes-body">
-          ${reuniones.map(r => `
-            <div class="mes-item ${tipoClass(r)}">
-              <div class="mes-dot"></div>
-              <div>
-                <div style="display:flex;align-items:center;gap:6px">
-                  <span class="mes-fecha">${r.dia} ${r.mes.slice(0,3)}.</span>
-                  <span class="mes-empresa-name">${r.empresa}</span>
-                </div>
-                <div class="mes-tipo-label">${tipoLabel(r)}</div>
-              </div>
-            </div>`).join('')}
-          ${reuniones.length === 0 ? '<div style="padding:16px 14px;font-size:12px;color:var(--gris-medio)">Sin reuniones registradas</div>' : ''}
-        </div>
-      </div>`;
-  }).join('');
-}
-
-// ══════════════════════════════════════════════════════════════
 // EVENTOS
 // ══════════════════════════════════════════════════════════════
 function renderEventos() {
@@ -1222,15 +1199,27 @@ function renderEventos() {
 // ══════════════════════════════════════════════════════════════
 // RECURSOS
 // ══════════════════════════════════════════════════════════════
+// Escapa un valor para usarlo dentro de un string JS en un atributo onclick.
+function jsq(s){ return esc(s).replace(/'/g, "\\'"); }
+
+// Abre un enlace (Google Drive/Docs/PDF/etc.) en una pestaña nueva.
+function openLink(url) {
+  if (!url || url === '#') {
+    alert('Este recurso todavía no tiene un enlace. En modo edición, pegá la URL (por ejemplo un link de Google Drive) en el campo correspondiente.');
+    return;
+  }
+  window.open(url, '_blank', 'noopener');
+}
+
 function renderRecursosSec() {
   const elM = document.getElementById('minutas-generales');
   if (elM) {
     elM.innerHTML = MINUTAS_GENERALES.map(m => `
-      <div class="pdf-item">
+      <div class="pdf-item" style="cursor:pointer" onclick="openLink('${jsq(m.url)}')">
         <div class="pdf-icon">📋</div>
         <div>
-          <div class="pdf-item-name">${m.nombre}</div>
-          <div class="pdf-item-date">${m.fecha}</div>
+          <div class="pdf-item-name">${esc(m.nombre)}</div>
+          <div class="pdf-item-date">${esc(m.fecha)}</div>
         </div>
         <div class="pdf-item-action">Ver minuta</div>
       </div>`).join('');
@@ -1248,11 +1237,11 @@ function renderRecursos(filtro, btn) {
   const el = document.getElementById('recursos-grid');
   if (!el) return;
   el.innerHTML = lista.map(r => `
-    <div class="recurso-card" style="border-top-color:${colorCat[r.categoria] || 'var(--azul-pizarra)'}">
+    <div class="recurso-card" style="border-top-color:${colorCat[r.categoria] || 'var(--azul-pizarra)'};cursor:pointer" onclick="openLink('${jsq(r.link)}')">
       <div class="rc-icon">${r.icon}</div>
-      <div class="rc-categoria" style="color:${colorCat[r.categoria]}">${r.categoria}</div>
-      <div class="rc-titulo">${r.titulo}</div>
-      <div class="rc-desc">${r.desc}</div>
+      <div class="rc-categoria" style="color:${colorCat[r.categoria]}">${esc(r.categoria)}</div>
+      <div class="rc-titulo">${esc(r.titulo)}</div>
+      <div class="rc-desc">${esc(r.desc)}</div>
       <div class="rc-link">📎 Abrir recurso →</div>
     </div>`).join('');
 }
@@ -1281,20 +1270,276 @@ async function loadContentFromDB() {
       HOME = Object.assign({}, HOME, c.home);
       if (!HOME.banner) HOME.banner = {};
     }
+    // Reuniones y configuración del calendario (tablas meetings/config de Turso)
+    if (Array.isArray(j.meetings)) MEETINGS = j.meetings;
+    if (j.config && typeof j.config === 'object') {
+      CALCFG.cadenceDays      = j.config.cadence_days        ?? CALCFG.cadenceDays;
+      CALCFG.novedadesRatio   = j.config.novedades_ratio     ?? CALCFG.novedadesRatio;
+      CALCFG.tecnicaRatio     = j.config.tecnica_ratio        ?? CALCFG.tecnicaRatio;
+      CALCFG.meetingDayOfWeek = j.config.meeting_day_of_week  ?? CALCFG.meetingDayOfWeek;
+    }
   } catch (e) {
     console.warn('No se pudo cargar el contenido de Turso (se usan los datos por defecto):', e);
   }
 }
 
 async function saveContentToDB(key, data) {
+  return apiWrite({ action: 'saveContent', key, data });
+}
+
+// Escritura genérica contra /api/db (reuniones, config, contenido)
+async function apiWrite(payload) {
   const r = await fetch(API_BASE, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'saveContent', group_id: GROUP_ID, password: EDIT_PASSWORD, key, data })
+    body: JSON.stringify(Object.assign({ group_id: GROUP_ID, password: EDIT_PASSWORD }, payload))
   });
   const j = await r.json().catch(() => ({}));
   if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
   return j;
+}
+
+// ══════════════════════════════════════════════════════════════
+// CALENDARIO NATIVO (reuniones en Turso, asignadas a EMPRESAS)
+// ══════════════════════════════════════════════════════════════
+let MEETINGS = [];
+let CALCFG = { cadenceDays: 42, novedadesRatio: 1, tecnicaRatio: 1, meetingDayOfWeek: 1 };
+const CAL_MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const CAL_DOWS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const CAL_HOLIDAYS = ['01-01','03-24','04-02','05-01','05-25','06-20','07-09','08-17','10-12','11-20','12-08','12-25'];
+const CAL_SPECIALS = ['Ronda de novedades', 'Técnica', 'Feriado', 'Sin reunión'];
+const CAL_SPECIAL_COLOR = { 'Ronda de novedades':'#89B4C8', 'Técnica':'#6C868C', 'Feriado':'#CD6155', 'Sin reunión':'#D9CCC1' };
+const CAL_TODAY = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
+
+function calLocalStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function calIsHoliday(d){ return CAL_HOLIDAYS.includes(`${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`); }
+function calActiveEmpresas(){ return EMPRESAS.filter(e => e.activa !== false); }
+function calEmpresaByName(name){ return EMPRESAS.find(e => e.nombre === name); }
+function calColorFor(assignment){
+  const e = calEmpresaByName(assignment);
+  return e ? (e.color || '#6C868C') : (CAL_SPECIAL_COLOR[assignment] || '#7F8C8C');
+}
+
+function renderCalendarNative() {
+  const list = document.getElementById('cal-list');
+  if (!list) return;
+  MEETINGS.sort((a,b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+
+  // Filtros
+  const dowLbl = document.getElementById('cal-dow-label');
+  if (dowLbl) dowLbl.textContent = CAL_DOWS[CALCFG.meetingDayOfWeek] ? CAL_DOWS[CALCFG.meetingDayOfWeek][0].toUpperCase()+CAL_DOWS[CALCFG.meetingDayOfWeek].slice(1) : '';
+  const search = (document.getElementById('cal-search')?.value || '').toLowerCase();
+  const yearSel = document.getElementById('cal-year');
+  const years = [...new Set(MEETINGS.map(m => m.date.slice(0,4)))].sort();
+  if (yearSel) {
+    const cur = yearSel.value || 'all';
+    yearSel.innerHTML = '<option value="all">Todos los años</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+    yearSel.value = years.includes(cur) ? cur : 'all';
+  }
+  const fy = yearSel ? yearSel.value : 'all';
+
+  const filtered = MEETINGS.filter(m => {
+    if (fy !== 'all' && m.date.slice(0,4) !== fy) return false;
+    if (search && !((m.assignment||'').toLowerCase().includes(search) || (m.topic||'').toLowerCase().includes(search))) return false;
+    return true;
+  });
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="cal-empty">${MEETINGS.length ? 'No hay reuniones que coincidan con el filtro.' : 'No hay reuniones todavía.' + (dashEditing ? ' Usá “Generar futuras” o “＋ Agregar reunión”.' : '')}</div>`;
+    return;
+  }
+
+  const todayStr = calLocalStr(CAL_TODAY);
+  const nextDate = (MEETINGS.find(m => m.date >= todayStr) || {}).date;
+  const groups = {};
+  filtered.forEach(m => { const k = m.date.slice(0,7); (groups[k] = groups[k] || []).push(m); });
+
+  list.innerHTML = Object.keys(groups).sort().map(k => {
+    const [y, mo] = k.split('-');
+    const title = `${CAL_MONTHS[parseInt(mo)-1]} ${y}`;
+    return `<div class="cal-month"><div class="cal-month-title">${title}</div>${
+      groups[k].map(m => calRowHtml(m, nextDate, todayStr)).join('')
+    }</div>`;
+  }).join('');
+}
+
+function calRowHtml(m, nextDate, todayStr) {
+  const d = new Date(m.date + 'T12:00:00');
+  const dow = CAL_DOWS[d.getDay()];
+  const color = calColorFor(m.assignment);
+  const isPast = m.date < todayStr;
+  const isNext = m.date === nextDate;
+  const dateCell = `<div class="cal-date">${d.getDate()} ${CAL_MONTHS[d.getMonth()].slice(0,3)}<small>${dow}</small></div>`;
+
+  if (dashEditing) {
+    const opts = `<optgroup label="Empresas">${EMPRESAS.map(e => `<option value="${esc(e.nombre)}"${m.assignment===e.nombre?' selected':''}>${esc(e.nombre)}</option>`).join('')}</optgroup>`
+      + `<optgroup label="Especiales">${CAL_SPECIALS.map(s => `<option value="${s}"${m.assignment===s?' selected':''}>${s}</option>`).join('')}</optgroup>`;
+    return `<div class="cal-row ${isPast?'past':''} ${isNext?'next':''}">
+      ${dateCell}
+      <span class="cal-dot" style="background:${color}"></span>
+      <select class="cal-input cal-assign-sel" onchange="calUpdateField('${m.date}','assignment',this.value)">${opts}</select>
+      <input type="text" class="cal-input cal-topic-inp" value="${esc(m.topic)}" placeholder="Tema (opcional)" onchange="calUpdateField('${m.date}','topic',this.value)">
+      <div class="cal-row-actions">
+        <button class="cal-pin ${m.fixed?'on':''}" title="Fijar (no se re-genera)" onclick="calTogglePin('${m.date}')">📌</button>
+        <button class="cal-del" title="Eliminar" onclick="calDelete('${m.date}')">✕</button>
+      </div>
+    </div>`;
+  }
+  return `<div class="cal-row ${isPast?'past':''} ${isNext?'next':''}">
+    ${dateCell}
+    <span class="cal-dot" style="background:${color}"></span>
+    <span class="cal-assign">${esc(m.assignment)}</span>
+    <span class="cal-topic">${esc(m.topic)}</span>
+    ${isNext?'<span class="cal-next-chip">próxima</span>':''}
+  </div>`;
+}
+
+function calApplyEditMode() {
+  const cfg = document.getElementById('cal-config');
+  const addBtn = document.getElementById('cal-add-btn');
+  if (cfg) cfg.style.display = dashEditing ? '' : 'none';
+  if (addBtn) addBtn.style.display = dashEditing ? '' : 'none';
+  if (dashEditing) {
+    const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.value=v; };
+    set('cfg-dow', CALCFG.meetingDayOfWeek); set('cfg-cadence', CALCFG.cadenceDays);
+    set('cfg-nov', CALCFG.novedadesRatio); set('cfg-tec', CALCFG.tecnicaRatio);
+    const from = document.getElementById('cfg-from'), to = document.getElementById('cfg-to');
+    if (from && !from.value) from.value = calLocalStr(CAL_TODAY);
+    if (to && !to.value) { const t = new Date(CAL_TODAY); t.setFullYear(t.getFullYear()+1); to.value = calLocalStr(t); }
+  }
+  if (currentSection === 'calendario') renderCalendarNative();
+}
+
+function calStatus(msg) {
+  const el = document.getElementById('cal-status');
+  if (!el) return;
+  el.textContent = msg;
+  if (msg === 'Guardado ✓') setTimeout(() => { if (el.textContent === 'Guardado ✓') el.textContent = ''; }, 2500);
+}
+
+async function calUpdateField(date, field, value) {
+  const m = MEETINGS.find(x => x.date === date);
+  if (!m) return;
+  m[field] = value;
+  if (field === 'assignment') renderCalendarNative();
+  calStatus('Guardando…');
+  try {
+    await apiWrite({ action: 'saveMeeting', meeting: { date: m.date, assignment: m.assignment, obs: m.obs || '', topic: m.topic || '', fixed: !!m.fixed } });
+    calStatus('Guardado ✓');
+  } catch (e) { calStatus('Error: ' + e.message); }
+}
+
+async function calTogglePin(date) {
+  const m = MEETINGS.find(x => x.date === date);
+  if (!m) return;
+  m.fixed = !m.fixed;
+  renderCalendarNative();
+  calStatus('Guardando…');
+  try {
+    await apiWrite({ action: 'saveMeeting', meeting: { date: m.date, assignment: m.assignment, obs: m.obs || '', topic: m.topic || '', fixed: !!m.fixed } });
+    calStatus('Guardado ✓');
+  } catch (e) { calStatus('Error: ' + e.message); }
+}
+
+async function calDelete(date) {
+  if (!confirm('¿Eliminar esta reunión?')) return;
+  MEETINGS = MEETINGS.filter(x => x.date !== date);
+  renderCalendarNative();
+  calStatus('Guardando…');
+  try { await apiWrite({ action: 'deleteMeeting', date }); calStatus('Guardado ✓'); }
+  catch (e) { calStatus('Error: ' + e.message); }
+}
+
+async function calAddMeeting() {
+  const def = calLocalStr(CAL_TODAY);
+  const date = prompt('Fecha de la reunión (AAAA-MM-DD):', def);
+  if (!date) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { alert('Formato inválido. Usá AAAA-MM-DD.'); return; }
+  if (MEETINGS.some(m => m.date === date)) { alert('Ya existe una reunión en esa fecha.'); return; }
+  const first = (calActiveEmpresas()[0] || EMPRESAS[0] || {}).nombre || 'Ronda de novedades';
+  const m = { date, assignment: first, obs: '', topic: '', fixed: false };
+  MEETINGS.push(m);
+  renderCalendarNative();
+  calStatus('Guardando…');
+  try {
+    await apiWrite({ action: 'saveMeeting', meeting: m });
+    calStatus('Guardado ✓');
+  } catch (e) { calStatus('Error: ' + e.message); }
+}
+
+async function calSaveConfig() {
+  CALCFG.meetingDayOfWeek = parseInt(document.getElementById('cfg-dow').value) || 1;
+  CALCFG.cadenceDays      = parseInt(document.getElementById('cfg-cadence').value) || 42;
+  CALCFG.novedadesRatio   = parseInt(document.getElementById('cfg-nov').value); if (isNaN(CALCFG.novedadesRatio)) CALCFG.novedadesRatio = 1;
+  CALCFG.tecnicaRatio     = parseInt(document.getElementById('cfg-tec').value); if (isNaN(CALCFG.tecnicaRatio)) CALCFG.tecnicaRatio = 1;
+  renderCalendarNative();
+  calStatus('Guardando…');
+  try {
+    await apiWrite({ action: 'saveConfig', config: { group_name: 'Grupo El Faro', cadence_days: CALCFG.cadenceDays, novedades_ratio: CALCFG.novedadesRatio, tecnica_ratio: CALCFG.tecnicaRatio, meeting_day_of_week: CALCFG.meetingDayOfWeek } });
+    calStatus('Guardado ✓');
+  } catch (e) { calStatus('Error: ' + e.message); }
+}
+
+// Generación automática: reuniones semanales rotando empresas por mayor tiempo sin presentar
+function calPickFiller(date) {
+  const prev = MEETINGS.filter(m => (m.assignment === 'Ronda de novedades' || m.assignment === 'Técnica') && new Date(m.date) < date);
+  const nov = prev.filter(m => m.assignment === 'Ronda de novedades').length;
+  const tec = prev.filter(m => m.assignment === 'Técnica').length;
+  const total = CALCFG.novedadesRatio + CALCFG.tecnicaRatio;
+  const target = total ? CALCFG.novedadesRatio / total : 0.5;
+  const cur = (nov + tec) === 0 ? 0 : nov / (nov + tec);
+  return cur < target ? 'Ronda de novedades' : 'Técnica';
+}
+function calPickBest(date) {
+  const activos = calActiveEmpresas();
+  let best = null, maxGap = -1;
+  activos.forEach(e => {
+    const last = [...MEETINGS].reverse().find(m => m.assignment === e.nombre && new Date(m.date) < date);
+    const gap = last ? Math.floor((date - new Date(last.date)) / 86400000) : 99999;
+    if (gap > maxGap) { maxGap = gap; best = e; }
+  });
+  if (!best || maxGap < CALCFG.cadenceDays) return calPickFiller(date);
+  return best.nombre;
+}
+
+async function calGenerate() {
+  if (!calActiveEmpresas().length) { alert('No hay empresas activas para asignar. Agregá empresas primero.'); return; }
+  const fromStr = document.getElementById('cfg-from').value;
+  const toStr = document.getElementById('cfg-to').value;
+  if (!fromStr || !toStr) { alert('Indicá el rango de fechas (Desde / Hasta).'); return; }
+  if (!confirm('Se generarán reuniones semanales en el rango indicado (respetando las fijadas 📌). ¿Continuar?')) return;
+  const dow = CALCFG.meetingDayOfWeek;
+  let cur = new Date(fromStr + 'T12:00:00');
+  const end = new Date(toStr + 'T12:00:00');
+  while (cur.getDay() !== dow) cur.setDate(cur.getDate() + 1);
+  while (cur <= end) {
+    const dateStr = calLocalStr(cur);
+    const existing = MEETINGS.find(m => m.date === dateStr);
+    if (!existing || !existing.fixed) {
+      let assignment;
+      if (calIsHoliday(cur)) assignment = 'Feriado';
+      else assignment = calPickBest(cur);
+      if (!existing) MEETINGS.push({ date: dateStr, assignment, obs: '', topic: '', fixed: false });
+      else { existing.assignment = assignment; }
+    }
+    cur.setDate(cur.getDate() + 7);
+  }
+  MEETINGS.sort((a,b) => a.date < b.date ? -1 : 1);
+  renderCalendarNative();
+  calStatus('Guardando…');
+  try {
+    await apiWrite({ action: 'saveAllMeetings', meetings: MEETINGS.map(m => ({ date: m.date, assignment: m.assignment, obs: m.obs||'', topic: m.topic||'', fixed: !!m.fixed })) });
+    calStatus('Guardado ✓');
+  } catch (e) { calStatus('Error: ' + e.message); }
+}
+
+async function calResetAll() {
+  if (!confirm('Esto borra TODAS las reuniones del calendario. ¿Seguro?')) return;
+  MEETINGS = [];
+  renderCalendarNative();
+  calStatus('Guardando…');
+  try { await apiWrite({ action: 'deleteAllMeetings' }); calStatus('Guardado ✓'); }
+  catch (e) { calStatus('Error: ' + e.message); }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1310,6 +1555,7 @@ const SCHEMAS = {
       { name:'nombre', label:'Nombre', type:'text' },
       { name:'sigla', label:'Sigla (2-3 letras)', type:'text' },
       { name:'color', label:'Color', type:'color' },
+      { name:'activa', label:'Activa en el calendario (se le asignan reuniones)', type:'bool' },
       { name:'sector', label:'Sector', type:'text' },
       { name:'zona', label:'Zona', type:'text' },
       { name:'referentes', label:'Referentes', type:'text' },
@@ -1323,7 +1569,7 @@ const SCHEMAS = {
         { name:'tipo', label:'Tipo' }, { name:'url', label:'URL' }
       ] },
     ],
-    newItem: () => ({ id: Date.now(), nombre:'Nueva empresa', sigla:'', color:'#6C868C', sector:'', zona:'', referentes:'', ingreso:'', descripcion:'', historia:'', tags:[], lineasEstrategicas:[], pdfs:[] }),
+    newItem: () => ({ id: Date.now(), nombre:'Nueva empresa', sigla:'', color:'#6C868C', activa:true, sector:'', zona:'', referentes:'', ingreso:'', descripcion:'', historia:'', tags:[], lineasEstrategicas:[], pdfs:[] }),
   },
   procesos: {
     title: 'Procesos estratégicos', titleField: 'titulo',
@@ -1499,6 +1745,8 @@ function renderField(f, val, idx) {
     return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><textarea id="${id}" data-idx="${idx}" data-field="${f.name}">${esc(val)}</textarea></div>`;
   if (f.type === 'color')
     return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><input type="color" id="${id}" data-idx="${idx}" data-field="${f.name}" value="${esc(val || '#6C868C')}"></div>`;
+  if (f.type === 'bool')
+    return `<div class="ed-field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="${id}" data-idx="${idx}" data-field="${f.name}" data-bool="1"${(val !== false)?' checked':''}> ${esc(f.label)}</label></div>`;
   if (f.type === 'select')
     return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><select id="${id}" data-idx="${idx}" data-field="${f.name}">${(f.options||[]).map(o => `<option value="${esc(o)}"${o===val?' selected':''}>${esc(o)}</option>`).join('')}</select></div>`;
   if (f.type === 'empresaSelect')
@@ -1549,6 +1797,9 @@ function readEditorDOM() {
           f.sub.forEach(sf => { const el = rowEl.querySelector(`[data-subfield="${sf.name}"]`); o[sf.name] = el ? el.value : ''; });
           return o;
         });
+      } else if (f.type === 'bool') {
+        const el = document.querySelector(`[data-idx="${idx}"][data-field="${f.name}"]`);
+        if (el) it[f.name] = el.checked;
       } else {
         const el = document.querySelector(`[data-idx="${idx}"][data-field="${f.name}"]`);
         if (el) it[f.name] = el.dataset.num ? (parseInt(el.value) || el.value) : el.value;

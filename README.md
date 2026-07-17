@@ -1,45 +1,58 @@
 # Grupo El Faro — Dashboard
 
-Sitio del Grupo El Faro desplegado en Vercel. Estructura:
+Sitio del Grupo El Faro desplegado en Vercel. Es una única app (`index.html`)
+con todo integrado. Estructura:
 
-- **`index.html`** → dashboard principal (portada, empresas, procesos, calendario,
-  eventos, recursos). Es la home del sitio.
-- **`gestion.html`** → app de gestión de calendario (Turso), embebida dentro del
-  dashboard en la sección **Calendario** como un segmento con sus propias
-  pestañas (Calendario / Empresas / Configuración).
+- **`index.html`** → todo el sitio: portada, empresas, procesos, **calendario**,
+  eventos y recursos. El calendario es nativo (no hay iframes ni apps embebidas).
 - **`api/db.js`** → función serverless que conecta a **Turso** (libSQL) usando las
   **variables de entorno de Vercel**. El token de Turso vive solo en el servidor y
   nunca se expone en el navegador.
+- **`assets/simpleza-logo.png`** → imagotipo de Simpleza (blanco, transparente).
 
 La **edición** se desbloquea con un único login (botón "Modo edición" en la barra
-superior, clave `faro26`). Ese login habilita la edición en todo el sitio y le
-pasa el modo edición a la app embebida automáticamente.
+superior, clave `faro26`). Ese login habilita la edición en todo el sitio.
+
+## Empresas y calendario (unificados)
+
+Hay **una sola lista de empresas** (la sección Empresas). Esa misma lista
+alimenta el **calendario**: cada reunión se asigna a una empresa del grupo (o a
+un tipo especial: Ronda de novedades, Técnica, Feriado, Sin reunión).
+
+- En la ficha de cada empresa hay un check **"Activa en el calendario"**: solo
+  las activas entran en la rotación de la generación automática.
+- El calendario permite: agregar/editar/eliminar reuniones, asignar la empresa,
+  fijar una reunión (📌, no se re-genera) y **Generar futuras** (reuniones
+  semanales rotando las empresas activas por mayor tiempo sin presentar,
+  respetando fijadas y feriados). Se guarda en las tablas `meetings` / `config`.
 
 ## Edición del contenido
 
-En modo edición, cada sección del dashboard muestra un botón **✏️ Editar** que
-abre un formulario para agregar, editar o eliminar su contenido. Todo se guarda
-en Turso (tabla `content`, un blob JSON por sección) y queda visible para todos:
+En modo edición, cada sección muestra un botón **✏️ Editar** con un formulario
+para agregar/editar/eliminar. Todo se guarda en Turso (tabla `content`, un blob
+JSON por sección) y queda visible para todos: **Portada**, **Empresas**,
+**Procesos**, **Eventos** y **Recursos**. El **Calendario** se edita con sus
+propios controles inline. Las tablas se crean solas; no hay que tocar Turso.
 
-- **Portada**: título, banner de próxima reunión, tarjetas de indicadores y
-  actividad reciente.
-- **Empresas**: fichas completas (datos, historia, líneas estratégicas, documentos).
-- **Procesos**, **Eventos** (hitos, próximos, marco conceptual) y **Recursos**
-  (minutas y recursos).
-- **Calendario**: se edita dentro del segmento embebido (app de gestión con Turso).
+## Recursos y enlaces (dónde llevan los links)
 
-La tabla `content` se crea sola; no hay que hacer nada en Turso.
+Las tarjetas de **Recursos**, las **minutas** y los **documentos** de cada empresa
+abren el enlace que cargues en su campo `URL / enlace` (se abre en una pestaña
+nueva). No hay almacenamiento de archivos en el sitio, así que la recomendación es
+**pegar enlaces de Google Drive / Google Docs** (o cualquier URL pública):
+
+1. Subí el archivo a una carpeta de Drive del grupo.
+2. Compartilo ("Cualquiera con el enlace puede ver").
+3. Copiá el link y pegalo en el campo del recurso/minuta/documento en modo edición.
+
+Si un recurso todavía no tiene enlace (queda en `#`), al hacer click avisa que
+falta cargar la URL.
 
 ## Logo de Simpleza
 
-El dashboard referencia el imagotipo de Simpleza en `assets/simpleza-logo.png`
-(se muestra en el sidebar, sobre fondo oscuro). Para que aparezca:
-
-1. Subí el archivo **PNG con fondo transparente** a `assets/simpleza-logo.png`.
-2. Si el PNG tiene fondo blanco, exportá una versión con transparencia (el
-   sidebar es oscuro, así que un imagotipo blanco transparente se ve perfecto).
-
-Si el archivo no existe, el sitio simplemente no muestra el logo (no rompe nada).
+El imagotipo está en `assets/simpleza-logo.png` (blanco, fondo transparente) y se
+muestra en el sidebar (fondo oscuro), que es donde un logo blanco se ve bien. Si
+el archivo no existe, el sitio simplemente no lo muestra.
 
 ## Puesta en marcha
 

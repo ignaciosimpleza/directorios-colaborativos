@@ -193,6 +193,11 @@ export default async function handler(req, res) {
           return res.status(200).json({ ok: true });
         }
 
+        case 'deleteMeeting': {
+          await client.execute({ sql: 'DELETE FROM meetings WHERE group_id = ? AND date = ?', args: [groupId, body.date] });
+          return res.status(200).json({ ok: true });
+        }
+
         case 'saveContent': {
           const key = String(body.key || '');
           if (!key) return res.status(400).json({ error: 'Falta "key"' });
