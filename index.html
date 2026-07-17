@@ -63,9 +63,9 @@ nav .nav-group-label { font-size: 10px; font-weight: 700; color: rgba(255,255,25
 body.editing .edit-toggle { background:var(--verde-menta); color:#1E2A2E; }
 
 /* ── LOGO SIMPLEZA (sidebar oscuro) ── */
-.sidebar-simpleza { margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:6px; }
+.sidebar-simpleza { padding:12px 16px 14px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:6px; }
 .sidebar-simpleza-label { font-size:9px; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,0.35); }
-.simpleza-logo { width:110px; max-width:100%; height:auto; opacity:.92; background:transparent; }
+.simpleza-logo { width:132px; max-width:100%; height:auto; opacity:.95; background:transparent; }
 
 /* ── MODAL LOGIN ── */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(30,42,46,0.55); z-index:200; align-items:center; justify-content:center; padding:20px; }
@@ -394,6 +394,10 @@ canvas { display:block; }
       <div class="logo-badge">Grupo IV · Simpleza</div>
     </div>
   </div>
+  <div class="sidebar-simpleza">
+    <span class="sidebar-simpleza-label">Facilitado por</span>
+    <img src="assets/simpleza-logo.png" alt="Simpleza" class="simpleza-logo" onerror="this.style.display='none'">
+  </div>
   <nav>
     <div class="nav-group-label">Principal</div>
     <a onclick="navigate('dashboard')" id="nav-dashboard" class="active">
@@ -436,10 +440,6 @@ canvas { display:block; }
     <div class="faci" style="margin-top:7px">
       <strong>Federico C. Guyot</strong>
       Co-facilitador
-    </div>
-    <div class="sidebar-simpleza">
-      <span class="sidebar-simpleza-label">Facilitado por</span>
-      <img src="assets/simpleza-logo.png" alt="Simpleza" class="simpleza-logo" onerror="this.style.display='none'">
     </div>
   </div>
 </aside>
@@ -1010,14 +1010,27 @@ function renderActividadReciente() {
   ).join('');
 }
 
+// "Próximas reuniones" del dashboard: se derivan del calendario real (MEETINGS)
 function renderProximasReuniones() {
-  const proximas = REUNIONES_2026.filter(r => !r.pasada && r.tipo === 'empresa').slice(0, 6);
   const el = document.getElementById('proximas-reuniones');
   if (!el) return;
-  el.innerHTML = proximas.map(r => {
-    const e = EMPRESAS.find(emp => r.empresa.toLowerCase().includes(emp.nombre.toLowerCase().split(' ').slice(0,2).join(' ').toLowerCase())) || EMPRESAS.find(emp => r.empresa.includes(emp.sigla));
-    const color = e ? e.color : '#6C868C';
-    return `<div class="historial-item"><span class="hist-fecha">${r.dia} ${r.mes}</span><span class="hist-dot" style="background:${color}"></span><div><div class="hist-empresa">${r.empresa}</div><div class="hist-tema">Lunes 8:00 hs · Zoom</div></div></div>`;
+  const todayStr = calLocalStr(CAL_TODAY);
+  const empresaNames = new Set(EMPRESAS.map(e => e.nombre));
+  const prox = MEETINGS
+    .filter(m => m.date >= todayStr && empresaNames.has(m.assignment))
+    .sort((a, b) => a.date < b.date ? -1 : 1)
+    .slice(0, 6);
+  if (!prox.length) {
+    el.innerHTML = '<div style="padding:10px 2px;font-size:12px;color:var(--gris-medio)">No hay próximas reuniones cargadas en el calendario.</div>';
+    return;
+  }
+  el.innerHTML = prox.map(m => {
+    const e = EMPRESAS.find(x => x.nombre === m.assignment);
+    const color = e ? (e.color || '#6C868C') : '#6C868C';
+    const d = new Date(m.date + 'T12:00:00');
+    const fecha = `${d.getDate()} ${CAL_MONTHS[d.getMonth()].slice(0, 3)}`;
+    const tema = m.topic ? esc(m.topic) : 'Lunes 8:00 hs · Zoom';
+    return `<div class="historial-item"><span class="hist-fecha">${fecha}</span><span class="hist-dot" style="background:${color}"></span><div><div class="hist-empresa">${esc(m.assignment)}</div><div class="hist-tema">${tema}</div></div></div>`;
   }).join('');
 }
 
@@ -1270,8 +1283,11 @@ async function loadContentFromDB() {
       HOME = Object.assign({}, HOME, c.home);
       if (!HOME.banner) HOME.banner = {};
     }
-    // Reuniones y configuración del calendario (tablas meetings/config de Turso)
-    if (Array.isArray(j.meetings)) MEETINGS = j.meetings;
+    // Reuniones y configuración del calendario (tablas meetings/config de Turso).
+    // Si la base todavía no tiene reuniones, se usa el seed de conocidas (fijadas).
+    MEETINGS = (Array.isArray(j.meetings) && j.meetings.length)
+      ? j.meetings
+      : JSON.parse(JSON.stringify(DEFAULT_MEETINGS));
     if (j.config && typeof j.config === 'object') {
       CALCFG.cadenceDays      = j.config.cadence_days        ?? CALCFG.cadenceDays;
       CALCFG.novedadesRatio   = j.config.novedades_ratio     ?? CALCFG.novedadesRatio;
@@ -1304,6 +1320,17 @@ async function apiWrite(payload) {
 // ══════════════════════════════════════════════════════════════
 let MEETINGS = [];
 let CALCFG = { cadenceDays: 42, novedadesRatio: 1, tecnicaRatio: 1, meetingDayOfWeek: 1 };
+// Reuniones conocidas iniciales: quedan FIJADAS (📌) en el calendario. Al generar
+// las futuras, se respetan estas y se completa el resto. Se usan cuando la base
+// todavía no tiene reuniones cargadas.
+const DEFAULT_MEETINGS = [
+  { date:'2026-06-29', assignment:'El Motivo S.A.',          obs:'', topic:'', fixed:true },
+  { date:'2026-07-06', assignment:'Agropecuaria El Sueño',   obs:'', topic:'', fixed:true },
+  { date:'2026-07-13', assignment:'Altos de Bermúdez SA',    obs:'', topic:'', fixed:true },
+  { date:'2026-07-20', assignment:'MACSA Agro',              obs:'', topic:'', fixed:true },
+  { date:'2026-07-27', assignment:'Rubro Agropecuario SRL',  obs:'', topic:'', fixed:true },
+  { date:'2026-08-03', assignment:'Estudio Tomás Becker',    obs:'', topic:'', fixed:true },
+];
 const CAL_MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const CAL_DOWS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 const CAL_HOLIDAYS = ['01-01','03-24','04-02','05-01','05-25','06-20','07-09','08-17','10-12','11-20','12-08','12-25'];
