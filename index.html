@@ -404,6 +404,10 @@ canvas { display:block; }
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       Dashboard
     </a>
+    <a onclick="navigate('grupo')" id="nav-grupo">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/><path d="M17 11a4 4 0 0 0 3 0"/></svg>
+      El Grupo
+    </a>
     <div class="nav-group-label">Grupo</div>
     <a onclick="navigate('empresas')" id="nav-empresas">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -488,7 +492,7 @@ canvas { display:block; }
       <p id="home-subtitle">Resumen del Grupo El Faro · Activo desde febrero 2022</p>
     </div>
     <div class="proxima-banner" id="home-banner"></div>
-    <div class="stat-grid" id="home-stats"></div>
+    <div class="card" id="home-grupo" style="margin-bottom:24px"></div>
     <div class="two-col">
       <div class="card">
         <div class="card-title">Actividad reciente</div>
@@ -503,6 +507,15 @@ canvas { display:block; }
       <div class="card-title">Reuniones realizadas <span>Último año · jun 2025 – jun 2026</span></div>
       <div id="historial-list"></div>
     </div>
+  </div>
+
+  <!-- ═══════════ EL GRUPO ═══════════ -->
+  <div id="sec-grupo" class="section">
+    <div class="page-header">
+      <h1 id="grupo-title">El Grupo</h1>
+      <p id="grupo-subtitle">Información institucional del Grupo El Faro</p>
+    </div>
+    <div id="grupo-content"></div>
   </div>
 
   <!-- ═══════════ EMPRESAS ═══════════ -->
@@ -668,6 +681,48 @@ canvas { display:block; }
 // ══════════════════════════════════════════════════════════════
 // DATOS
 // ══════════════════════════════════════════════════════════════
+
+// Información institucional del grupo — proviene del archivo base de Drive
+// (Base_Estructurada_Grupo_El_Faro). Por ahora se siembra acá; cuando se conecte
+// Drive en vivo, se leerá directamente de ese archivo.
+let GRUPO_INFO = {
+  nombre: 'Grupo Estratégico El Faro',
+  subtitulo: 'Directorio colaborativo de empresas agropecuarias.',
+  descripcion: 'El Grupo Estratégico El Faro es un espacio de trabajo colaborativo entre empresarios agropecuarios. Nació en 2021 como Grupo IV de pensamiento estratégico y, desde 2025, adoptó la identidad El Faro. Las empresas comparten sus procesos, desafíos y decisiones relevantes para recibir preguntas, experiencias y perspectivas de otros empresarios. El grupo funciona como un directorio colaborativo: ayuda a ampliar la mirada, profundizar el análisis y sostener la implementación de decisiones que transformen a las empresas.',
+  inicio: '2021',
+  nombreDesde: '2025',
+  objetivoGeneral: 'Incrementar la capacidad de crear valor sostenible de las empresas participantes mediante un proceso colaborativo de pensamiento estratégico, definición de líneas de trabajo, implementación y seguimiento.',
+  objetivo2026: 'Consolidar un directorio colaborativo maduro y estratégico, que ayude a sus empresas a pensar el futuro, profesionalizar su gestión y tomar mejores decisiones.',
+  objetivo2026Ampliado: 'Durante 2026, El Faro busca elevar la profundidad y la calidad de los intercambios, trabajar sobre problemáticas estratégicas reales y transformar cada reunión en aportes aplicables a las decisiones de las empresas.',
+  principios: [
+    'Profundidad antes que cantidad.',
+    'Reuniones con impacto concreto en las empresas.',
+    'Casos reales y ejemplos aplicados.',
+    'Preparación previa y claridad en la inquietud estratégica.',
+    'Escucha activa, confianza, confidencialidad y participación responsable.',
+    'Seguimiento de las decisiones y continuidad de los procesos.',
+    'Aprendizaje a partir de la diversidad de empresas y experiencias.',
+  ],
+  fraseDestacada: 'Profundidad antes que cantidad. Reuniones con impacto concreto en las decisiones de las empresas.',
+};
+
+let GRUPO_HITOS = [
+  { anio:'2021', titulo:'Inicio del grupo', desc:'Comienzan las primeras presentaciones empresariales y el trabajo colaborativo sobre escenarios, análisis interno y pensamiento estratégico.' },
+  { anio:'2022', titulo:'Brechas y líneas estratégicas', desc:'Las empresas profundizan la identificación de brechas, el diagnóstico de causas y la definición de transformaciones prioritarias.' },
+  { anio:'2023', titulo:'Implementación y seguimiento', desc:'Se incorporan objetivos, OKR y rutinas de seguimiento para llevar las líneas estratégicas a la acción.' },
+  { anio:'2024', titulo:'Profundización de los procesos', desc:'El grupo avanza sobre profesionalización, gobierno empresario, organización, crecimiento y calidad de la toma de decisiones.' },
+  { anio:'2025', titulo:'Nace Grupo Estratégico El Faro', desc:'El grupo adopta su identidad actual y consolida un mayor nivel de confianza, compromiso y profundidad en los intercambios.' },
+  { anio:'2025', titulo:'Instancias presenciales y directorios ampliados', desc:'Se fortalecen los espacios presenciales, los viajes y las presentaciones conjuntas para analizar con mayor profundidad los procesos de las empresas.' },
+  { anio:'2026', titulo:'Plan de Trabajo compartido', desc:'El grupo revisa su funcionamiento y acuerda priorizar pensamiento estratégico, profesionalización del directorio, crecimiento y herramientas de gestión.' },
+  { anio:'2026', titulo:'Consolidación como directorio colaborativo', desc:'El Faro busca sostener reuniones mejor preparadas, con foco estratégico e impacto real en las decisiones empresarias.' },
+];
+
+let GRUPO_EJES = [
+  { titulo:'Directorio y funcionamiento', desc:'Pensamiento estratégico; profesionalización del directorio; mejora de su dinámica; información necesaria para reuniones efectivas; construcción de órganos de gobierno que orienten y acompañen a la gestión.' },
+  { titulo:'Estrategia y crecimiento', desc:'Dirección estratégica; planificación del crecimiento; análisis de escenarios; nuevos negocios; presentación de proyectos; evaluación de inversiones y definición de criterios para decidir cómo, cuándo y para qué crecer.' },
+  { titulo:'Herramientas de gestión', desc:'Indicadores de salud empresarial; lectura de Estado de Resultados, patrimonio y balances; ratios y semáforos; procesos; presupuestos; información para el directorio y control de gestión.' },
+];
+
 let EMPRESAS = [
   { id:1, nombre:'Agropecuaria El Sueño', sigla:'AES', color:'#27AE60', sector:'Agropecuaria diversificada', zona:'NOA / Córdoba', referentes:'Sebastián Valdez & Paola Graña', ingreso:'2022', descripcion:'Empresa de primera generación fundada en 2011. Diversificada en gerenciamiento agropecuario, agricultura de grano, cultivo de pecán e inversiones inmobiliarias.', tags:['Granos','Pecán','Inmobiliario','Gerenciamiento'],
     historia:'Fundada en 2011 por Sebastián Valdez y Paola Graña, la empresa comenzó como un escritorio de asesoramiento agropecuario y fue incorporando actividades productivas propias. La diversificación hacia el pecán representa la apuesta de largo plazo, con horizonte de producción plena en 2030. El gerenciamiento de terceros es la actividad que más escala sin comprometer capital propio.',
@@ -921,6 +976,7 @@ function navigate(section, data) {
 
   const titles = {
     dashboard: 'Dashboard',
+    grupo: 'El Grupo',
     empresas: 'Empresas',
     'empresa-detalle': 'Detalle de empresa',
     procesos: 'Procesos Estratégicos',
@@ -937,6 +993,7 @@ function navigate(section, data) {
   document.getElementById('nav-empresa-detalle').style.display = section === 'empresa-detalle' ? 'flex' : 'none';
 
   if (section === 'dashboard') initDashboard();
+  if (section === 'grupo') renderGrupo();
   if (section === 'empresas') renderEmpresas();
   if (section === 'empresa-detalle' && data) renderEmpresaDetalle(data);
   if (section === 'procesos') renderProcesos();
@@ -995,10 +1052,74 @@ function renderHome() {
     const bn = HOME.banner || {};
     b.innerHTML = `<div><div class="pb-date">${esc(bn.fecha)}</div><div class="pb-empresa">${esc(bn.empresa)}</div><div class="pb-desc">${esc(bn.desc)}</div></div><div class="pb-days"><div class="num">${esc(bn.dias)}</div><div class="txt">días</div></div>`;
   }
-  const g = document.getElementById('home-stats');
-  if (g) g.innerHTML = (HOME.stats || []).map((st, i) =>
-    `<div class="stat-card c${(i % 4) + 1}"><div class="val">${esc(st.val)}</div><div class="lbl">${esc(st.lbl)}</div><div class="sub">${esc(st.sub)}</div></div>`
+  // Información general del grupo (sin indicadores inventados)
+  const g = document.getElementById('home-grupo');
+  if (g) g.innerHTML =
+    `<div class="card-title">${esc(GRUPO_INFO.nombre)} <span>${esc(GRUPO_INFO.subtitulo)}</span></div>
+     <p style="font-size:13px;color:var(--gris-oscuro,#616A6B);line-height:1.6;margin-top:6px">${esc(GRUPO_INFO.descripcion)}</p>
+     <div style="margin-top:12px"><a onclick="navigate('grupo')" style="cursor:pointer;font-size:12px;font-weight:700;color:var(--azul-pizarra)">Ver información del grupo →</a></div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// EL GRUPO (información institucional — fuente: archivo base de Drive)
+// ══════════════════════════════════════════════════════════════
+function renderGrupo() {
+  const tEl = document.getElementById('grupo-title'); if (tEl) tEl.textContent = GRUPO_INFO.nombre;
+  const sEl = document.getElementById('grupo-subtitle'); if (sEl) sEl.textContent = GRUPO_INFO.subtitulo;
+  const el = document.getElementById('grupo-content');
+  if (!el) return;
+
+  const principios = GRUPO_INFO.principios.map(p => `<li style="margin-bottom:5px">${esc(p)}</li>`).join('');
+  const hitos = GRUPO_HITOS.map(h =>
+    `<div class="evento-item pasada"><div class="evento-fecha">${esc(h.anio)}</div><div class="evento-titulo">${esc(h.titulo)}</div><div class="evento-desc">${esc(h.desc)}</div></div>`
   ).join('');
+  const ejes = GRUPO_EJES.map(e =>
+    `<div class="concepto-card"><div class="concepto-titulo">${esc(e.titulo)}</div><div class="concepto-desc">${esc(e.desc)}</div></div>`
+  ).join('');
+  const empresas = EMPRESAS.map(e => `
+    <div class="empresa-card" style="border-top-color:${e.color || '#6C868C'};cursor:pointer" onclick="openEmpresa(${e.id})">
+      <div class="ec-header">
+        <div class="ec-sigla" style="background:${e.color || '#6C868C'}">${esc(e.sigla || '')}</div>
+        <div style="flex:1"><div class="ec-name">${esc(e.nombre)}</div><div class="ec-sector">${esc(e.zona || '')}</div></div>
+        <span class="ec-arrow">›</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--gris-medio);margin-top:8px"><strong>Participan:</strong> ${esc(e.participantes || e.referentes || '—')}</div>
+      <div style="font-size:12px;color:var(--gris-oscuro,#616A6B);line-height:1.5;margin-top:6px">${esc(e.resumen || e.descripcion || '')}</div>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Identidad</div>
+      <p style="font-size:13.5px;color:var(--gris-oscuro,#616A6B);line-height:1.65;margin-top:8px">${esc(GRUPO_INFO.descripcion)}</p>
+      <div style="font-size:11.5px;color:var(--gris-medio);margin-top:10px">Inicio del grupo: <strong>${esc(GRUPO_INFO.inicio)}</strong> · Nombre «El Faro» desde: <strong>${esc(GRUPO_INFO.nombreDesde)}</strong></div>
+    </div>
+    <div class="two-col" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-title">Objetivo general</div>
+        <p style="font-size:13px;color:var(--gris-oscuro,#616A6B);line-height:1.6;margin-top:8px">${esc(GRUPO_INFO.objetivoGeneral)}</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Objetivo 2026</div>
+        <p style="font-size:13px;color:var(--gris-oscuro,#616A6B);line-height:1.6;margin-top:8px">${esc(GRUPO_INFO.objetivo2026)}</p>
+        <p style="font-size:12px;color:var(--gris-medio);line-height:1.55;margin-top:8px">${esc(GRUPO_INFO.objetivo2026Ampliado)}</p>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Principios que orientan el funcionamiento</div>
+      <ul style="font-size:13px;color:var(--gris-oscuro,#616A6B);line-height:1.5;margin-top:10px;padding-left:18px">${principios}</ul>
+      <div style="margin-top:10px;padding:12px 14px;background:#eef4f2;border-radius:10px;font-size:13px;font-weight:600;color:#1a7a55">${esc(GRUPO_INFO.fraseDestacada)}</div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Hitos del grupo</div>
+      <div class="evento-timeline" style="margin-top:10px">${hitos}</div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Ejes temáticos 2026</div>
+      <div class="concepto-grid" style="margin-top:10px">${ejes}</div>
+    </div>
+    <div class="page-header" style="margin-top:8px"><h1 style="font-size:16px">Empresas participantes</h1><p>Hacé click en una empresa para ver su ficha</p></div>
+    <div class="empresa-grid">${empresas}</div>
+  `;
 }
 
 function renderActividadReciente() {
@@ -1677,16 +1798,6 @@ const SCHEMAS = {
       { name:'bannerDias', label:'Banner · Días restantes', type:'text' },
     ],
   },
-  home_stats: {
-    title: 'Tarjetas de indicadores', titleField: 'lbl', persistKey: 'home', persistData: () => HOME,
-    getData: () => HOME.stats, setData: v => { HOME.stats = v; },
-    fields: [
-      { name:'val', label:'Número', type:'text' },
-      { name:'lbl', label:'Etiqueta', type:'text' },
-      { name:'sub', label:'Detalle', type:'text' },
-    ],
-    newItem: () => ({ val:'0', lbl:'Nuevo indicador', sub:'' }),
-  },
   home_actividad: {
     title: 'Actividad reciente', titleField: 'time', persistKey: 'home', persistData: () => HOME,
     getData: () => HOME.actividad, setData: v => { HOME.actividad = v; },
@@ -1707,13 +1818,12 @@ const RENDER_AFTER = {
   minutas: () => renderRecursosSec(),
   recursos: () => renderRecursos('todos'),
   home: () => renderHome(),
-  home_stats: () => renderHome(),
   home_actividad: () => renderActividadReciente(),
 };
 
 // Datasets editables por sección del dashboard
 const SECTION_DATASETS = {
-  dashboard: [{ key:'home', label:'Portada y banner' }, { key:'home_stats', label:'Tarjetas de indicadores' }, { key:'home_actividad', label:'Actividad reciente' }],
+  dashboard: [{ key:'home', label:'Portada y banner' }, { key:'home_actividad', label:'Actividad reciente' }],
   empresas: [{ key:'empresas', label:'Empresas' }],
   procesos: [{ key:'procesos', label:'Procesos' }],
   eventos:  [{ key:'hitos', label:'Hitos' }, { key:'proximos', label:'Próximos eventos' }, { key:'conceptos', label:'Marco conceptual' }],
