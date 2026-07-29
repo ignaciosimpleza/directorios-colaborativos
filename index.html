@@ -473,7 +473,7 @@ canvas { display:block; }
   <span id="topbar-section">Dashboard</span>
   <span id="topbar-sub"></span>
   <div class="topbar-right">
-    <span class="topbar-date">27 jun 2026</span>
+    <span class="topbar-date" id="topbar-date"></span>
     <span class="next-chip">📅 29 jun · El Motivo S.A.</span>
     <button id="edit-toggle" class="edit-toggle" onclick="onEditToggle()">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -1044,13 +1044,34 @@ function initDashboard() {
   renderHistorial();
 }
 
+// Fecha de hoy (real) para el topbar
+function setTopbarDate() {
+  const el = document.getElementById('topbar-date');
+  if (el) el.textContent = CAL_TODAY.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 function renderHome() {
+  setTopbarDate();
   const t = document.getElementById('home-title');    if (t) t.textContent = HOME.title || 'Dashboard';
   const s = document.getElementById('home-subtitle'); if (s) s.textContent = HOME.subtitle || '';
   const b = document.getElementById('home-banner');
   if (b) {
-    const bn = HOME.banner || {};
-    b.innerHTML = `<div><div class="pb-date">${esc(bn.fecha)}</div><div class="pb-empresa">${esc(bn.empresa)}</div><div class="pb-desc">${esc(bn.desc)}</div></div><div class="pb-days"><div class="num">${esc(bn.dias)}</div><div class="txt">días</div></div>`;
+    // Banner "Próxima reunión" derivado del calendario real
+    const todayStr = calLocalStr(CAL_TODAY);
+    const empresaNames = new Set(EMPRESAS.map(e => e.nombre));
+    const next = MEETINGS
+      .filter(m => m.date >= todayStr && (empresaNames.has(m.assignment) || !['Feriado', 'Sin reunión'].includes(m.assignment)))
+      .sort((a, b2) => a.date < b2.date ? -1 : 1)[0];
+    if (next) {
+      const d = new Date(next.date + 'T12:00:00');
+      const fechaTxt = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      const dias = Math.max(0, Math.round((new Date(next.date + 'T12:00:00') - CAL_TODAY) / 86400000));
+      const emp = EMPRESAS.find(e => e.nombre === next.assignment);
+      const desc = emp ? `${esc(emp.zona || '')}${emp.participantes ? ' · ' + esc(emp.participantes) : ''}` : (next.topic ? esc(next.topic) : '');
+      b.innerHTML = `<div><div class="pb-date">📅 Próxima reunión · ${fechaTxt}</div><div class="pb-empresa">${esc(next.assignment)}</div><div class="pb-desc">${desc}</div></div><div class="pb-days"><div class="num">${dias}</div><div class="txt">día${dias === 1 ? '' : 's'}</div></div>`;
+    } else {
+      b.innerHTML = `<div><div class="pb-date">📅 Próxima reunión</div><div class="pb-empresa">Sin reuniones próximas cargadas</div><div class="pb-desc">Cargá reuniones en el Calendario.</div></div>`;
+    }
   }
   // Información general del grupo (sin indicadores inventados)
   const g = document.getElementById('home-grupo');
@@ -1195,73 +1216,102 @@ function renderEmpresas() {
 // ══════════════════════════════════════════════════════════════
 // EMPRESA DETALLE
 // ══════════════════════════════════════════════════════════════
+// Mapeo empresa → carpeta de Drive (auto-listado de documentos).
+// Para otros grupos, esto vendrá del archivo base (CONFIG_DRIVE); acá se siembra
+// con las carpetas reales de El Faro para que funcione de una.
+const EMPRESA_DRIVE = {
+  'Agropecuaria El Sueño': '1glfNT1MAjDSUIjbzmyrI6F2VEUWksXvA',
+  'El Motivo S.A.':        '1y2YwY8LZ7rWrMiXHeptHbF2BtUbjbujj',
+  'Estudio Tomás Becker':  '15QaIy-KJjQXhKF1mEoO1QbgE0cfWmHkP',
+  'MACSA Agro':            '1caOZM90DLaM4hndwGp1b6VTllF6dGetn',
+  'Tricampo S.A.':         '1zWyvbl7uXmOK0uGKmd4E0nZ6CbvVe1Wv',
+  'Beheran Sarciat SA':    '128TkRPbDmwaZ2vDAAL3bivuIEmscmDl4',
+  'Altos de Bermúdez SA':  '14ZxVrWmK2EZE2odajRF2tE29mPZnmqbo',
+  'Donato Álvarez SRL':    '1DCQHpkahHiVte2uVtogTjECvw2GsOGWE',
+  'Rubro Agropecuario SRL':'104yiDQ-q09UeWC3pQcbMKB06aN-f9vxQ',
+};
+const API_BASE_DRIVE = '/api/drive';
+function empresaDriveFolder(e) { return e.driveFolderId || EMPRESA_DRIVE[e.nombre] || ''; }
+
+function iconTipo(t) {
+  t = (t || '').toUpperCase();
+  if (t.includes('PPT')) return '📊';
+  if (t.includes('PDF')) return '📕';
+  if (t.includes('XLS')) return '📗';
+  if (t.includes('DOC')) return '📄';
+  return '📎';
+}
+
+function docsBlockHtml(titulo, files) {
+  files = files || [];
+  return `<div class="pdf-section" style="margin-bottom:16px">
+    <div class="pdf-header">
+      <div class="pdf-header-title">📄 ${esc(titulo)}</div>
+      <div class="pdf-header-meta">${files.length} archivo${files.length === 1 ? '' : 's'} · desde Drive</div>
+    </div>
+    <div class="pdf-list">${files.length ? files.map(f => `
+      <div class="pdf-item" style="cursor:pointer" onclick="openLink('${jsq(f.url)}')">
+        <div class="pdf-icon">${iconTipo(f.tipo)}</div>
+        <div><div class="pdf-item-name">${esc(f.nombre)}</div><div class="pdf-item-date">${esc(f.fecha)} · ${esc(f.tipo)}</div></div>
+        <div class="pdf-item-action">Abrir</div>
+      </div>`).join('') : '<div style="padding:14px;font-size:12px;color:var(--gris-medio)">Sin archivos en esta carpeta.</div>'}</div>
+  </div>`;
+}
+
+async function loadEmpresaDocs(empresa) {
+  const el = document.getElementById('empresa-docs-' + empresa.id);
+  if (!el) return;
+  const folder = empresaDriveFolder(empresa);
+  if (!folder) {
+    el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--gris-medio)">Esta empresa todavía no tiene carpeta de Drive vinculada.</div>';
+    return;
+  }
+  el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--gris-medio)">Cargando documentos del Drive…</div>';
+  try {
+    const r = await fetch(`${API_BASE_DRIVE}?op=empresa&folderId=${encodeURIComponent(folder)}`);
+    const j = await r.json();
+    if (j.error) throw new Error(j.error);
+    el.innerHTML = docsBlockHtml('Presentaciones', j.presentaciones) + docsBlockHtml('Minutas / Bitácora del proceso', j.minutas);
+  } catch (e) {
+    el.innerHTML = `<div style="padding:16px;font-size:12px;color:var(--terracota)">No se pudieron cargar los documentos del Drive.<br><small>${esc(e.message)}</small></div>`;
+  }
+}
+
 function renderEmpresaDetalle(empresa) {
   const el = document.getElementById('empresa-detalle-content');
   if (!el) return;
   document.getElementById('topbar-sub').textContent = '· ' + empresa.nombre;
 
-  const procsEmpresa = PROCESOS.filter(p => p.empresaId === empresa.id);
+  const resumen = empresa.resumen || empresa.descripcion || '';
+  const recorrido = empresa.recorrido || empresa.historia || '';
+  const meta = [];
+  if (empresa.participantes || empresa.referentes) meta.push(`<span class="ede-meta-item"><strong>Participan:</strong> ${esc(empresa.participantes || empresa.referentes)}</span>`);
+  if (empresa.zona) meta.push(`<span class="ede-meta-item"><strong>Zona:</strong> ${esc(empresa.zona)}</span>`);
 
   el.innerHTML = `
     <div class="empresa-detalle-header">
-      <div class="ede-sigla" style="background:${empresa.color}">${empresa.sigla}</div>
+      <div class="ede-sigla" style="background:${empresa.color}">${esc(empresa.sigla || '')}</div>
       <div class="ede-info">
-        <h2>${empresa.nombre}</h2>
-        <div class="ede-sector">${empresa.sector}</div>
-        <div class="ede-meta-row">
-          <span class="ede-meta-item"><strong>Referentes:</strong> ${empresa.referentes}</span>
-          <span class="ede-meta-item"><strong>Zona:</strong> ${empresa.zona}</span>
-          <span class="ede-meta-item"><strong>En el grupo desde:</strong> ${empresa.ingreso}</span>
-        </div>
+        <h2>${esc(empresa.nombre)}</h2>
+        <div class="ede-sector">${esc(empresa.sector || empresa.foco || '')}</div>
+        <div class="ede-meta-row">${meta.join('')}</div>
       </div>
     </div>
 
     <div class="two-col">
       <div>
         <div class="card">
-          <div class="card-title">Historia de la empresa</div>
-          <p style="font-size:13px;color:#3a4a4b;line-height:1.7">${empresa.historia}</p>
-        </div>
-        <div class="card" style="margin-top:18px">
-          <div class="card-title">Líneas estratégicas</div>
-          ${empresa.lineasEstrategicas.map((le,i) => `
-            <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f5f1eb">
-              <div style="width:22px;height:22px;background:${empresa.color};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;margin-top:1px">${i+1}</div>
-              <span style="font-size:13px;color:#2c3e3f;line-height:1.5">${le}</span>
-            </div>`).join('')}
-        </div>
-        <div class="card" style="margin-top:18px">
-          <div class="card-title">Proceso en el grupo <span>${procsEmpresa.length} presentaciones</span></div>
-          ${procsEmpresa.map(p => `
-            <div style="padding:10px 0;border-bottom:1px solid #f5f1eb">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
-                <span style="font-size:11px;font-weight:700;color:var(--gris-oscuro)">${p.fecha}</span>
-              </div>
-              <div style="font-size:13px;font-weight:600;color:var(--navy)">${p.titulo}</div>
-              <div style="font-size:12px;color:#555;margin-top:3px;line-height:1.5">${p.resumen}</div>
-            </div>`).join('')}
+          <div class="card-title">Resumen del proceso</div>
+          <p style="font-size:13px;color:#3a4a4b;line-height:1.7">${esc(resumen)}</p>
+          ${recorrido ? `<p style="font-size:12.5px;color:#555;line-height:1.65;margin-top:10px">${esc(recorrido)}</p>` : ''}
         </div>
       </div>
       <div>
-        <div class="pdf-section">
-          <div class="pdf-header">
-            <div class="pdf-header-title">📄 Documentos del proceso</div>
-            <div class="pdf-header-meta">Actualización semanal</div>
-          </div>
-          <div class="pdf-list">
-            ${empresa.pdfs.map(pdf => `
-              <div class="pdf-item">
-                <div class="pdf-icon">📄</div>
-                <div>
-                  <div class="pdf-item-name">${pdf.nombre}</div>
-                  <div class="pdf-item-date">${pdf.fecha} · ${pdf.tipo}</div>
-                </div>
-                <div class="pdf-item-action" onclick="openLink('${jsq(pdf.url)}')">Abrir</div>
-              </div>`).join('')}
-          </div>
-        </div>
+        <div id="empresa-docs-${empresa.id}"></div>
       </div>
     </div>`;
+
+  loadEmpresaDocs(empresa);
 }
 
 // ══════════════════════════════════════════════════════════════
