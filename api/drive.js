@@ -12,6 +12,8 @@
 //   GET /api/drive?op=empresa&folderId=ID     → { presentaciones, minutas } de una
 //                                               empresa (descubre subcarpetas por nombre:
 //                                               "Presentaciones" y "Proceso"/"Bitácora"/"Minutas")
+//   GET /api/drive?op=bitacora&folderId=ID    → { url, nombre, carpeta } del archivo de
+//                                               Bitácora dentro de la carpeta "Proceso"
 
 import { GoogleAuth } from 'google-auth-library';
 
@@ -89,6 +91,17 @@ async function listFiles(folderId) {
   return files.map(mapFile);
 }
 
+// Normaliza para comparar nombres de carpetas/archivos (sin tildes ni mayúsculas)
+const normName = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+async function subFolders(folderId) {
+  return driveList(`'${folderId}' in parents and trashed=false and mimeType='${FOLDER_MIME}'`, 'files(id,name)');
+}
+
+function findSubFolder(subs, keys) {
+  return subs.find(c => keys.some(k => normName(c.name).includes(k)));
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
   try {
@@ -110,20 +123,31 @@ export default async function handler(req, res) {
 
     if (op === 'empresa') {
       // Descubrir subcarpetas por nombre
-      const subs = await driveList(
-        `'${folderId}' in parents and trashed=false and mimeType='${FOLDER_MIME}'`,
-        'files(id,name)'
-      );
-      const norm = s => (s || '').toLowerCase();
-      const findSub = keys => subs.find(c => keys.some(k => norm(c.name).includes(k)));
-      const presFolder = findSub(['presentac']);
+      const subs = await subFolders(folderId);
+      const presFolder = findSubFolder(subs, ['presentac']);
       // Minutas = carpeta "Proceso"/"Bitácora" (el documento del proceso)
-      const procFolder = findSub(['proceso', 'bitácora', 'bitacora', 'minuta']);
+      const procFolder = findSubFolder(subs, ['proceso', 'bitacora', 'minuta']);
 
       const out = { presentaciones: [], minutas: [], subcarpetas: subs.map(s => ({ id: s.id, nombre: s.name })) };
       if (presFolder) out.presentaciones = await listFiles(presFolder.id);
       if (procFolder) out.minutas = await listFiles(procFolder.id);
       return res.status(200).json(out);
+    }
+
+    // Bitácora del proceso: carpeta "Proceso" de la empresa → archivo de bitácora.
+    // Si no hay un archivo que se llame "bitácora", se devuelve el más reciente;
+    // si la carpeta está vacía, se devuelve la carpeta misma.
+    if (op === 'bitacora') {
+      const subs = await subFolders(folderId);
+      const procFolder = findSubFolder(subs, ['proceso', 'bitacora', 'minuta']);
+      if (!procFolder) {
+        return res.status(404).json({ error: 'No se encontró la carpeta «Proceso» dentro de la carpeta de la empresa.' });
+      }
+      const carpeta = `https://drive.google.com/drive/folders/${procFolder.id}`;
+      const files = await listFiles(procFolder.id);
+      const pick = files.find(f => normName(f.nombre).includes('bitacora')) || files[0];
+      if (!pick) return res.status(200).json({ url: carpeta, nombre: procFolder.name, carpeta, esCarpeta: true });
+      return res.status(200).json({ url: pick.url, nombre: pick.nombre, fecha: pick.fecha, carpeta });
     }
 
     return res.status(400).json({ error: `op desconocida: ${op}` });
