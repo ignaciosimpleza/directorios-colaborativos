@@ -6,6 +6,7 @@
   "description": "Gestión de calendario de reuniones - Grupo El Faro (Turso + Vercel)",
   "dependencies": {
     "@libsql/client": "^0.17.4",
-    "google-auth-library": "^9.14.1"
+    "google-auth-library": "^9.14.1",
+    "xlsx": "^0.18.5"
   }
 }
