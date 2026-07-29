@@ -1193,24 +1193,27 @@ function renderHistorial() {
 function renderEmpresas() {
   const el = document.getElementById('empresa-grid');
   if (!el) return;
-  el.innerHTML = EMPRESAS.map(e => `
-    <div class="empresa-card" style="border-top-color:${e.color}" onclick="openEmpresa(${e.id})">
+  el.innerHTML = EMPRESAS.map(e => {
+    const color = e.color || '#6C868C';
+    const tags = Array.isArray(e.tags) ? e.tags : [];
+    return `
+    <div class="empresa-card" style="border-top-color:${color}" onclick="openEmpresa(${e.id})">
       <div class="ec-header">
-        <div class="ec-sigla" style="background:${e.color}">${e.sigla}</div>
+        <div class="ec-sigla" style="background:${color}">${esc(e.sigla || '')}</div>
         <div style="flex:1">
-          <div class="ec-name">${e.nombre}</div>
-          <div class="ec-sector">${e.sector}</div>
+          <div class="ec-name">${esc(e.nombre)}</div>
+          <div class="ec-sector">${esc(e.foco || e.sector || '')}</div>
         </div>
         <span class="ec-arrow">›</span>
       </div>
-      <div class="ec-desc">${e.descripcion}</div>
+      <div class="ec-desc">${esc(e.resumen || e.descripcion || '')}</div>
       <div class="ec-meta">
-        <span class="ec-tag">📍 ${e.zona}</span>
-        <span class="ec-tag">👤 ${e.referentes}</span>
-        <span class="ec-tag">📅 Desde ${e.ingreso}</span>
-        ${e.tags.map(t=>`<span class="ec-tag">${t}</span>`).join('')}
+        ${e.zona ? `<span class="ec-tag">📍 ${esc(e.zona)}</span>` : ''}
+        ${(e.participantes || e.referentes) ? `<span class="ec-tag">👤 ${esc(e.participantes || e.referentes)}</span>` : ''}
+        ${tags.map(t => `<span class="ec-tag">${esc(t)}</span>`).join('')}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1230,8 +1233,23 @@ const EMPRESA_DRIVE = {
   'Donato Álvarez SRL':    '1DCQHpkahHiVte2uVtogTjECvw2GsOGWE',
   'Rubro Agropecuario SRL':'104yiDQ-q09UeWC3pQcbMKB06aN-f9vxQ',
 };
+// Fallback por slug (los que usa la planilla base). Prioridad: driveFolderId del
+// archivo base (CONFIG_DRIVE) → slug → nombre.
+const EMPRESA_DRIVE_BY_SLUG = {
+  'el-sueno': '1glfNT1MAjDSUIjbzmyrI6F2VEUWksXvA',
+  'el-motivo': '1y2YwY8LZ7rWrMiXHeptHbF2BtUbjbujj',
+  'estudio-becker': '15QaIy-KJjQXhKF1mEoO1QbgE0cfWmHkP',
+  'macsa': '1caOZM90DLaM4hndwGp1b6VTllF6dGetn',
+  'tricampo': '1zWyvbl7uXmOK0uGKmd4E0nZ6CbvVe1Wv',
+  'el-porvenir': '128TkRPbDmwaZ2vDAAL3bivuIEmscmDl4',
+  'altos-de-bermudez': '14ZxVrWmK2EZE2odajRF2tE29mPZnmqbo',
+  'donato-alvarez': '1DCQHpkahHiVte2uVtogTjECvw2GsOGWE',
+  'rubro-agropecuario': '104yiDQ-q09UeWC3pQcbMKB06aN-f9vxQ',
+};
 const API_BASE_DRIVE = '/api/drive';
-function empresaDriveFolder(e) { return e.driveFolderId || EMPRESA_DRIVE[e.nombre] || ''; }
+function empresaDriveFolder(e) {
+  return e.driveFolderId || EMPRESA_DRIVE_BY_SLUG[e.slug] || EMPRESA_DRIVE[e.nombre] || '';
+}
 
 function iconTipo(t) {
   t = (t || '').toUpperCase();
@@ -1746,29 +1764,6 @@ async function calResetAll() {
 function esc(s){ return String(s ?? '').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
 
 const SCHEMAS = {
-  empresas: {
-    title: 'Empresas del grupo', titleField: 'nombre',
-    getData: () => EMPRESAS, setData: v => { EMPRESAS = v; },
-    fields: [
-      { name:'nombre', label:'Nombre', type:'text' },
-      { name:'sigla', label:'Sigla (2-3 letras)', type:'text' },
-      { name:'color', label:'Color', type:'color' },
-      { name:'activa', label:'Activa en el calendario (se le asignan reuniones)', type:'bool' },
-      { name:'sector', label:'Sector', type:'text' },
-      { name:'zona', label:'Zona', type:'text' },
-      { name:'referentes', label:'Referentes', type:'text' },
-      { name:'ingreso', label:'Año de ingreso', type:'text' },
-      { name:'descripcion', label:'Descripción', type:'textarea' },
-      { name:'historia', label:'Historia', type:'textarea' },
-      { name:'tags', label:'Tags', type:'strlist' },
-      { name:'lineasEstrategicas', label:'Líneas estratégicas', type:'strlist' },
-      { name:'pdfs', label:'Documentos', type:'objlist', sub:[
-        { name:'nombre', label:'Nombre' }, { name:'fecha', label:'Fecha' },
-        { name:'tipo', label:'Tipo' }, { name:'url', label:'URL' }
-      ] },
-    ],
-    newItem: () => ({ id: Date.now(), nombre:'Nueva empresa', sigla:'', color:'#6C868C', activa:true, sector:'', zona:'', referentes:'', ingreso:'', descripcion:'', historia:'', tags:[], lineasEstrategicas:[], pdfs:[] }),
-  },
   procesos: {
     title: 'Procesos estratégicos', titleField: 'titulo',
     getData: () => PROCESOS, setData: v => { PROCESOS = v; },
@@ -1779,16 +1774,6 @@ const SCHEMAS = {
       { name:'resumen', label:'Resumen', type:'textarea' },
     ],
     newItem: () => ({ empresaId: (EMPRESAS[0]||{}).id || 1, titulo:'Nuevo proceso', fecha:'', resumen:'' }),
-  },
-  hitos: {
-    title: 'Hitos del grupo', titleField: 'titulo',
-    getData: () => HITOS, setData: v => { HITOS = v; },
-    fields: [
-      { name:'fecha', label:'Fecha', type:'text' },
-      { name:'titulo', label:'Título', type:'text' },
-      { name:'desc', label:'Descripción', type:'textarea' },
-    ],
-    newItem: () => ({ fecha:'', titulo:'Nuevo hito', desc:'', tipo:'pasada' }),
   },
   proximos: {
     title: 'Próximos eventos', titleField: 'titulo',
@@ -1834,20 +1819,7 @@ const SCHEMAS = {
     ],
     newItem: () => ({ id: Date.now(), icon:'📌', categoria:'herramienta', titulo:'Nuevo recurso', desc:'', link:'#' }),
   },
-  // ── Portada (persisten todos bajo la key 'home') ──
-  home: {
-    title: 'Portada y banner', singleton: true, persistKey: 'home', persistData: () => HOME,
-    getData: () => ({ title: HOME.title, subtitle: HOME.subtitle, bannerFecha: HOME.banner?.fecha, bannerEmpresa: HOME.banner?.empresa, bannerDesc: HOME.banner?.desc, bannerDias: HOME.banner?.dias }),
-    setData: v => { HOME.title = v.title; HOME.subtitle = v.subtitle; HOME.banner = { fecha: v.bannerFecha, empresa: v.bannerEmpresa, desc: v.bannerDesc, dias: v.bannerDias }; },
-    fields: [
-      { name:'title', label:'Título de la portada', type:'text' },
-      { name:'subtitle', label:'Subtítulo', type:'text' },
-      { name:'bannerFecha', label:'Banner · Fecha', type:'text' },
-      { name:'bannerEmpresa', label:'Banner · Empresa', type:'text' },
-      { name:'bannerDesc', label:'Banner · Detalle', type:'textarea' },
-      { name:'bannerDias', label:'Banner · Días restantes', type:'text' },
-    ],
-  },
+  // ── Portada: actividad reciente ──
   home_actividad: {
     title: 'Actividad reciente', titleField: 'time', persistKey: 'home', persistData: () => HOME,
     getData: () => HOME.actividad, setData: v => { HOME.actividad = v; },
@@ -1860,23 +1832,20 @@ const SCHEMAS = {
 };
 
 const RENDER_AFTER = {
-  empresas: () => renderEmpresas(),
   procesos: () => renderProcesos(),
-  hitos: () => renderEventos(),
   proximos: () => renderEventos(),
   conceptos: () => renderEventos(),
   minutas: () => renderRecursosSec(),
   recursos: () => renderRecursos('todos'),
-  home: () => renderHome(),
   home_actividad: () => renderActividadReciente(),
 };
 
-// Datasets editables por sección del dashboard
+// Secciones cuyo contenido se edita EN EL SITIO (formularios).
+// El Grupo y Empresas ya NO están acá: se cargan desde el archivo base de Drive.
 const SECTION_DATASETS = {
-  dashboard: [{ key:'home', label:'Portada y banner' }, { key:'home_actividad', label:'Actividad reciente' }],
-  empresas: [{ key:'empresas', label:'Empresas' }],
+  dashboard: [{ key:'home_actividad', label:'Actividad reciente' }],
   procesos: [{ key:'procesos', label:'Procesos' }],
-  eventos:  [{ key:'hitos', label:'Hitos' }, { key:'proximos', label:'Próximos eventos' }, { key:'conceptos', label:'Marco conceptual' }],
+  eventos:  [{ key:'proximos', label:'Próximos eventos' }, { key:'conceptos', label:'Marco conceptual' }],
   recursos: [{ key:'minutas', label:'Minutas generales' }, { key:'recursos', label:'Recursos' }],
 };
 
@@ -2037,8 +2006,43 @@ async function saveEditor() {
 // ══════════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+// ARCHIVO BASE DE DRIVE (El Grupo + Empresas) — /api/base
+// ══════════════════════════════════════════════════════════════
+const API_BASE_SHEET = '/api/base';
+const EMP_PALETTE = ['#6C868C','#E67E22','#2980B9','#16A085','#5D8A97','#8E44AD','#CD6155','#D4AC0D','#00897B'];
+function siglaFrom(nombre) {
+  const stop = /^(s\.?a\.?|s\.?r\.?l\.?|de|del|la|el|y|e|los|las)$/i;
+  const words = String(nombre || '').replace(/[.,/]/g, ' ').split(/\s+/).filter(w => w.length > 1 && !stop.test(w));
+  const s = words.slice(0, 3).map(w => w[0]).join('');
+  return (s || String(nombre || '?').slice(0, 2)).toUpperCase();
+}
+async function loadBaseFromDrive() {
+  try {
+    const r = await fetch(API_BASE_SHEET);
+    if (!r.ok) return;
+    const j = await r.json();
+    if (!j || j.error) return;
+    if (j.grupo && j.grupo.nombre) GRUPO_INFO = Object.assign({}, GRUPO_INFO, j.grupo);
+    if (Array.isArray(j.hitos) && j.hitos.length) GRUPO_HITOS = j.hitos;
+    if (Array.isArray(j.ejes) && j.ejes.length) GRUPO_EJES = j.ejes;
+    if (Array.isArray(j.empresas) && j.empresas.length) {
+      EMPRESAS = j.empresas.map((e, i) => ({
+        id: e.orden || (i + 1), slug: e.slug, nombre: e.nombre, sigla: siglaFrom(e.nombre),
+        color: EMP_PALETTE[i % EMP_PALETTE.length], activa: true,
+        zona: e.zona || '', participantes: e.participantes || '', resumen: e.resumen || '',
+        foco: e.foco || '', identidad: e.identidad || '', queHace: e.queHace || '', recorrido: e.recorrido || '',
+        driveFolderId: e.driveFolderId || '', tags: [],
+      }));
+    }
+  } catch (err) {
+    console.warn('No se pudo cargar el archivo base de Drive (se usan los datos por defecto):', err);
+  }
+}
+
 async function boot() {
   await loadContentFromDB();
+  await loadBaseFromDrive();
   initDashboard();
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
