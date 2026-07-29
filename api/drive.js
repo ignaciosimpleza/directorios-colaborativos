@@ -93,6 +93,13 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
   try {
     const op = req.query.op || 'list';
+
+    // Email de la cuenta de servicio (para saber con quién compartir en Drive)
+    if (op === 'whoami') {
+      const creds = loadCreds();
+      return res.status(200).json({ email: creds.client_email || '' });
+    }
+
     const folderId = req.query.folderId;
     if (!folderId) return res.status(400).json({ error: 'Falta folderId' });
 

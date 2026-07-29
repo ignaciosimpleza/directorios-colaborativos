@@ -152,6 +152,26 @@ body.editing .edit-toggle { background:var(--verde-menta); color:#1E2A2E; }
 .cal-pin.on { background:var(--amarillo-pastel); color:#7a5c00; }
 .cal-del { background:#fdecea; color:var(--terracota); }
 .cal-empty { text-align:center; color:var(--gris-medio); font-size:13px; padding:40px 0; }
+
+/* ── CONFIGURACIÓN · FUENTES DE DATOS ── */
+.sa-email { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-family:monospace; font-size:13px; background:#f1f5f4; border:1px solid var(--beige-suave); border-radius:8px; padding:8px 12px; color:var(--navy,#1E2A2E); }
+.src-card { }
+.src-head { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+.src-title { font-size:14px; font-weight:700; color:var(--navy,#1E2A2E); }
+.src-badge { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; background:#eef4f2; color:var(--azul-pizarra); padding:2px 8px; border-radius:12px; }
+.src-req { font-size:10px; font-weight:700; color:var(--terracota); background:#fdecea; padding:2px 8px; border-radius:12px; }
+.src-opt { font-size:10px; font-weight:600; color:var(--gris-medio); background:#f1f1f1; padding:2px 8px; border-radius:12px; }
+.src-desc { font-size:12.5px; color:var(--gris-oscuro,#616A6B); line-height:1.5; margin-bottom:4px; }
+.src-estructura { font-size:12px; color:var(--gris-medio); margin-bottom:10px; }
+.src-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.src-row .cal-input { flex:1; min-width:200px; }
+.src-link { font-size:12px; font-weight:600; color:var(--azul-pizarra); text-decoration:none; white-space:nowrap; }
+.src-link:hover { text-decoration:underline; }
+.src-status { font-size:12px; margin-top:8px; color:var(--gris-medio); }
+.src-status.ok { color:#1a7a55; font-weight:600; }
+.src-status.err { color:var(--terracota); }
+.drive-hint { margin-top:10px; font-size:12px; color:var(--gris-oscuro,#616A6B); background:#eef4f2; border:1px solid #d6e8e2; border-radius:8px; padding:8px 12px; }
+.drive-hint a { color:var(--azul-pizarra); font-weight:700; text-decoration:underline; cursor:pointer; }
 @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
 
 /* ── PAGE HEADER ── */
@@ -435,6 +455,10 @@ canvas { display:block; }
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
       Recursos del grupo
     </a>
+    <a onclick="navigate('config')" id="nav-config" style="display:none">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Configuración
+    </a>
   </nav>
   <div class="sidebar-footer">
     <div class="faci">
@@ -630,6 +654,16 @@ canvas { display:block; }
       <button class="filter-btn" onclick="renderRecursos('documento',this)">Documentos</button>
     </div>
     <div class="recursos-grid" id="recursos-grid"></div>
+  </div>
+
+  <!-- ═══════════ CONFIGURACIÓN · FUENTES DE DATOS (solo edición) ═══════════ -->
+  <div id="sec-config" class="section">
+    <div class="page-header">
+      <h1>Configuración · Fuentes de datos</h1>
+      <p>El contenido del sitio se carga desde Google Drive. Conectá acá los archivos y carpetas de tu grupo.</p>
+    </div>
+    <div class="card" id="config-sa" style="margin-bottom:16px"></div>
+    <div id="config-sources"></div>
   </div>
 
 </div><!-- /main -->
@@ -959,6 +993,9 @@ function setEditing(on) {
   document.body.classList.toggle('editing', on);
   const lbl = document.getElementById('edit-toggle-label');
   if (lbl) lbl.textContent = on ? 'Editando · Salir' : 'Modo edición';
+  const navCfg = document.getElementById('nav-config');
+  if (navCfg) navCfg.style.display = on ? 'flex' : 'none';
+  if (!on && currentSection === 'config') navigate('dashboard');
   if (typeof calApplyEditMode === 'function') calApplyEditMode();
   if (typeof onEditingChange === 'function') onEditingChange(on); // hook para secciones editables
 }
@@ -982,7 +1019,8 @@ function navigate(section, data) {
     procesos: 'Procesos Estratégicos',
     calendario: 'Calendario',
     eventos: 'Eventos e Hitos',
-    recursos: 'Recursos del grupo'
+    recursos: 'Recursos del grupo',
+    config: 'Configuración'
   };
 
   const topbarSec = document.getElementById('topbar-section');
@@ -1000,6 +1038,7 @@ function navigate(section, data) {
   if (section === 'calendario') renderCalendarNative();
   if (section === 'eventos') renderEventos();
   if (section === 'recursos') renderRecursosSec();
+  if (section === 'config') renderConfig();
 }
 
 function openEmpresa(id) {
@@ -1461,6 +1500,7 @@ async function loadContentFromDB() {
     if (!r.ok) return;
     const j = await r.json();
     const c = (j && j.content) || {};
+    if (c.drive_config && typeof c.drive_config === 'object') DRIVE_CONFIG = Object.assign({}, DRIVE_CONFIG, c.drive_config);
     if (Array.isArray(c.empresas))  EMPRESAS = c.empresas;
     if (Array.isArray(c.procesos))  PROCESOS = c.procesos;
     if (Array.isArray(c.hitos))     HITOS = c.hitos;
@@ -1852,8 +1892,11 @@ const SECTION_DATASETS = {
 let editorState = null;
 
 // Hook llamado por setEditing(): agrega/quita los botones "Editar" por sección
+// Secciones cuyo contenido viene del Drive (no se editan con formulario)
+const DRIVE_SECTIONS = { grupo: 'El Grupo', empresas: 'Empresas' };
+
 function onEditingChange(on) {
-  document.querySelectorAll('.section-edit-btn').forEach(b => b.remove());
+  document.querySelectorAll('.section-edit-btn, .drive-hint').forEach(b => b.remove());
   if (!on) return;
   for (const [sec, sets] of Object.entries(SECTION_DATASETS)) {
     const ph = document.querySelector(`#sec-${sec} .page-header`);
@@ -1863,6 +1906,15 @@ function onEditingChange(on) {
     btn.innerHTML = '✏️ Editar';
     btn.onclick = () => sets.length === 1 ? openEditor(sets[0].key) : openChooser(sets);
     ph.appendChild(btn);
+  }
+  // Aviso "se carga desde Drive" en las secciones que salen del archivo base
+  for (const sec of Object.keys(DRIVE_SECTIONS)) {
+    const ph = document.querySelector(`#sec-${sec} .page-header`);
+    if (!ph) continue;
+    const d = document.createElement('div');
+    d.className = 'drive-hint';
+    d.innerHTML = '📄 Este contenido se carga desde la planilla de Drive. Editalo en ese archivo, o cambiá la fuente en <a onclick="navigate(\'config\')">Configuración</a>.';
+    ph.appendChild(d);
   }
 }
 
@@ -2011,6 +2063,16 @@ async function saveEditor() {
 // ══════════════════════════════════════════════════════════════
 const API_BASE_SHEET = '/api/base';
 const EMP_PALETTE = ['#6C868C','#E67E22','#2980B9','#16A085','#5D8A97','#8E44AD','#CD6155','#D4AC0D','#00897B'];
+
+// Fuentes de datos de Drive configurables por grupo (persistido en Turso 'drive_config').
+// Por defecto apunta a los archivos de El Faro para que funcione de una.
+let DRIVE_CONFIG = {
+  baseFileId: '1hdGYpzGrqIh5gADoVkp9yNp8pPGM29dt',
+  marcoFileId: '',
+  herramientasFolderId: '',
+  tecnicasFolderId: '',
+};
+
 function siglaFrom(nombre) {
   const stop = /^(s\.?a\.?|s\.?r\.?l\.?|de|del|la|el|y|e|los|las)$/i;
   const words = String(nombre || '').replace(/[.,/]/g, ' ').split(/\s+/).filter(w => w.length > 1 && !stop.test(w));
@@ -2019,7 +2081,8 @@ function siglaFrom(nombre) {
 }
 async function loadBaseFromDrive() {
   try {
-    const r = await fetch(API_BASE_SHEET);
+    const fileId = DRIVE_CONFIG.baseFileId || '';
+    const r = await fetch(API_BASE_SHEET + (fileId ? `?fileId=${encodeURIComponent(fileId)}` : ''));
     if (!r.ok) return;
     const j = await r.json();
     if (!j || j.error) return;
@@ -2037,6 +2100,116 @@ async function loadBaseFromDrive() {
     }
   } catch (err) {
     console.warn('No se pudo cargar el archivo base de Drive (se usan los datos por defecto):', err);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// CONFIGURACIÓN · FUENTES DE DATOS (Drive)
+// ══════════════════════════════════════════════════════════════
+const SA_EMAIL = { v: null };
+async function getServiceAccountEmail() {
+  if (SA_EMAIL.v !== null) return SA_EMAIL.v;
+  try { const r = await fetch(`${API_BASE_DRIVE}?op=whoami`); const j = await r.json(); SA_EMAIL.v = j.email || ''; }
+  catch (e) { SA_EMAIL.v = ''; }
+  return SA_EMAIL.v;
+}
+
+const DRIVE_SOURCES = [
+  { key:'baseFileId', tipo:'archivo', label:'El Grupo y Empresas', obligatorio:true,
+    desc:'Identidad del grupo, objetivos, principios, hitos, ejes temáticos y la ficha de cada empresa.',
+    estructura:'Pestañas: GRUPO, HITOS, EJES_2026, EMPRESAS, CONFIG_DRIVE.',
+    plantilla:'plantillas/Plantilla_Base_Grupo.xlsx' },
+  { key:'marcoFileId', tipo:'archivo', label:'Marco Conceptual',
+    desc:'Conceptos y criterios metodológicos del grupo (directorio colaborativo, línea estratégica, etc.).',
+    estructura:'Pestaña CONCEPTOS: columnas icono, titulo, formula, descripcion.',
+    plantilla:'plantillas/Plantilla_Marco_Conceptual.xlsx' },
+  { key:'herramientasFolderId', tipo:'carpeta', label:'Herramientas del grupo',
+    desc:'Herramientas que el grupo va incorporando. Se listan automáticamente los archivos de la carpeta.',
+    estructura:'Una carpeta de Drive con los archivos.' },
+  { key:'tecnicasFolderId', tipo:'carpeta', label:'Reuniones Técnicas',
+    desc:'Material de las reuniones técnicas generales (presentaciones, minutas, grabaciones…).',
+    estructura:'Una carpeta de Drive con el material.' },
+];
+
+// Extrae el ID de Drive de un link pegado (o devuelve el valor si ya es un ID)
+function extractDriveId(v) {
+  v = String(v || '').trim();
+  const m = v.match(/[-\w]{25,}/);
+  return m ? m[0] : v;
+}
+
+async function renderConfig() {
+  const saBox = document.getElementById('config-sa');
+  if (saBox) {
+    const email = await getServiceAccountEmail();
+    saBox.innerHTML = `
+      <div class="card-title">1) Compartí en Drive</div>
+      <p style="font-size:13px;color:var(--gris-oscuro,#616A6B);line-height:1.6;margin:6px 0 10px">Compartí cada archivo o carpeta (como <strong>Lector</strong>) con la cuenta de servicio del sitio:</p>
+      <div class="sa-email">${email ? esc(email) : '⚠ No se pudo obtener (¿falta GOOGLE_SERVICE_ACCOUNT_JSON en Vercel?)'}${email ? ` <button class="btn-cal-add" onclick="copySA('${esc(email)}')">Copiar</button>` : ''}</div>`;
+  }
+  const cont = document.getElementById('config-sources');
+  if (cont) {
+    cont.innerHTML = `<div class="card-title" style="margin:6px 0 12px">2) Conectá los archivos y carpetas</div>` +
+      DRIVE_SOURCES.map(configSourceHtml).join('');
+  }
+}
+
+function configSourceHtml(s) {
+  const id = DRIVE_CONFIG[s.key] || '';
+  return `<div class="card src-card" style="margin-bottom:12px">
+    <div class="src-head">
+      <span class="src-title">${esc(s.label)}</span>
+      <span class="src-badge">${s.tipo}</span>
+      <span class="${s.obligatorio ? 'src-req' : 'src-opt'}">${s.obligatorio ? 'requerido' : 'opcional'}</span>
+    </div>
+    <div class="src-desc">${esc(s.desc)}</div>
+    <div class="src-estructura"><strong>Estructura esperada:</strong> ${esc(s.estructura)}</div>
+    <div class="src-row">
+      <input type="text" id="src-${s.key}" class="cal-input" placeholder="Pegá el ID o el link de Drive" value="${esc(id)}">
+      <button class="btn-cal-primary" onclick="saveDriveSource('${s.key}')">Guardar</button>
+      <button class="btn-cal-add" onclick="testDriveSource('${s.key}')">Probar conexión</button>
+      ${s.plantilla ? `<a class="src-link" href="${s.plantilla}" download>⬇ Descargar plantilla</a>` : ''}
+      ${id ? `<a class="src-link" href="https://drive.google.com/${s.tipo === 'carpeta' ? 'drive/folders/' : 'file/d/'}${esc(id)}${s.tipo === 'carpeta' ? '' : '/view'}" target="_blank" rel="noopener">Abrir en Drive ↗</a>` : ''}
+    </div>
+    <div class="src-status" id="src-status-${s.key}"></div>
+  </div>`;
+}
+
+function copySA(email) { try { navigator.clipboard.writeText(email); } catch (e) {} }
+
+async function saveDriveSource(key) {
+  const inp = document.getElementById('src-' + key);
+  const st = document.getElementById('src-status-' + key);
+  const val = extractDriveId(inp.value);
+  inp.value = val;
+  DRIVE_CONFIG[key] = val;
+  if (st) st.textContent = 'Guardando…';
+  try {
+    await saveContentToDB('drive_config', DRIVE_CONFIG);
+    if (st) { st.textContent = 'Guardado ✓'; st.className = 'src-status ok'; }
+    if (key === 'baseFileId') { await loadBaseFromDrive(); if (currentSection === 'grupo') renderGrupo(); if (currentSection === 'empresas') renderEmpresas(); }
+  } catch (e) { if (st) { st.textContent = 'Error: ' + e.message; st.className = 'src-status err'; } }
+}
+
+async function testDriveSource(key) {
+  const src = DRIVE_SOURCES.find(s => s.key === key);
+  const id = extractDriveId((document.getElementById('src-' + key) || {}).value || DRIVE_CONFIG[key] || '');
+  const st = document.getElementById('src-status-' + key);
+  if (!id) { if (st) { st.textContent = 'Pegá un ID primero.'; st.className = 'src-status err'; } return; }
+  if (st) { st.textContent = 'Probando…'; st.className = 'src-status'; }
+  try {
+    const url = src.tipo === 'carpeta'
+      ? `${API_BASE_DRIVE}?op=list&folderId=${encodeURIComponent(id)}`
+      : `${API_BASE_SHEET}?fileId=${encodeURIComponent(id)}`;
+    const r = await fetch(url);
+    const j = await r.json();
+    if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
+    let info = 'Conectado ✓';
+    if (src.tipo === 'carpeta') info = `Conectado ✓ · ${(j.files || []).length} archivos`;
+    else if (Array.isArray(j.empresas)) info = `Conectado ✓ · ${j.empresas.length} empresas`;
+    if (st) { st.textContent = info; st.className = 'src-status ok'; }
+  } catch (e) {
+    if (st) { st.textContent = 'No conecta: ' + e.message + ' (¿compartiste la carpeta/archivo con la cuenta de servicio?)'; st.className = 'src-status err'; }
   }
 }
 
