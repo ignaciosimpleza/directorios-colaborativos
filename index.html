@@ -81,44 +81,14 @@ body.editing .edit-toggle { background:var(--verde-menta); color:#1E2A2E; }
 .btn-primary { flex:1; background:var(--verde-menta); border:0; color:#1E2A2E; font-weight:700; font-size:13px; padding:9px; border-radius:10px; cursor:pointer; font-family:inherit; }
 .hidden { display:none !important; }
 
-/* ── BOTÓN EDITAR SECCIÓN ── */
+/* ── AVISO "SE CARGA DESDE DRIVE" ── */
 .page-header { position: relative; }
-.section-edit-btn { position:absolute; top:0; right:0; display:inline-flex; align-items:center; gap:5px; background:var(--verde-menta); color:#1E2A2E; border:0; font-size:11px; font-weight:700; padding:6px 12px; border-radius:20px; cursor:pointer; font-family:inherit; }
-.section-edit-btn:hover { opacity:.9; }
-.card-edit-btn { background:var(--verde-menta); color:#1E2A2E; border:0; font-size:10.5px; font-weight:700; padding:4px 10px; border-radius:16px; cursor:pointer; font-family:inherit; margin-left:8px; }
-
-/* ── EDITOR GENÉRICO ── */
-.editor-box { background:#fff; border-radius:16px; width:100%; max-width:720px; max-height:88vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
-.editor-head { display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--beige-suave); }
-.editor-title { font-size:16px; font-weight:700; color:var(--navy,#1E2A2E); }
-.editor-x { background:none; border:0; font-size:16px; color:var(--gris-medio); cursor:pointer; }
-.editor-body { padding:16px 22px; overflow-y:auto; flex:1; }
-.editor-foot { display:flex; align-items:center; gap:10px; padding:14px 22px; border-top:1px solid var(--beige-suave); }
-.editor-foot .btn-ghost, .editor-foot .btn-primary { flex:0 0 auto; padding:9px 18px; }
-.editor-msg { font-size:12px; color:var(--gris-medio); }
-.btn-add { background:#eef4f2; color:#1a7a55; border:1px dashed #b2e8d4; font-weight:700; font-size:12px; padding:8px 14px; border-radius:10px; cursor:pointer; font-family:inherit; }
-.ed-item { border:1px solid var(--beige-suave); border-radius:12px; padding:14px; margin-bottom:14px; background:#fcfaf7; }
-.ed-item-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-.ed-item-head span { font-size:12px; font-weight:700; color:var(--azul-pizarra); }
-.ed-del { background:#fdecea; color:var(--terracota); border:0; font-size:11px; font-weight:700; padding:4px 10px; border-radius:8px; cursor:pointer; font-family:inherit; }
-.ed-field { margin-bottom:10px; }
-.ed-field > label { display:block; font-size:11px; font-weight:600; color:var(--gris-oscuro,#616A6B); margin-bottom:4px; }
-.ed-field input[type=text], .ed-field textarea, .ed-field select { width:100%; border:1px solid var(--beige-suave); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; outline:none; background:#fff; }
-.ed-field input[type=color] { width:44px; height:32px; padding:2px; border:1px solid var(--beige-suave); border-radius:8px; background:#fff; cursor:pointer; }
-.ed-field textarea { resize:vertical; min-height:56px; line-height:1.4; }
 .ed-hint { font-size:10px; color:var(--gris-medio); margin-top:3px; }
-.ed-sub { border:1px dashed var(--beige-suave); border-radius:10px; padding:10px; margin-top:4px; }
-.ed-subrow { display:flex; gap:6px; margin-bottom:6px; align-items:center; flex-wrap:wrap; }
-.ed-subrow input { flex:1; min-width:90px; border:1px solid var(--beige-suave); border-radius:7px; padding:6px 8px; font-size:12px; font-family:inherit; }
-.ed-subdel { background:#fdecea; color:var(--terracota); border:0; font-size:12px; padding:5px 9px; border-radius:7px; cursor:pointer; }
-.ed-subadd { background:#eef4f2; color:#1a7a55; border:1px dashed #b2e8d4; font-weight:700; font-size:11px; padding:5px 10px; border-radius:8px; cursor:pointer; font-family:inherit; }
-.ed-empty { text-align:center; color:var(--gris-medio); font-size:13px; padding:30px 0; }
-.chooser-list { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
-.chooser-list button { text-align:left; background:#fcfaf7; border:1px solid var(--beige-suave); border-radius:10px; padding:11px 13px; font-size:13px; font-weight:600; color:var(--navy,#1E2A2E); cursor:pointer; font-family:inherit; }
-.chooser-list button:hover { border-color:var(--azul-pizarra); }
 
 /* ── MAIN ── */
-#main { margin-left: 220px; margin-top: 56px; flex: 1; overflow-y: auto; padding: 24px 28px; }
+/* El sidebar es un item flex (ocupa sus 220px en el flujo): #main NO lleva
+   margin-left, si no queda un espacio vacío del ancho del sidebar. */
+#main { margin-top: 56px; flex: 1; min-width: 0; overflow-y: auto; padding: 24px 28px; }
 .section { display: none; animation: fadeIn 0.22s ease; }
 .section.active { display: block; }
 /* ── CALENDARIO NATIVO ── */
@@ -287,6 +257,8 @@ td { padding: 10px 14px; vertical-align: middle; }
 .peh-nombre { font-size:14px; font-weight:700; color:var(--navy); }
 .peh-sector { font-size:11.5px; color:var(--gris-medio); }
 .peh-count { margin-left:auto; font-size:11.5px; font-weight:600; color:var(--azul-pizarra); }
+.peh-bitacora { background:var(--white); color:var(--azul-pizarra); border:1.5px solid var(--azul-pizarra); border-radius:16px; font-size:11.5px; font-weight:700; padding:5px 12px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+.peh-bitacora:hover { background:var(--azul-pizarra); color:#fff; }
 .peh-arrow { font-size:14px; color:var(--gris-medio); margin-left:6px; transition:transform 0.2s; }
 .proceso-list { display:none; padding:0 4px; }
 .proceso-list.open { display:block; }
@@ -296,17 +268,18 @@ td { padding: 10px 14px; vertical-align: middle; }
 .pi-resumen { font-size:12px; color:#555; margin-top:3px; line-height:1.55; }
 .pi-pdf-link { display:inline-flex; align-items:center; gap:5px; margin-top:8px; font-size:11.5px; font-weight:600; color:var(--azul-pizarra); cursor:pointer; padding:4px 10px; border:1.5px solid var(--azul-pizarra); border-radius:16px; }
 .pi-pdf-link:hover { background:var(--azul-pizarra); color:#fff; }
+.proc-loading { text-align:center; color:var(--gris-medio); font-size:13px; padding:30px 0; }
+.proc-vacio { font-size:12px; color:var(--gris-medio); padding:10px 16px 14px; }
+.act-empty { font-size:12px; color:var(--gris-medio); padding:12px 2px; line-height:1.5; }
 
 /* ── RECURSOS ── */
-.recursos-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:18px; }
-.recurso-card { background:var(--white); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:8px; border-top:3px solid var(--azul-pizarra); transition:transform 0.15s; }
-.recurso-card:hover { transform:translateY(-1px); box-shadow:0 5px 16px rgba(0,0,0,0.1); }
-.rc-icon { font-size:22px; }
-.rc-categoria { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--gris-medio); }
-.rc-titulo { font-size:13.5px; font-weight:700; color:var(--navy); }
-.rc-desc { font-size:12px; color:#555; line-height:1.55; flex:1; }
-.rc-link { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:var(--azul-pizarra); cursor:pointer; margin-top:4px; }
-.rc-link:hover { text-decoration:underline; }
+.rec-lead { font-size:13px; color:var(--gris-oscuro,#616A6B); line-height:1.6; margin-bottom:12px; }
+.rec-cta { display:inline-block; background:var(--navy,#1E2A2E); color:#fff; font-size:12.5px; font-weight:700; padding:9px 16px; border-radius:9px; text-decoration:none; }
+.rec-cta:hover { opacity:.9; }
+.rec-note { font-size:11.5px; color:var(--gris-medio); line-height:1.55; margin-top:10px; }
+.rec-empty { font-size:12.5px; color:var(--gris-oscuro,#616A6B); line-height:1.6; background:#fcfaf7; border:1px dashed var(--beige-suave); border-radius:10px; padding:16px; }
+.rec-empty a { color:var(--azul-pizarra); font-weight:700; text-decoration:underline; cursor:pointer; }
+.drive-embed { width:100%; height:440px; border:1px solid var(--beige-suave); border-radius:10px; background:#fff; display:block; }
 
 /* ── EVENTOS ── */
 .evento-timeline { position:relative; padding-left:26px; }
@@ -314,7 +287,7 @@ td { padding: 10px 14px; vertical-align: middle; }
 .evento-item { position:relative; margin-bottom:18px; }
 .evento-item::before { content:''; position:absolute; left:-20px; top:4px; width:10px; height:10px; border-radius:50%; background:var(--azul-pizarra); border:2px solid var(--white); }
 .evento-item.proxima::before { background:var(--verde-menta); }
-.evento-fecha { font-size:11px; font-weight:700; color:var(--gris-medio); text-transform:uppercase; }
+.evento-fecha { font-size:11px; font-weight:700; color:var(--gris-medio); }
 .evento-titulo { font-size:13.5px; font-weight:600; color:var(--navy); margin-top:2px; }
 .evento-desc { font-size:12px; color:#555; margin-top:3px; line-height:1.5; }
 .evento-empresa { display:inline-block; font-size:10.5px; padding:2px 8px; border-radius:10px; background:var(--crema-fondo); color:var(--gris-oscuro); margin-top:5px; font-weight:500; }
@@ -352,11 +325,6 @@ td { padding: 10px 14px; vertical-align: middle; }
 .part-bar-track { background:#eee; border-radius:4px; height:7px; overflow:hidden; }
 .part-bar-fill { height:100%; border-radius:4px; }
 
-/* ── FILTER ── */
-.filter-bar { display:flex; gap:7px; margin-bottom:14px; flex-wrap:wrap; }
-.filter-btn { font-size:11.5px; font-weight:600; padding:6px 13px; border-radius:20px; border:1.5px solid var(--beige-suave); background:var(--white); cursor:pointer; transition:all 0.15s; color:var(--gris-oscuro); }
-.filter-btn.active, .filter-btn:hover { background:var(--navy); color:#fff; border-color:var(--navy); }
-
 /* ── CONCEPTO CARDS ── */
 .concepto-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
 .concepto-card { background:var(--white); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); border-top:3px solid var(--azul-pizarra); }
@@ -369,11 +337,11 @@ canvas { display:block; }
 
 @media (max-width:1000px) {
   .stat-grid { grid-template-columns:repeat(2,1fr); }
-  .empresa-grid, .recursos-grid, .mes-grid, .concepto-grid { grid-template-columns:repeat(2,1fr); }
+  .empresa-grid, .mes-grid, .concepto-grid { grid-template-columns:repeat(2,1fr); }
   .two-col { grid-template-columns:1fr; }
 }
 @media (max-width:680px) {
-  .empresa-grid, .recursos-grid, .mes-grid, .concepto-grid, .stat-grid { grid-template-columns:1fr; }
+  .empresa-grid, .mes-grid, .concepto-grid, .stat-grid { grid-template-columns:1fr; }
 }
 </style>
 </head>
@@ -519,16 +487,16 @@ canvas { display:block; }
     <div class="card" id="home-grupo" style="margin-bottom:24px"></div>
     <div class="two-col">
       <div class="card">
-        <div class="card-title">Actividad reciente</div>
+        <div class="card-title">Actividad reciente <span>Últimos archivos en Drive</span></div>
         <div id="actividad-reciente"></div>
       </div>
       <div class="card">
-        <div class="card-title">Próximas reuniones <span>Julio – Agosto 2026</span></div>
+        <div class="card-title">Próximas reuniones <span>Según el calendario</span></div>
         <div id="proximas-reuniones"></div>
       </div>
     </div>
     <div class="card">
-      <div class="card-title">Reuniones realizadas <span>Último año · jun 2025 – jun 2026</span></div>
+      <div class="card-title">Reuniones realizadas <span>Según el calendario</span></div>
       <div id="historial-list"></div>
     </div>
   </div>
@@ -561,7 +529,7 @@ canvas { display:block; }
   <div id="sec-procesos" class="section">
     <div class="page-header">
       <h1>Procesos Estratégicos</h1>
-      <p>Historial de presentaciones por empresa · Hacé click en una empresa para expandir su proceso</p>
+      <p>Los archivos de la carpeta de Drive de cada empresa · Hacé click en una empresa para ver sus presentaciones. «Bitácora» abre el documento del proceso (carpeta <em>Proceso</em>).</p>
     </div>
     <div id="procesos-content"></div>
   </div>
@@ -599,7 +567,7 @@ canvas { display:block; }
         <button class="btn-cal-primary" onclick="calGenerate()">↻ Generar futuras</button>
         <button class="btn-cal-danger" onclick="calResetAll()">Borrar todo</button>
       </div>
-      <div class="ed-hint">Genera reuniones semanales rotando las empresas activas por mayor tiempo sin presentar, respetando las reuniones fijadas (📌) y feriados.</div>
+      <div class="ed-hint">Genera reuniones semanales rotando las empresas activas por mayor tiempo sin presentar, respetando las reuniones fijadas (📌), las marcadas como <strong>Flexible</strong> (internas o especiales) y los feriados.</div>
     </div>
 
     <!-- Barra de filtros / acciones -->
@@ -625,13 +593,9 @@ canvas { display:block; }
         <div class="evento-timeline" id="timeline-hitos"></div>
       </div>
       <div class="card">
-        <div class="card-title">Próximos eventos <span>Jul–Ago 2026</span></div>
+        <div class="card-title">Agenda y próximos eventos <span>Congresos, viajes y encuentros</span></div>
         <div class="evento-timeline" id="timeline-proximos"></div>
       </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Marco conceptual <span>Metodología Simpleza</span></div>
-      <div class="concepto-grid" id="conceptos-grid"></div>
     </div>
   </div>
 
@@ -639,21 +603,24 @@ canvas { display:block; }
   <div id="sec-recursos" class="section">
     <div class="page-header">
       <h1>Recursos del Grupo</h1>
-      <p>Herramientas, metodologías, minutas y documentación transversal del grupo</p>
+      <p>Marco conceptual del trabajo y herramientas disponibles para las empresas</p>
     </div>
 
-    <div class="card" style="margin-bottom:18px">
-      <div class="card-title">📁 Minutas generales del grupo <span>Actualización semanal</span></div>
-      <div class="pdf-list" id="minutas-generales"></div>
+    <div class="card">
+      <div class="card-title">Marco conceptual <span>Metodología Simpleza</span></div>
+      <div class="concepto-grid" id="conceptos-grid"></div>
+      <div id="marco-drive-link"></div>
     </div>
 
-    <div class="filter-bar">
-      <button class="filter-btn active" onclick="renderRecursos('todos',this)">Todos</button>
-      <button class="filter-btn" onclick="renderRecursos('herramienta',this)">Herramientas</button>
-      <button class="filter-btn" onclick="renderRecursos('metodologia',this)">Metodologías</button>
-      <button class="filter-btn" onclick="renderRecursos('documento',this)">Documentos</button>
+    <div class="card">
+      <div class="card-title">🧰 Herramientas de Simpleza <span>simpleza.com.ar</span></div>
+      <div id="herramientas-web"></div>
     </div>
-    <div class="recursos-grid" id="recursos-grid"></div>
+
+    <div class="card">
+      <div class="card-title">📁 Herramientas del grupo <span>Carpeta compartida de Drive</span></div>
+      <div id="herramientas-carpeta"></div>
+    </div>
   </div>
 
   <!-- ═══════════ CONFIGURACIÓN · FUENTES DE DATOS (solo edición) ═══════════ -->
@@ -680,34 +647,6 @@ canvas { display:block; }
       <button class="btn-ghost" onclick="closeDashLogin()">Cancelar</button>
       <button class="btn-primary" onclick="tryDashLogin()">Ingresar</button>
     </div>
-  </div>
-</div>
-
-<!-- ═══════════ MODAL EDITOR GENÉRICO ═══════════ -->
-<div id="editor-modal" class="modal-overlay" onclick="if(event.target===this) closeEditor()">
-  <div class="editor-box">
-    <div class="editor-head">
-      <div class="editor-title" id="editor-title">Editar</div>
-      <button class="editor-x" onclick="closeEditor()" title="Cerrar">✕</button>
-    </div>
-    <div class="editor-body" id="editor-body"></div>
-    <div class="editor-foot">
-      <button class="btn-add" onclick="addEditorItem()">＋ Agregar elemento</button>
-      <div style="flex:1"></div>
-      <span id="editor-msg" class="editor-msg"></span>
-      <button class="btn-ghost" onclick="closeEditor()">Cancelar</button>
-      <button class="btn-primary" id="editor-save" onclick="saveEditor()">Guardar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Chooser de datasets (secciones con más de un editable) -->
-<div id="chooser-modal" class="modal-overlay" onclick="if(event.target===this) closeChooser()">
-  <div class="modal-box">
-    <div class="modal-title">¿Qué querés editar?</div>
-    <div class="modal-sub">Elegí el contenido a editar en esta sección.</div>
-    <div id="chooser-list" class="chooser-list"></div>
-    <div class="modal-actions"><button class="btn-ghost" onclick="closeChooser()">Cancelar</button></div>
   </div>
 </div>
 
@@ -840,73 +779,9 @@ let EMPRESAS = [
   }
 ];
 
-let PROCESOS = [
-  { empresaId:1, titulo:'Estrategias de Crecimiento 2025/2026', fecha:'29 Sep 2025', resumen:'Hoja de ruta: pecán, gerenciamiento de terceros y ordenamiento patrimonial. El grupo aportó foco en la brecha entre ambición y estructura.' },
-  { empresaId:1, titulo:'Validación de diagnóstico y delegación operativa', fecha:'23 Jun 2025', resumen:'16ª reunión del proceso. Validación del diagnóstico Simpleza y discusión de la estrategia de delegación para liberar tiempo de dirección.' },
-  { empresaId:2, titulo:'Nueva Visión 2030 y Proyecto Inmobiliario', fecha:'15 Sep 2025', resumen:'Visión renovada a 5 años: crecimiento agrícola, consolidación familiar y proyecto inmobiliario como diversificación.' },
-  { empresaId:2, titulo:'Avance: proyecto inmobiliario y acuerdo familiar', fecha:'22 Dic 2025', resumen:'Avances en el proyecto inmobiliario y trabajo en el acuerdo entre socios familiares para alinear roles y retiros.' },
-  { empresaId:3, titulo:'Análisis Patrimonial y escenarios de decisión', fecha:'14 Jul 2025', resumen:'Evolución patrimonial del escritorio (USD 2M → USD 4.2M en 4 años) y escenarios de inversión para los próximos años.' },
-  { empresaId:3, titulo:'Presentación: visión estratégica del escritorio', fecha:'1 Dic 2025', resumen:'Primera presentación formal como miembro nuevo. Modelo de negocio, clientes bajo gestión y líneas estratégicas.' },
-  { empresaId:3, titulo:'Avance Líneas Estratégicas: crecimiento y socio operativo', fecha:'27 Abr 2026', resumen:'Expansión a nuevas zonas, búsqueda de socio operativo y ordenamiento patrimonial propio.' },
-  { empresaId:4, titulo:'Gobierno corporativo, feedlot y proyecto Necochea', fecha:'17 Nov 2025', resumen:'Avances en gobierno corporativo, proyecto de feedlot 10.000 cab. en 3 etapas y oportunidad de compra en Necochea.' },
-  { empresaId:4, titulo:'Visión de largo plazo e incorporación de la 4ª generación', fecha:'13 Abr 2026', resumen:'Construcción de visión de largo plazo que integre a la cuarta generación familiar en la empresa.' },
-  { empresaId:5, titulo:'Estructura vs. tamaño: eficiencia y crecimiento', fecha:'4 Ago 2025', resumen:'Análisis de la evolución de Tricampo: crecimiento agrícola y preocupación por gastos de estructura vs. resultado.' },
-  { empresaId:5, titulo:'Nueva Gerencia General y plan de profesionalización', fecha:'16 Mar 2026', resumen:'Nuevo esquema organizacional: Alejandro (Gerente General Comercial-Financiero) y Federico (Gerente de Producción). Marco Estratégico 2024-2028.' },
-  { empresaId:6, titulo:'Primera presentación: gobernanza y reorganización', fecha:'9 Feb 2026', resumen:'Historia familiar, ganadería de ciclo completo, y proceso de reorganización tras salida de socio en 2021.' },
-  { empresaId:6, titulo:'Rediseño de la reunión anual de accionistas', fecha:'1 Jun 2026', resumen:'Consulta al grupo sobre cómo organizar y conducir efectivamente la reunión anual de accionistas.' },
-  { empresaId:7, titulo:'Primera presentación: planta balanceados y feedlot', fecha:'10 Nov 2025', resumen:'Presentación de la planta de alimentos balanceados (4.500 tn/mes), feedlot y desafíos de sucesión.' },
-  { empresaId:8, titulo:'Primera presentación: empresa citrícola familiar', fecha:'4 May 2026', resumen:'Empresa familiar de 3ª generación en Tucumán: citricultura, integración vertical hacia la exportación y reorganización societaria.' },
-  { empresaId:9, titulo:'Primera presentación: servicios agrícolas', fecha:'22 Sep 2025', resumen:'Servicios de pulverización y siembra (180.000 ha/año), fideicomiso Rubro Producción y brechas de gestión.' },
-  { empresaId:9, titulo:'Avance: sistema de gestión y lectura por unidad', fecha:'20 Abr 2026', resumen:'Avances en Sinagro (30% de uso), cambios en el equipo administrativo y necesidad de ordenar info por unidad de negocio.' }
-];
-
-// Todas las reuniones del periodo jun 2025 – ago 2026
-let REUNIONES_HISTORIAL = [
-  { fecha:'23 Jun', año:'2025', empresa:'Agropecuaria El Sueño', tipo:'empresa' },
-  { fecha:'14 Jul', año:'2025', empresa:'Estudio Becker', tipo:'empresa' },
-  { fecha:'4 Ago', año:'2025', empresa:'Tricampo S.A.', tipo:'empresa' },
-  { fecha:'25 Ago', año:'2025', empresa:'Coyuntura agrícola 2025/26', tipo:'especial' },
-  { fecha:'22 Sep', año:'2025', empresa:'Rubro Agropecuario SRL', tipo:'empresa' },
-  { fecha:'29 Sep', año:'2025', empresa:'Agropecuaria El Sueño', tipo:'empresa' },
-  { fecha:'10 Nov', año:'2025', empresa:'Altos de Bermúdez SA', tipo:'empresa' },
-  { fecha:'17 Nov', año:'2025', empresa:'MACSA Agro', tipo:'empresa' },
-  { fecha:'1 Dic', año:'2025', empresa:'Estudio Becker', tipo:'empresa' },
-  { fecha:'22 Dic', año:'2025', empresa:'El Motivo S.A.', tipo:'empresa' },
-  { fecha:'9 Feb', año:'2026', empresa:'Beheran Sarciat SA', tipo:'empresa' },
-  { fecha:'23 Feb', año:'2026', empresa:'Plan de Trabajo', tipo:'especial' },
-  { fecha:'16 Mar', año:'2026', empresa:'Tricampo S.A.', tipo:'empresa' },
-  { fecha:'30 Mar', año:'2026', empresa:'Agropecuaria El Sueño', tipo:'empresa' },
-  { fecha:'6 Abr', año:'2026', empresa:'Altos de Bermúdez SA', tipo:'empresa' },
-  { fecha:'13 Abr', año:'2026', empresa:'MACSA Agro', tipo:'empresa' },
-  { fecha:'20 Abr', año:'2026', empresa:'Rubro Agropecuario SRL', tipo:'empresa' },
-  { fecha:'27 Abr', año:'2026', empresa:'Estudio Becker', tipo:'empresa' },
-  { fecha:'4 May', año:'2026', empresa:'Donato Álvarez SRL', tipo:'empresa' },
-  { fecha:'11 May', año:'2026', empresa:'Coyuntura de Negocio', tipo:'especial' },
-  { fecha:'1 Jun', año:'2026', empresa:'Beheran Sarciat SA', tipo:'empresa' },
-  { fecha:'8 Jun', año:'2026', empresa:'Técnica: Análisis de Negocios', tipo:'especial' },
-  { fecha:'22 Jun', año:'2026', empresa:'Tricampo S.A.', tipo:'empresa' }
-];
-
-// Reuniones 2026 para calendario
-let REUNIONES_2026 = [
-  // Mayo
-  { mes:'mayo', dia:'4', empresa:'Donato Álvarez SRL', tipo:'empresa', pasada:true },
-  { mes:'mayo', dia:'11', empresa:'Coyuntura de Negocio', tipo:'especial', pasada:true },
-  { mes:'mayo', dia:'18', empresa:'Interna viaje', tipo:'interna', pasada:true },
-  { mes:'mayo', dia:'25', empresa:'Feriado (Rev. de Mayo)', tipo:'feriado', pasada:true },
-  // Junio
-  { mes:'junio', dia:'1', empresa:'Beheran Sarciat SA', tipo:'empresa', pasada:true },
-  { mes:'junio', dia:'8', empresa:'Técnica: Análisis de Negocios', tipo:'especial', pasada:true },
-  { mes:'junio', dia:'15', empresa:'Feriado', tipo:'feriado', pasada:true },
-  { mes:'junio', dia:'22', empresa:'Tricampo S.A.', tipo:'empresa', pasada:true },
-  { mes:'junio', dia:'29', empresa:'El Motivo S.A.', tipo:'empresa', pasada:false, proxima:true },
-  // Julio
-  { mes:'julio', dia:'6', empresa:'Agropecuaria El Sueño', tipo:'empresa', pasada:false },
-  { mes:'julio', dia:'13', empresa:'Altos de Bermúdez SA', tipo:'empresa', pasada:false },
-  { mes:'julio', dia:'20', empresa:'MACSA Agro', tipo:'empresa', pasada:false },
-  { mes:'julio', dia:'27', empresa:'Rubro Agropecuario SRL', tipo:'empresa', pasada:false }
-];
-
+// Hitos, agenda y marco conceptual: valores por defecto. Se reemplazan con lo que
+// venga de Drive (pestañas HITOS y EVENTOS de la planilla base; archivo Marco
+// Conceptual). Nada de esto se carga con formularios.
 let HITOS = [
   { fecha:'Feb 2022', titulo:'Inicio del Grupo El Faro', desc:'Primera reunión del Grupo IV con las empresas fundadoras. Facilitado por Cecilia Panizzo y Federico C. Guyot (Simpleza).', tipo:'pasada' },
   { fecha:'Dic 2022', titulo:'Cierre del primer año', desc:'25 reuniones realizadas. Primeras presentaciones empresariales y devoluciones del ciclo.', tipo:'pasada' },
@@ -916,13 +791,12 @@ let HITOS = [
   { fecha:'Jun 2026', titulo:'Más de 150 reuniones realizadas', desc:'El grupo supera las 150 reuniones acumuladas desde su inicio. Más de 200 devoluciones registradas.', tipo:'pasada' }
 ];
 
+// Agenda del grupo (pestaña EVENTOS de la planilla base): congresos, viajes y
+// encuentros. La fecha es texto libre: "4-5-6/8", "23 y 24/10", "Octubre 2026".
+// Las presentaciones semanales de las empresas no van acá: están en el Calendario.
 let PROXIMOS_EVENTOS = [
-  { fecha:'29 Jun 2026', titulo:'Presentación El Motivo S.A.', desc:'Adriana Ponzio, Esteban & Federico Vissio presentan avances en la visión 2030 y el proyecto inmobiliario.', empresa:'El Motivo S.A.' },
-  { fecha:'6 Jul 2026', titulo:'Presentación Agropecuaria El Sueño', desc:'Sebastián Valdez y Paola Graña actualizan al grupo sobre el ciclo agrícola, pecán y líneas estratégicas.', empresa:'Agropecuaria El Sueño' },
-  { fecha:'13 Jul 2026', titulo:'Presentación Altos de Bermúdez SA', desc:'Alfredo Moreno presenta avances en el feedlot y el proceso de sucesión.', empresa:'Altos de Bermúdez SA' },
-  { fecha:'20 Jul 2026', titulo:'Presentación MACSA Agro', desc:'Carlos Vidal presenta construcción de la visión con la cuarta generación y el proyecto Necochea.', empresa:'MACSA Agro' },
-  { fecha:'27 Jul 2026', titulo:'Presentación Rubro Agropecuario', desc:'Manuel Monedero presenta la lectura económica por unidad de negocio.', empresa:'Rubro Agropecuario SRL' },
-  { fecha:'3 Ago 2026', titulo:'Presentación Estudio Becker', desc:'Tomás Becker presenta avances de sus líneas estratégicas: incorporación de socio y expansión.', empresa:'Estudio Becker' }
+  { fecha:'4-5-6/8', titulo:'Congreso Aapresid', desc:'', empresa:'' },
+  { fecha:'23 y 24/10', titulo:'Viaje Grupo El Faro: Laboulaye – Buenos Aires', desc:'', empresa:'' },
 ];
 
 let CONCEPTOS = [
@@ -934,25 +808,9 @@ let CONCEPTOS = [
   { icon:'🤝', titulo:'Acuerdo de Accionistas', formula:'derechos + obligaciones + mecanismos', desc:'Documento que regula la relación entre socios: roles, retiros, decisiones y protocolos ante situaciones especiales.' }
 ];
 
-let MINUTAS_GENERALES = [
-  { nombre:'Minuta 22 junio 2026 — Tricampo S.A.', fecha:'22 Jun 2026', url:'#' },
-  { nombre:'Minuta 8 junio 2026 — Técnica: Análisis de Negocios', fecha:'8 Jun 2026', url:'#' },
-  { nombre:'Minuta 1 junio 2026 — Beheran Sarciat SA', fecha:'1 Jun 2026', url:'#' },
-  { nombre:'Minuta 4 mayo 2026 — Donato Álvarez SRL', fecha:'4 May 2026', url:'#' },
-  { nombre:'Minuta 27 abril 2026 — Estudio Becker', fecha:'27 Abr 2026', url:'#' }
-];
-
-let RECURSOS = [
-  { id:1, categoria:'herramienta', icon:'📊', titulo:'Tablero de Indicadores de Empresa', desc:'Planilla de seguimiento de indicadores clave por empresa: resultado económico, patrimonio, superficie, cabezas y liquidez.', link:'#' },
-  { id:2, categoria:'herramienta', icon:'📅', titulo:'Plantilla de Minuta de Reunión', desc:'Estructura estándar para registrar los temas, devoluciones y compromisos de cada reunión semanal.', link:'#' },
-  { id:3, categoria:'metodologia', icon:'🧭', titulo:'Metodología Simpleza — Resumen ejecutivo', desc:'Descripción del proceso de directorio colaborativo, sus etapas, herramientas y principios de funcionamiento.', link:'#' },
-  { id:4, categoria:'metodologia', icon:'🎯', titulo:'Guía de Líneas Estratégicas', desc:'Cómo definir, priorizar y hacer seguimiento de líneas estratégicas en empresas agropecuarias familiares.', link:'#' },
-  { id:5, categoria:'documento', icon:'📝', titulo:'Acuerdo de Confidencialidad del Grupo', desc:'Documento firmado por todos los miembros estableciendo los principios de reserva y uso de la información compartida.', link:'#' },
-  { id:6, categoria:'documento', icon:'📋', titulo:'Reglamento de funcionamiento', desc:'Normas de participación, frecuencia de asistencia, criterios de ingreso y egreso, y forma de trabajo del grupo.', link:'#' },
-  { id:7, categoria:'herramienta', icon:'💰', titulo:'Modelo de Análisis Patrimonial', desc:'Hoja de cálculo para construir el estado patrimonial de una empresa agropecuaria y analizar su evolución año a año.', link:'#' },
-  { id:8, categoria:'metodologia', icon:'🏛️', titulo:'Guía de Gobierno Corporativo', desc:'Introducción al gobierno corporativo en empresas agropecuarias familiares: directorio, acuerdo de socios y protocolos.', link:'#' },
-  { id:9, categoria:'documento', icon:'📌', titulo:'Cronograma histórico del grupo', desc:'Registro de todas las reuniones del Grupo El Faro desde 2022, con la empresa presentante y el tema de cada sesión.', link:'#' }
-];
+// Sitio de Simpleza (sección Herramientas). Se puede sobreescribir desde
+// Configuración → "Herramientas de Simpleza (web)".
+const SIMPLEZA_TOOLS_URL = 'https://www.simpleza.com.ar/';
 
 // ══════════════════════════════════════════════════════════════
 // ESTADO
@@ -1050,30 +908,12 @@ function openEmpresa(id) {
 // ══════════════════════════════════════════════════════════════
 // DASHBOARD
 // ══════════════════════════════════════════════════════════════
-// Contenido editable de la portada (persistido en Turso bajo la key 'home')
+// Títulos de la portada. El resto del dashboard (banner, próximas reuniones,
+// reuniones realizadas y actividad reciente) se deriva solo del calendario y de
+// las carpetas de Drive.
 let HOME = {
   title: 'Dashboard',
-  subtitle: 'Resumen del Grupo El Faro · Activo desde febrero 2022',
-  banner: {
-    fecha: '📅 Próxima reunión · Lunes 29 de junio de 2026',
-    empresa: 'El Motivo S.A.',
-    desc: 'Adriana Ponzio · Esteban, Federico & Simón Vissio · Río Cuarto, Córdoba',
-    dias: '2'
-  },
-  stats: [
-    { val:'27', lbl:'Reuniones realizadas', sub:'Último año (jun 2025–jun 2026)' },
-    { val:'9',  lbl:'Empresas en el grupo', sub:'2 incorporadas en 2025–2026' },
-    { val:'17', lbl:'Procesos estratégicos', sub:'Presentaciones del último año' },
-    { val:'95', lbl:'Devoluciones registradas', sub:'Promedio 5.6 por proceso' },
-  ],
-  actividad: [
-    { text:'<strong>Tricampo S.A.</strong> presentó su nueva estructura gerencial y Marco Estratégico 2024-2028', time:'22 jun 2026' },
-    { text:'<strong>Beheran Sarciat SA</strong> consultó al grupo sobre el rediseño de la reunión anual de accionistas', time:'1 jun 2026' },
-    { text:'<strong>Donato Álvarez SRL</strong> realizó su primera presentación: empresa citrícola de 3ª generación en Tucumán', time:'4 may 2026' },
-    { text:'<strong>Estudio Becker</strong> presentó avances de líneas estratégicas: socio operativo y expansión geográfica', time:'27 abr 2026' },
-    { text:'<strong>MACSA Agro</strong> inició el proceso de construcción de visión con la cuarta generación familiar', time:'13 abr 2026' },
-    { text:'<strong>Rubro Agropecuario SRL</strong> presentó avances en implementación de Sinagro y gestión por unidades', time:'20 abr 2026' }
-  ],
+  subtitle: 'Resumen del Grupo El Faro',
 };
 
 function initDashboard() {
@@ -1182,13 +1022,72 @@ function renderGrupo() {
   `;
 }
 
-function renderActividadReciente() {
-  const palette = ['#e8f4f0','#f0eaf8','#fef5e0','#e6f0f9','#e0f4f0','#fde9e7'];
+// ══════════════════════════════════════════════════════════════
+// ACTIVIDAD DESDE LAS CARPETAS DE DRIVE
+// ══════════════════════════════════════════════════════════════
+// Una sola llamada trae los archivos de las carpetas de todas las empresas
+// (ordenados por fecha de modificación). Con eso se arman "Actividad reciente"
+// del dashboard y el detalle de Procesos. Nada se carga a mano.
+let DRIVE_ACTIVITY = null; // promesa cacheada por sesión
+
+function driveActivity(force) {
+  if (DRIVE_ACTIVITY && !force) return DRIVE_ACTIVITY;
+  const porCarpeta = {};
+  EMPRESAS.forEach(e => { const f = empresaDriveFolder(e); if (f) porCarpeta[f] = e; });
+  const ids = Object.keys(porCarpeta);
+  DRIVE_ACTIVITY = (async () => {
+    if (!ids.length) return { items: [], porCarpeta };
+    const r = await fetch(`${API_BASE_DRIVE}?op=actividad&folderIds=${encodeURIComponent(ids.join(','))}&limit=300`);
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
+    const items = (j.items || []).map(i => Object.assign({}, i, { empresa: porCarpeta[i.empresaFolderId] || null }));
+    return { items, porCarpeta };
+  })();
+  return DRIVE_ACTIVITY;
+}
+
+// "2026-06-22" → "22 jun 2026"
+function fechaCorta(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T12:00:00');
+  if (isNaN(d)) return iso;
+  return `${d.getDate()} ${CAL_MONTHS[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`;
+}
+function esPresentacion(item) { return /presentac/i.test(item.carpeta || ''); }
+
+// "Bitácora MACSA Agro" + empresa "MACSA Agro" → "Bitácora"
+function sinNombreEmpresa(archivo, empresa) {
+  const limpio = String(archivo || '').replace(new RegExp(String(empresa || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), '').replace(/\s*[-–·:]\s*/g, ' ').replace(/\s+/g, ' ').trim();
+  return limpio || archivo;
+}
+
+async function renderActividadReciente() {
   const el = document.getElementById('actividad-reciente');
   if (!el) return;
-  el.innerHTML = (HOME.actividad || []).map((i, idx) =>
-    `<div class="activity-item"><div class="act-icon" style="background:${palette[idx % palette.length]}">📋</div><div><div class="act-text">${i.text}</div><div class="act-time">${esc(i.time)}</div></div></div>`
-  ).join('');
+  el.innerHTML = '<div class="act-empty">Cargando novedades de las carpetas de Drive…</div>';
+  try {
+    const { items } = await driveActivity();
+    const recientes = items.slice(0, 8);
+    if (!recientes.length) {
+      el.innerHTML = '<div class="act-empty">Todavía no hay archivos en las carpetas de Drive de las empresas.</div>';
+      return;
+    }
+    el.innerHTML = recientes.map(i => {
+      const emp = i.empresa;
+      const color = emp ? (emp.color || '#6C868C') : '#6C868C';
+      const quien = emp ? esc(emp.nombre) : 'Grupo El Faro';
+      const donde = i.carpeta ? ` · ${esc(i.carpeta)}` : '';
+      // El nombre del archivo suele repetir el de la empresa: no se muestra dos veces
+      const archivo = emp ? sinNombreEmpresa(i.nombre, emp.nombre) : i.nombre;
+      return `<div class="activity-item" style="cursor:pointer" onclick="openLink('${jsq(i.url)}')">
+        <div class="act-icon" style="background:${color}22">${iconTipo(i.tipo)}</div>
+        <div><div class="act-text"><strong>${quien}</strong>${archivo ? ' · ' + esc(archivo) : ''}</div>
+        <div class="act-time">${esc(fechaCorta(i.fecha))}${donde}</div></div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = `<div class="act-empty">No se pudo leer la actividad de Drive.<br><small>${esc(e.message)}</small></div>`;
+  }
 }
 
 // "Próximas reuniones" del dashboard: se derivan del calendario real (MEETINGS)
@@ -1196,9 +1095,8 @@ function renderProximasReuniones() {
   const el = document.getElementById('proximas-reuniones');
   if (!el) return;
   const todayStr = calLocalStr(CAL_TODAY);
-  const empresaNames = new Set(EMPRESAS.map(e => e.nombre));
   const prox = MEETINGS
-    .filter(m => m.date >= todayStr && empresaNames.has(m.assignment))
+    .filter(m => m.date >= todayStr && !['Feriado', 'Sin reunión'].includes(m.assignment))
     .sort((a, b) => a.date < b.date ? -1 : 1)
     .slice(0, 6);
   if (!prox.length) {
@@ -1206,8 +1104,7 @@ function renderProximasReuniones() {
     return;
   }
   el.innerHTML = prox.map(m => {
-    const e = EMPRESAS.find(x => x.nombre === m.assignment);
-    const color = e ? (e.color || '#6C868C') : '#6C868C';
+    const color = calColorFor(m.assignment);
     const d = new Date(m.date + 'T12:00:00');
     const fecha = `${d.getDate()} ${CAL_MONTHS[d.getMonth()].slice(0, 3)}`;
     const tema = m.topic ? esc(m.topic) : 'Lunes 8:00 hs · Zoom';
@@ -1215,14 +1112,24 @@ function renderProximasReuniones() {
   }).join('');
 }
 
+// "Reuniones realizadas": se derivan del calendario (MEETINGS), no de una lista aparte
 function renderHistorial() {
   const el = document.getElementById('historial-list');
   if (!el) return;
-  const recientes = REUNIONES_HISTORIAL.filter(r => r.tipo === 'empresa').slice(-12).reverse();
-  el.innerHTML = recientes.map(r => {
-    const e = EMPRESAS.find(emp => r.empresa.toLowerCase().includes(emp.nombre.toLowerCase().split(' ').slice(0,2).join(' ').toLowerCase()));
-    const color = e ? e.color : '#6C868C';
-    return `<div class="historial-item"><span class="hist-fecha">${r.dia} ${r.año}</span><span class="hist-dot" style="background:${color}"></span><div><div class="hist-empresa">${r.empresa}</div><div class="hist-tema">Presentación empresarial · Lunes 8:00 hs</div></div><span class="badge badge-green" style="margin-left:auto">Realizada</span></div>`;
+  const todayStr = calLocalStr(CAL_TODAY);
+  const pasadas = MEETINGS
+    .filter(m => m.date < todayStr && !['Feriado', 'Sin reunión'].includes(m.assignment))
+    .sort((a, b) => a.date < b.date ? 1 : -1)
+    .slice(0, 12);
+  if (!pasadas.length) {
+    el.innerHTML = '<div style="padding:10px 2px;font-size:12px;color:var(--gris-medio)">Todavía no hay reuniones realizadas cargadas en el calendario.</div>';
+    return;
+  }
+  el.innerHTML = pasadas.map(m => {
+    const d = new Date(m.date + 'T12:00:00');
+    const fecha = `${d.getDate()} ${CAL_MONTHS[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`;
+    const tema = m.topic ? esc(m.topic) : 'Reunión del grupo';
+    return `<div class="historial-item"><span class="hist-fecha">${fecha}</span><span class="hist-dot" style="background:${calColorFor(m.assignment)}"></span><div><div class="hist-empresa">${esc(m.assignment)}</div><div class="hist-tema">${tema}</div></div><span class="badge badge-green" style="margin-left:auto">Realizada</span></div>`;
   }).join('');
 }
 
@@ -1374,37 +1281,86 @@ function renderEmpresaDetalle(empresa) {
 // ══════════════════════════════════════════════════════════════
 // PROCESOS
 // ══════════════════════════════════════════════════════════════
-function renderProcesos() {
+// El historial de presentaciones sale de la carpeta "Presentaciones" de cada
+// empresa en Drive. Si un archivo está en otra subcarpeta, igual se lista abajo.
+async function renderProcesos() {
   const el = document.getElementById('procesos-content');
   if (!el) return;
+  el.innerHTML = '<div class="proc-loading">Cargando las carpetas de Drive…</div>';
+  let items = [];
+  try {
+    items = (await driveActivity()).items;
+  } catch (e) {
+    el.innerHTML = `<div class="proc-loading">No se pudieron leer las carpetas de Drive.<br><small>${esc(e.message)}</small></div>`;
+    return;
+  }
+  const porEmpresa = {};
+  items.forEach(i => { if (i.empresa) (porEmpresa[i.empresa.id] = porEmpresa[i.empresa.id] || []).push(i); });
 
   el.innerHTML = EMPRESAS.map(empresa => {
-    const procs = PROCESOS.filter(p => p.empresaId === empresa.id);
-    if (!procs.length) return '';
+    const todos = porEmpresa[empresa.id] || [];
+    const pres = todos.filter(esPresentacion);
+    const lista = pres.length ? pres : todos.filter(i => !/proceso|bitacora|minuta/i.test(i.carpeta || ''));
+    const color = empresa.color || '#6C868C';
+    const sub = [empresa.foco || empresa.sector || '', empresa.zona || ''].filter(Boolean).join(' · ');
+    const cuerpo = lista.length
+      ? lista.map(i => `
+            <div class="proceso-item" style="border-left-color:${color};cursor:pointer" onclick="openLink('${jsq(i.url)}')">
+              <div class="pi-fecha">${esc(fechaCorta(i.fecha))}</div>
+              <div style="flex:1">
+                <div class="pi-titulo">${esc(i.nombre)}</div>
+                <div class="pi-resumen">${esc(i.carpeta || 'Carpeta de la empresa')} · ${esc(i.tipo || 'archivo')}</div>
+              </div>
+              <div class="pdf-item-action">Abrir</div>
+            </div>`).join('')
+      : `<div class="proc-vacio">${empresaDriveFolder(empresa)
+          ? 'Todavía no hay archivos en la carpeta de esta empresa.'
+          : 'Esta empresa todavía no tiene carpeta de Drive vinculada (pestaña CONFIG_DRIVE de la planilla base).'}</div>`;
     return `
       <div class="proceso-empresa-section">
         <div class="proceso-empresa-header" onclick="toggleProceso('proc-${empresa.id}', this)">
-          <div class="peh-sigla" style="background:${empresa.color}">${empresa.sigla}</div>
+          <div class="peh-sigla" style="background:${color}">${esc(empresa.sigla || '')}</div>
           <div>
-            <div class="peh-nombre">${empresa.nombre}</div>
-            <div class="peh-sector">${empresa.sector} · ${empresa.zona}</div>
+            <div class="peh-nombre">${esc(empresa.nombre)}</div>
+            <div class="peh-sector">${esc(sub)}</div>
           </div>
-          <div class="peh-count">${procs.length} presentaciones</div>
+          <div class="peh-count">${lista.length} archivo${lista.length === 1 ? '' : 's'}</div>
+          <button class="peh-bitacora" onclick="event.stopPropagation(); openBitacora(${empresa.id}, this)">📓 Bitácora</button>
           <div class="peh-arrow" id="arrow-proc-${empresa.id}">›</div>
         </div>
-        <div class="proceso-list" id="proc-${empresa.id}">
-          ${procs.map(p => `
-            <div class="proceso-item" style="border-left-color:${empresa.color}">
-              <div class="pi-fecha">${p.fecha}</div>
-              <div style="flex:1">
-                <div class="pi-titulo">${p.titulo}</div>
-                <div class="pi-resumen">${p.resumen}</div>
-                <div class="pi-pdf-link" onclick="openEmpresa(${empresa.id})">📄 Ver documentos →</div>
-              </div>
-            </div>`).join('')}
-        </div>
+        <div class="proceso-list" id="proc-${empresa.id}">${cuerpo}</div>
       </div>`;
   }).join('');
+}
+
+// Abre SOLO el archivo de Bitácora del proceso (carpeta "Proceso" de la empresa
+// en Drive), sin pasar por la ficha completa de la empresa.
+const BITACORA_CACHE = {};
+async function openBitacora(empresaId, el) {
+  const empresa = EMPRESAS.find(e => e.id === empresaId);
+  if (!empresa) return;
+  const folder = empresaDriveFolder(empresa);
+  if (!folder) {
+    alert('Esta empresa todavía no tiene carpeta de Drive vinculada.\n\nCargá el id de la carpeta en la planilla base (pestaña CONFIG_DRIVE, columna id_carpeta_empresa).');
+    return;
+  }
+  if (BITACORA_CACHE[folder]) { window.open(BITACORA_CACHE[folder], '_blank', 'noopener'); return; }
+  // Se abre la pestaña ya mismo (si se abriera después del fetch, el navegador la bloquea)
+  const win = window.open('', '_blank');
+  const txt = el ? el.textContent : '';
+  if (el) el.textContent = 'Buscando la Bitácora…';
+  try {
+    const r = await fetch(`${API_BASE_DRIVE}?op=bitacora&folderId=${encodeURIComponent(folder)}`);
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.error || !j.url) throw new Error(j.error || `HTTP ${r.status}`);
+    BITACORA_CACHE[folder] = j.url;
+    if (win) win.location = j.url; else window.open(j.url, '_blank', 'noopener');
+  } catch (e) {
+    if (win) win.close();
+    alert('No se pudo abrir la Bitácora de ' + empresa.nombre + '.\n\n' + e.message);
+  } finally {
+    if (el) el.textContent = txt;
+  }
 }
 
 function toggleProceso(listId, header) {
@@ -1422,19 +1378,19 @@ function toggleProceso(listId, header) {
 function renderEventos() {
   const elH = document.getElementById('timeline-hitos');
   const elP = document.getElementById('timeline-proximos');
-  const elC = document.getElementById('conceptos-grid');
 
   if (elH) elH.innerHTML = HITOS.map(e =>
-    `<div class="evento-item ${e.tipo}"><div class="evento-fecha">${e.fecha}</div><div class="evento-titulo">${e.titulo}</div><div class="evento-desc">${e.desc}</div></div>`
+    `<div class="evento-item ${esc(e.tipo || 'pasada')}"><div class="evento-fecha">${esc(e.fecha)}</div><div class="evento-titulo">${esc(e.titulo)}</div><div class="evento-desc">${esc(e.desc)}</div></div>`
   ).join('');
 
-  if (elP) elP.innerHTML = PROXIMOS_EVENTOS.map(e =>
-    `<div class="evento-item proxima"><div class="evento-fecha">${e.fecha}</div><div class="evento-titulo">${e.titulo}</div><div class="evento-desc">${e.desc}</div><span class="evento-empresa">🏢 ${e.empresa}</span></div>`
-  ).join('');
-
-  if (elC) elC.innerHTML = CONCEPTOS.map(c =>
-    `<div class="concepto-card"><div class="concepto-icon">${c.icon}</div><div class="concepto-titulo">${c.titulo}</div><div class="concepto-formula">${c.formula}</div><div class="concepto-desc">${c.desc}</div></div>`
-  ).join('');
+  // La fecha es texto libre: sirve tanto "29 Jun 2026" como "4-5-6/8" o "23 y 24/10".
+  // La referencia (empresa, lugar u organizador) es opcional.
+  if (elP) elP.innerHTML = PROXIMOS_EVENTOS.map(e => {
+    const ref = e.empresa || e.referencia || '';
+    return `<div class="evento-item proxima"><div class="evento-fecha">${esc(e.fecha)}</div><div class="evento-titulo">${esc(e.titulo)}</div>${
+      e.desc ? `<div class="evento-desc">${esc(e.desc)}</div>` : ''
+    }${ref ? `<span class="evento-empresa">📍 ${esc(ref)}</span>` : ''}</div>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1452,48 +1408,46 @@ function openLink(url) {
   window.open(url, '_blank', 'noopener');
 }
 
+// Recursos = Marco conceptual + herramientas (web de Simpleza + carpeta de Drive)
 function renderRecursosSec() {
-  const elM = document.getElementById('minutas-generales');
-  if (elM) {
-    elM.innerHTML = MINUTAS_GENERALES.map(m => `
-      <div class="pdf-item" style="cursor:pointer" onclick="openLink('${jsq(m.url)}')">
-        <div class="pdf-icon">📋</div>
-        <div>
-          <div class="pdf-item-name">${esc(m.nombre)}</div>
-          <div class="pdf-item-date">${esc(m.fecha)}</div>
-        </div>
-        <div class="pdf-item-action">Ver minuta</div>
-      </div>`).join('');
-  }
-  renderRecursos('todos');
-}
+  const elC = document.getElementById('conceptos-grid');
+  if (elC) elC.innerHTML = CONCEPTOS.map(c =>
+    `<div class="concepto-card"><div class="concepto-icon">${esc(c.icon)}</div><div class="concepto-titulo">${esc(c.titulo)}</div>${
+      c.formula ? `<div class="concepto-formula">${esc(c.formula)}</div>` : ''
+    }<div class="concepto-desc">${esc(c.desc)}</div></div>`
+  ).join('');
 
-function renderRecursos(filtro, btn) {
-  if (btn) {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+  const elML = document.getElementById('marco-drive-link');
+  if (elML) elML.innerHTML = DRIVE_CONFIG.marcoFileId
+    ? `<div class="rec-note"><a class="src-link" href="https://drive.google.com/file/d/${esc(DRIVE_CONFIG.marcoFileId)}/view" target="_blank" rel="noopener">📄 Abrir el archivo del Marco Conceptual en Drive ↗</a></div>`
+    : '';
+
+  const elW = document.getElementById('herramientas-web');
+  if (elW) {
+    const url = DRIVE_CONFIG.herramientasUrl || SIMPLEZA_TOOLS_URL;
+    elW.innerHTML = `<p class="rec-lead">Las herramientas publicadas por Simpleza (guías, tableros y materiales de trabajo) están en su sitio web.</p>
+      <a class="rec-cta" href="${esc(url)}" target="_blank" rel="noopener">Ir a las herramientas de Simpleza ↗</a>`;
   }
-  const lista = filtro === 'todos' ? RECURSOS : RECURSOS.filter(r => r.categoria === filtro);
-  const colorCat = { herramienta:'#27AE60', metodologia:'#2980B9', documento:'#8E44AD' };
-  const el = document.getElementById('recursos-grid');
-  if (!el) return;
-  el.innerHTML = lista.map(r => `
-    <div class="recurso-card" style="border-top-color:${colorCat[r.categoria] || 'var(--azul-pizarra)'};cursor:pointer" onclick="openLink('${jsq(r.link)}')">
-      <div class="rc-icon">${r.icon}</div>
-      <div class="rc-categoria" style="color:${colorCat[r.categoria]}">${esc(r.categoria)}</div>
-      <div class="rc-titulo">${esc(r.titulo)}</div>
-      <div class="rc-desc">${esc(r.desc)}</div>
-      <div class="rc-link">📎 Abrir recurso →</div>
-    </div>`).join('');
+
+  const elF = document.getElementById('herramientas-carpeta');
+  if (elF) {
+    const fid = DRIVE_CONFIG.herramientasFolderId;
+    elF.innerHTML = fid
+      ? `<iframe class="drive-embed" src="https://drive.google.com/embeddedfolderview?id=${encodeURIComponent(fid)}#grid" title="Herramientas del grupo"></iframe>
+         <div class="rec-note">Se ve el contenido en vivo de la carpeta: lo que suban a Drive aparece acá. Para que se vea desde cualquier navegador, la carpeta tiene que estar compartida como «Cualquiera con el enlace · Lector».
+         <a class="src-link" href="https://drive.google.com/drive/folders/${esc(fid)}" target="_blank" rel="noopener">Abrir en Drive ↗</a></div>`
+      : `<div class="rec-empty">Todavía no hay carpeta vinculada. Armá una carpeta en Drive con las herramientas del grupo (tableros, matrices, plantillas) y pegá su id o su link en <a onclick="navigate('config')">Configuración → Herramientas del grupo</a>.</div>`;
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
-// CONTENIDO EDITABLE (persistido en Turso vía /api/db)
+// TURSO (/api/db): SOLO calendario + fuentes de datos de Drive
 // ══════════════════════════════════════════════════════════════
+// El contenido del sitio NO se guarda acá: sale de Drive (planilla base,
+// carpetas de las empresas y archivo del marco conceptual).
 const API_BASE = '/api/db';
 const GROUP_ID = 'grupo4';
 
-// Carga el contenido guardado en Turso y sobreescribe los datos por defecto.
 async function loadContentFromDB() {
   try {
     const r = await fetch(`${API_BASE}?group_id=${encodeURIComponent(GROUP_ID)}`);
@@ -1501,17 +1455,6 @@ async function loadContentFromDB() {
     const j = await r.json();
     const c = (j && j.content) || {};
     if (c.drive_config && typeof c.drive_config === 'object') DRIVE_CONFIG = Object.assign({}, DRIVE_CONFIG, c.drive_config);
-    if (Array.isArray(c.empresas))  EMPRESAS = c.empresas;
-    if (Array.isArray(c.procesos))  PROCESOS = c.procesos;
-    if (Array.isArray(c.hitos))     HITOS = c.hitos;
-    if (Array.isArray(c.proximos))  PROXIMOS_EVENTOS = c.proximos;
-    if (Array.isArray(c.conceptos)) CONCEPTOS = c.conceptos;
-    if (Array.isArray(c.minutas))   MINUTAS_GENERALES = c.minutas;
-    if (Array.isArray(c.recursos))  RECURSOS = c.recursos;
-    if (c.home && typeof c.home === 'object') {
-      HOME = Object.assign({}, HOME, c.home);
-      if (!HOME.banner) HOME.banner = {};
-    }
     // Reuniones y configuración del calendario (tablas meetings/config de Turso).
     // Si la base todavía no tiene reuniones, se usa el seed de conocidas (fijadas).
     MEETINGS = (Array.isArray(j.meetings) && j.meetings.length)
@@ -1563,8 +1506,9 @@ const DEFAULT_MEETINGS = [
 const CAL_MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const CAL_DOWS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 const CAL_HOLIDAYS = ['01-01','03-24','04-02','05-01','05-25','06-20','07-09','08-17','10-12','11-20','12-08','12-25'];
-const CAL_SPECIALS = ['Ronda de novedades', 'Técnica', 'Feriado', 'Sin reunión'];
-const CAL_SPECIAL_COLOR = { 'Ronda de novedades':'#89B4C8', 'Técnica':'#6C868C', 'Feriado':'#CD6155', 'Sin reunión':'#D9CCC1' };
+// "Flexible" = reunión interna o especial del grupo (sin empresa asignada).
+const CAL_SPECIALS = ['Ronda de novedades', 'Técnica', 'Flexible', 'Feriado', 'Sin reunión'];
+const CAL_SPECIAL_COLOR = { 'Ronda de novedades':'#89B4C8', 'Técnica':'#6C868C', 'Flexible':'#F7DC6F', 'Feriado':'#CD6155', 'Sin reunión':'#D9CCC1' };
 const CAL_TODAY = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
 
 function calLocalStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -1771,7 +1715,8 @@ async function calGenerate() {
   while (cur <= end) {
     const dateStr = calLocalStr(cur);
     const existing = MEETINGS.find(m => m.date === dateStr);
-    if (!existing || !existing.fixed) {
+    // Se respetan las fijadas (📌) y las marcadas como "Flexible" (internas/especiales)
+    if (!existing || (!existing.fixed && existing.assignment !== 'Flexible')) {
       let assignment;
       if (calIsHoliday(cur)) assignment = 'Feriado';
       else assignment = calPickBest(cur);
@@ -1799,259 +1744,37 @@ async function calResetAll() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// EDITOR GENÉRICO DIRIGIDO POR ESQUEMA
+// ORIGEN DE LOS DATOS (no hay formularios: todo sale de Drive)
 // ══════════════════════════════════════════════════════════════
 function esc(s){ return String(s ?? '').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
 
-const SCHEMAS = {
-  procesos: {
-    title: 'Procesos estratégicos', titleField: 'titulo',
-    getData: () => PROCESOS, setData: v => { PROCESOS = v; },
-    fields: [
-      { name:'empresaId', label:'Empresa', type:'empresaSelect' },
-      { name:'titulo', label:'Título', type:'text' },
-      { name:'fecha', label:'Fecha', type:'text' },
-      { name:'resumen', label:'Resumen', type:'textarea' },
-    ],
-    newItem: () => ({ empresaId: (EMPRESAS[0]||{}).id || 1, titulo:'Nuevo proceso', fecha:'', resumen:'' }),
-  },
-  proximos: {
-    title: 'Próximos eventos', titleField: 'titulo',
-    getData: () => PROXIMOS_EVENTOS, setData: v => { PROXIMOS_EVENTOS = v; },
-    fields: [
-      { name:'fecha', label:'Fecha', type:'text' },
-      { name:'titulo', label:'Título', type:'text' },
-      { name:'desc', label:'Descripción', type:'textarea' },
-      { name:'empresa', label:'Empresa', type:'text' },
-    ],
-    newItem: () => ({ fecha:'', titulo:'Nuevo evento', desc:'', empresa:'' }),
-  },
-  conceptos: {
-    title: 'Marco conceptual', titleField: 'titulo',
-    getData: () => CONCEPTOS, setData: v => { CONCEPTOS = v; },
-    fields: [
-      { name:'icon', label:'Ícono (emoji)', type:'text' },
-      { name:'titulo', label:'Título', type:'text' },
-      { name:'formula', label:'Fórmula', type:'text' },
-      { name:'desc', label:'Descripción', type:'textarea' },
-    ],
-    newItem: () => ({ icon:'📌', titulo:'Nuevo concepto', formula:'', desc:'' }),
-  },
-  minutas: {
-    title: 'Minutas generales', titleField: 'nombre',
-    getData: () => MINUTAS_GENERALES, setData: v => { MINUTAS_GENERALES = v; },
-    fields: [
-      { name:'nombre', label:'Nombre', type:'text' },
-      { name:'fecha', label:'Fecha', type:'text' },
-      { name:'url', label:'URL / enlace', type:'text' },
-    ],
-    newItem: () => ({ nombre:'Nueva minuta', fecha:'', url:'#' }),
-  },
-  recursos: {
-    title: 'Recursos del grupo', titleField: 'titulo',
-    getData: () => RECURSOS, setData: v => { RECURSOS = v; },
-    fields: [
-      { name:'icon', label:'Ícono (emoji)', type:'text' },
-      { name:'categoria', label:'Categoría', type:'select', options:['herramienta','metodologia','documento'] },
-      { name:'titulo', label:'Título', type:'text' },
-      { name:'desc', label:'Descripción', type:'textarea' },
-      { name:'link', label:'Enlace', type:'text' },
-    ],
-    newItem: () => ({ id: Date.now(), icon:'📌', categoria:'herramienta', titulo:'Nuevo recurso', desc:'', link:'#' }),
-  },
-  // ── Portada: actividad reciente ──
-  home_actividad: {
-    title: 'Actividad reciente', titleField: 'time', persistKey: 'home', persistData: () => HOME,
-    getData: () => HOME.actividad, setData: v => { HOME.actividad = v; },
-    fields: [
-      { name:'text', label:'Texto (permite <strong>…</strong>)', type:'textarea' },
-      { name:'time', label:'Fecha', type:'text' },
-    ],
-    newItem: () => ({ text:'<strong>Empresa</strong> novedad…', time:'' }),
-  },
+// En modo edición cada sección explica de dónde sale su contenido y linkea el
+// archivo o la carpeta de Drive que hay que tocar para cambiarlo.
+const DRIVE_SECTIONS = {
+  dashboard: { texto: 'La <strong>actividad reciente</strong> son los últimos archivos subidos a las carpetas de Drive de las empresas. Las <strong>próximas reuniones</strong> y las <strong>realizadas</strong> salen del Calendario.', tipo: 'carpetas' },
+  grupo:     { texto: 'Identidad, objetivos, principios, hitos y ejes salen de las pestañas <strong>GRUPO</strong>, <strong>HITOS</strong> y <strong>EJES_2026</strong> de la planilla base.', tipo: 'base' },
+  empresas:  { texto: 'Cada ficha sale de la pestaña <strong>EMPRESAS</strong> de la planilla base: nombre, <strong>zona</strong> (📍), <strong>participantes</strong> (👤), <strong>resumen_corto</strong> y <strong>foco_actual</strong>. Para cambiar un nombre de participante, editá esa celda.', tipo: 'base' },
+  procesos:  { texto: 'Cada empresa lista los archivos de su carpeta de Drive (subcarpeta <strong>Presentaciones</strong>). Subí el archivo a Drive y aparece acá. El botón <strong>Bitácora</strong> abre el documento de la subcarpeta <strong>Proceso</strong>.', tipo: 'carpetas' },
+  eventos:   { texto: 'Los <strong>hitos</strong> salen de la pestaña <strong>HITOS</strong> y la <strong>agenda</strong> de la pestaña <strong>EVENTOS</strong> (columnas fecha, titulo, descripcion, lugar). La fecha es texto libre: «4-5-6/8», «23 y 24/10».', tipo: 'base' },
+  recursos:  { texto: 'El <strong>marco conceptual</strong> sale del archivo Marco Conceptual (pestaña CONCEPTOS) y las <strong>herramientas del grupo</strong> de la carpeta de Drive vinculada.', tipo: 'config' },
 };
-
-const RENDER_AFTER = {
-  procesos: () => renderProcesos(),
-  proximos: () => renderEventos(),
-  conceptos: () => renderEventos(),
-  minutas: () => renderRecursosSec(),
-  recursos: () => renderRecursos('todos'),
-  home_actividad: () => renderActividadReciente(),
-};
-
-// Secciones cuyo contenido se edita EN EL SITIO (formularios).
-// El Grupo y Empresas ya NO están acá: se cargan desde el archivo base de Drive.
-const SECTION_DATASETS = {
-  dashboard: [{ key:'home_actividad', label:'Actividad reciente' }],
-  procesos: [{ key:'procesos', label:'Procesos' }],
-  eventos:  [{ key:'proximos', label:'Próximos eventos' }, { key:'conceptos', label:'Marco conceptual' }],
-  recursos: [{ key:'minutas', label:'Minutas generales' }, { key:'recursos', label:'Recursos' }],
-};
-
-let editorState = null;
-
-// Hook llamado por setEditing(): agrega/quita los botones "Editar" por sección
-// Secciones cuyo contenido viene del Drive (no se editan con formulario)
-const DRIVE_SECTIONS = { grupo: 'El Grupo', empresas: 'Empresas' };
 
 function onEditingChange(on) {
-  document.querySelectorAll('.section-edit-btn, .drive-hint').forEach(b => b.remove());
+  document.querySelectorAll('.drive-hint').forEach(b => b.remove());
   if (!on) return;
-  for (const [sec, sets] of Object.entries(SECTION_DATASETS)) {
-    const ph = document.querySelector(`#sec-${sec} .page-header`);
-    if (!ph) continue;
-    const btn = document.createElement('button');
-    btn.className = 'section-edit-btn';
-    btn.innerHTML = '✏️ Editar';
-    btn.onclick = () => sets.length === 1 ? openEditor(sets[0].key) : openChooser(sets);
-    ph.appendChild(btn);
-  }
-  // Aviso "se carga desde Drive" en las secciones que salen del archivo base
-  for (const sec of Object.keys(DRIVE_SECTIONS)) {
+  const linkBase = DRIVE_CONFIG.baseFileId
+    ? ` <a href="https://drive.google.com/file/d/${esc(DRIVE_CONFIG.baseFileId)}/view" target="_blank" rel="noopener">Abrir la planilla ↗</a>`
+    : '';
+  for (const [sec, info] of Object.entries(DRIVE_SECTIONS)) {
     const ph = document.querySelector(`#sec-${sec} .page-header`);
     if (!ph) continue;
     const d = document.createElement('div');
     d.className = 'drive-hint';
-    d.innerHTML = '📄 Este contenido se carga desde la planilla de Drive. Editalo en ese archivo, o cambiá la fuente en <a onclick="navigate(\'config\')">Configuración</a>.';
+    const cola = info.tipo === 'base'
+      ? ` Editá ese archivo (o cambiá la fuente en <a onclick="navigate('config')">Configuración</a>).${linkBase}`
+      : ` Las fuentes se conectan en <a onclick="navigate('config')">Configuración</a>.`;
+    d.innerHTML = `📄 ${info.texto}${cola}`;
     ph.appendChild(d);
-  }
-}
-
-function openChooser(sets) {
-  const list = document.getElementById('chooser-list');
-  list.innerHTML = '';
-  sets.forEach(s => {
-    const b = document.createElement('button');
-    b.textContent = s.label;
-    b.onclick = () => { closeChooser(); openEditor(s.key); };
-    list.appendChild(b);
-  });
-  document.getElementById('chooser-modal').classList.add('open');
-}
-function closeChooser() { document.getElementById('chooser-modal').classList.remove('open'); }
-
-function openEditor(key) {
-  const schema = SCHEMAS[key];
-  if (!schema) return;
-  const raw = schema.getData();
-  const items = schema.singleton
-    ? [JSON.parse(JSON.stringify(raw || {}))]
-    : JSON.parse(JSON.stringify(raw || []));
-  editorState = { key, schema, singleton: !!schema.singleton, items };
-  document.getElementById('editor-title').textContent = 'Editar · ' + schema.title;
-  document.getElementById('editor-msg').textContent = '';
-  document.querySelector('#editor-modal .btn-add').style.display = schema.singleton ? 'none' : '';
-  renderEditor();
-  document.getElementById('editor-modal').classList.add('open');
-}
-function closeEditor() { document.getElementById('editor-modal').classList.remove('open'); editorState = null; }
-
-function renderField(f, val, idx) {
-  const id = `f-${idx}-${f.name}`;
-  if (f.type === 'textarea')
-    return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><textarea id="${id}" data-idx="${idx}" data-field="${f.name}">${esc(val)}</textarea></div>`;
-  if (f.type === 'color')
-    return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><input type="color" id="${id}" data-idx="${idx}" data-field="${f.name}" value="${esc(val || '#6C868C')}"></div>`;
-  if (f.type === 'bool')
-    return `<div class="ed-field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="${id}" data-idx="${idx}" data-field="${f.name}" data-bool="1"${(val !== false)?' checked':''}> ${esc(f.label)}</label></div>`;
-  if (f.type === 'select')
-    return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><select id="${id}" data-idx="${idx}" data-field="${f.name}">${(f.options||[]).map(o => `<option value="${esc(o)}"${o===val?' selected':''}>${esc(o)}</option>`).join('')}</select></div>`;
-  if (f.type === 'empresaSelect')
-    return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><select id="${id}" data-idx="${idx}" data-field="${f.name}" data-num="1">${EMPRESAS.map(e => `<option value="${e.id}"${e.id==val?' selected':''}>${esc(e.nombre)}</option>`).join('')}</select></div>`;
-  if (f.type === 'strlist')
-    return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><textarea id="${id}" data-idx="${idx}" data-field="${f.name}" data-list="1">${esc((Array.isArray(val)?val:[]).join('\n'))}</textarea><div class="ed-hint">Un elemento por línea.</div></div>`;
-  if (f.type === 'objlist') {
-    const rows = (Array.isArray(val) ? val : []);
-    return `<div class="ed-field"><label>${esc(f.label)}</label><div class="ed-sub" data-objlist="${idx}-${f.name}">${
-      rows.map((row, ri) => renderSubRow(f, idx, ri, row)).join('')
-    }<button type="button" class="ed-subadd" onclick="addSubRow(${idx}, '${f.name}')">＋ Agregar</button></div></div>`;
-  }
-  // text por defecto
-  return `<div class="ed-field"><label for="${id}">${esc(f.label)}</label><input type="text" id="${id}" data-idx="${idx}" data-field="${f.name}" value="${esc(val)}"></div>`;
-}
-
-function renderSubRow(f, idx, ri, row) {
-  return `<div class="ed-subrow" data-row="${ri}">${
-    f.sub.map(sf => `<input type="text" placeholder="${esc(sf.label)}" data-subfield="${sf.name}" value="${esc(row[sf.name])}">`).join('')
-  }<button type="button" class="ed-subdel" onclick="removeSubRow(${idx}, '${f.name}', ${ri})">✕</button></div>`;
-}
-
-function renderEditor() {
-  const { schema, items, singleton } = editorState;
-  const body = document.getElementById('editor-body');
-  body.innerHTML = items.length ? items.map((it, idx) => `
-    <div class="ed-item">
-      ${singleton ? '' : `<div class="ed-item-head">
-        <span>#${idx + 1}${it[schema.titleField] ? ' · ' + esc(it[schema.titleField]) : ''}</span>
-        <button class="ed-del" onclick="removeEditorItem(${idx})">Eliminar</button>
-      </div>`}
-      ${schema.fields.map(f => renderField(f, it[f.name], idx)).join('')}
-    </div>`).join('') : '<div class="ed-empty">Sin elementos todavía. Usá “＋ Agregar elemento”.</div>';
-}
-
-// Lee los valores actuales del DOM hacia editorState.items (antes de re-render/guardar)
-function readEditorDOM() {
-  const { schema, items } = editorState;
-  items.forEach((it, idx) => {
-    schema.fields.forEach(f => {
-      if (f.type === 'strlist') {
-        const el = document.querySelector(`[data-idx="${idx}"][data-field="${f.name}"]`);
-        if (el) it[f.name] = el.value.split('\n').map(s => s.trim()).filter(Boolean);
-      } else if (f.type === 'objlist') {
-        const cont = document.querySelector(`[data-objlist="${idx}-${f.name}"]`);
-        if (cont) it[f.name] = [...cont.querySelectorAll('.ed-subrow')].map(rowEl => {
-          const o = {};
-          f.sub.forEach(sf => { const el = rowEl.querySelector(`[data-subfield="${sf.name}"]`); o[sf.name] = el ? el.value : ''; });
-          return o;
-        });
-      } else if (f.type === 'bool') {
-        const el = document.querySelector(`[data-idx="${idx}"][data-field="${f.name}"]`);
-        if (el) it[f.name] = el.checked;
-      } else {
-        const el = document.querySelector(`[data-idx="${idx}"][data-field="${f.name}"]`);
-        if (el) it[f.name] = el.dataset.num ? (parseInt(el.value) || el.value) : el.value;
-      }
-    });
-  });
-}
-
-function addEditorItem() { readEditorDOM(); editorState.items.push(editorState.schema.newItem()); renderEditor(); }
-function removeEditorItem(idx) { readEditorDOM(); editorState.items.splice(idx, 1); renderEditor(); }
-function addSubRow(idx, fname) {
-  readEditorDOM();
-  const f = editorState.schema.fields.find(x => x.name === fname);
-  const empty = {}; f.sub.forEach(sf => empty[sf.name] = '');
-  (editorState.items[idx][fname] = editorState.items[idx][fname] || []).push(empty);
-  renderEditor();
-}
-function removeSubRow(idx, fname, ri) {
-  readEditorDOM();
-  editorState.items[idx][fname].splice(ri, 1);
-  renderEditor();
-}
-
-async function saveEditor() {
-  if (!editorState) return;
-  readEditorDOM();
-  const { key, schema, items, singleton } = editorState;
-  const saveBtn = document.getElementById('editor-save');
-  const msg = document.getElementById('editor-msg');
-  saveBtn.disabled = true; msg.textContent = 'Guardando…';
-  try {
-    // Actualiza el estado en memoria primero (por si persistData deriva de él)
-    schema.setData(JSON.parse(JSON.stringify(singleton ? items[0] : items)));
-    const persistKey = schema.persistKey || key;
-    const payload = schema.persistData ? schema.persistData() : (singleton ? items[0] : items);
-    await saveContentToDB(persistKey, payload);
-    if (RENDER_AFTER[key]) RENDER_AFTER[key]();
-    msg.textContent = 'Guardado ✓';
-    setTimeout(() => closeEditor(), 500);
-  } catch (e) {
-    console.error('Error al guardar contenido:', e);
-    msg.textContent = 'Error: ' + e.message;
-  } finally {
-    saveBtn.disabled = false;
   }
 }
 
@@ -2070,6 +1793,7 @@ let DRIVE_CONFIG = {
   baseFileId: '1hdGYpzGrqIh5gADoVkp9yNp8pPGM29dt',
   marcoFileId: '',
   herramientasFolderId: '',
+  herramientasUrl: '',
   tecnicasFolderId: '',
 };
 
@@ -2098,8 +1822,28 @@ async function loadBaseFromDrive() {
         driveFolderId: e.driveFolderId || '', tags: [],
       }));
     }
+    // Agenda del grupo: pestaña EVENTOS (opcional) de la misma planilla
+    if (Array.isArray(j.eventos) && j.eventos.length) PROXIMOS_EVENTOS = j.eventos;
+    // Los hitos de "Eventos e Hitos" son los mismos de la planilla
+    if (Array.isArray(j.hitos) && j.hitos.length) {
+      HITOS = j.hitos.map(h => ({ fecha: h.anio || h.fecha || '', titulo: h.titulo, desc: h.desc, tipo: 'pasada' }));
+    }
   } catch (err) {
     console.warn('No se pudo cargar el archivo base de Drive (se usan los datos por defecto):', err);
+  }
+}
+
+// Marco Conceptual: archivo aparte de Drive (pestaña CONCEPTOS)
+async function loadMarcoFromDrive() {
+  const fileId = DRIVE_CONFIG.marcoFileId;
+  if (!fileId) return;
+  try {
+    const r = await fetch(`${API_BASE_SHEET}?fileId=${encodeURIComponent(fileId)}`);
+    if (!r.ok) return;
+    const j = await r.json();
+    if (j && Array.isArray(j.conceptos) && j.conceptos.length) CONCEPTOS = j.conceptos;
+  } catch (err) {
+    console.warn('No se pudo cargar el Marco Conceptual de Drive (se usan los conceptos por defecto):', err);
   }
 }
 
@@ -2115,17 +1859,20 @@ async function getServiceAccountEmail() {
 }
 
 const DRIVE_SOURCES = [
-  { key:'baseFileId', tipo:'archivo', label:'El Grupo y Empresas', obligatorio:true,
-    desc:'Identidad del grupo, objetivos, principios, hitos, ejes temáticos y la ficha de cada empresa.',
-    estructura:'Pestañas: GRUPO, HITOS, EJES_2026, EMPRESAS, CONFIG_DRIVE.',
+  { key:'baseFileId', tipo:'archivo', label:'El Grupo, Empresas y Agenda', obligatorio:true,
+    desc:'Identidad del grupo, objetivos, principios, hitos, ejes temáticos, la ficha de cada empresa y la agenda de eventos. La pestaña CONFIG_DRIVE es la que vincula cada empresa con su carpeta de Drive: de ahí salen la actividad reciente, los Procesos y la Bitácora.',
+    estructura:'Pestañas: GRUPO, HITOS, EJES_2026, EMPRESAS, CONFIG_DRIVE y EVENTOS (opcional: fecha, titulo, descripcion, lugar).',
     plantilla:'plantillas/Plantilla_Base_Grupo.xlsx' },
   { key:'marcoFileId', tipo:'archivo', label:'Marco Conceptual',
-    desc:'Conceptos y criterios metodológicos del grupo (directorio colaborativo, línea estratégica, etc.).',
+    desc:'Conceptos y criterios metodológicos del grupo (directorio colaborativo, línea estratégica, etc.). Se muestra en «Recursos del grupo»; el link al archivo aparece debajo de los conceptos.',
     estructura:'Pestaña CONCEPTOS: columnas icono, titulo, formula, descripcion.',
     plantilla:'plantillas/Plantilla_Marco_Conceptual.xlsx' },
   { key:'herramientasFolderId', tipo:'carpeta', label:'Herramientas del grupo',
-    desc:'Herramientas que el grupo va incorporando. Se listan automáticamente los archivos de la carpeta.',
-    estructura:'Una carpeta de Drive con los archivos.' },
+    desc:'Carpeta con las herramientas, tableros y matrices que el grupo comparte. Se muestra embebida (iframe) en «Recursos del grupo»: lo que suban a la carpeta aparece solo.',
+    estructura:'Una carpeta de Drive compartida como «Cualquiera con el enlace · Lector» (si no, el iframe no se ve desde otros navegadores).' },
+  { key:'herramientasUrl', tipo:'enlace', label:'Herramientas de Simpleza (web)',
+    desc:'Link a la sección de herramientas del sitio de Simpleza que se muestra en «Recursos del grupo».',
+    estructura:`Una URL completa. Si se deja vacío, se usa ${SIMPLEZA_TOOLS_URL}` },
   { key:'tecnicasFolderId', tipo:'carpeta', label:'Reuniones Técnicas',
     desc:'Material de las reuniones técnicas generales (presentaciones, minutas, grabaciones…).',
     estructura:'Una carpeta de Drive con el material.' },
@@ -2156,6 +1903,10 @@ async function renderConfig() {
 
 function configSourceHtml(s) {
   const id = DRIVE_CONFIG[s.key] || '';
+  const esEnlace = s.tipo === 'enlace';
+  const abrir = esEnlace
+    ? (id ? `<a class="src-link" href="${esc(id)}" target="_blank" rel="noopener">Abrir ↗</a>` : '')
+    : (id ? `<a class="src-link" href="https://drive.google.com/${s.tipo === 'carpeta' ? 'drive/folders/' : 'file/d/'}${esc(id)}${s.tipo === 'carpeta' ? '' : '/view'}" target="_blank" rel="noopener">Abrir en Drive ↗</a>` : '');
   return `<div class="card src-card" style="margin-bottom:12px">
     <div class="src-head">
       <span class="src-title">${esc(s.label)}</span>
@@ -2165,11 +1916,11 @@ function configSourceHtml(s) {
     <div class="src-desc">${esc(s.desc)}</div>
     <div class="src-estructura"><strong>Estructura esperada:</strong> ${esc(s.estructura)}</div>
     <div class="src-row">
-      <input type="text" id="src-${s.key}" class="cal-input" placeholder="Pegá el ID o el link de Drive" value="${esc(id)}">
+      <input type="text" id="src-${s.key}" class="cal-input" placeholder="${esEnlace ? 'Pegá la URL (https://…)' : 'Pegá el ID o el link de Drive'}" value="${esc(id)}">
       <button class="btn-cal-primary" onclick="saveDriveSource('${s.key}')">Guardar</button>
-      <button class="btn-cal-add" onclick="testDriveSource('${s.key}')">Probar conexión</button>
+      ${esEnlace ? '' : `<button class="btn-cal-add" onclick="testDriveSource('${s.key}')">Probar conexión</button>`}
       ${s.plantilla ? `<a class="src-link" href="${s.plantilla}" download>⬇ Descargar plantilla</a>` : ''}
-      ${id ? `<a class="src-link" href="https://drive.google.com/${s.tipo === 'carpeta' ? 'drive/folders/' : 'file/d/'}${esc(id)}${s.tipo === 'carpeta' ? '' : '/view'}" target="_blank" rel="noopener">Abrir en Drive ↗</a>` : ''}
+      ${abrir}
     </div>
     <div class="src-status" id="src-status-${s.key}"></div>
   </div>`;
@@ -2178,16 +1929,24 @@ function configSourceHtml(s) {
 function copySA(email) { try { navigator.clipboard.writeText(email); } catch (e) {} }
 
 async function saveDriveSource(key) {
+  const src = DRIVE_SOURCES.find(s => s.key === key) || {};
   const inp = document.getElementById('src-' + key);
   const st = document.getElementById('src-status-' + key);
-  const val = extractDriveId(inp.value);
+  const val = src.tipo === 'enlace' ? inp.value.trim() : extractDriveId(inp.value);
   inp.value = val;
   DRIVE_CONFIG[key] = val;
   if (st) st.textContent = 'Guardando…';
   try {
     await saveContentToDB('drive_config', DRIVE_CONFIG);
     if (st) { st.textContent = 'Guardado ✓'; st.className = 'src-status ok'; }
-    if (key === 'baseFileId') { await loadBaseFromDrive(); if (currentSection === 'grupo') renderGrupo(); if (currentSection === 'empresas') renderEmpresas(); }
+    if (key === 'baseFileId') {
+      await loadBaseFromDrive();
+      DRIVE_ACTIVITY = null; // cambian las carpetas de las empresas
+      if (currentSection === 'grupo') renderGrupo();
+      if (currentSection === 'empresas') renderEmpresas();
+    }
+    if (key === 'marcoFileId') await loadMarcoFromDrive();
+    if (['marcoFileId', 'herramientasFolderId', 'herramientasUrl'].includes(key) && currentSection === 'recursos') renderRecursosSec();
   } catch (e) { if (st) { st.textContent = 'Error: ' + e.message; st.className = 'src-status err'; } }
 }
 
@@ -2206,7 +1965,8 @@ async function testDriveSource(key) {
     if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
     let info = 'Conectado ✓';
     if (src.tipo === 'carpeta') info = `Conectado ✓ · ${(j.files || []).length} archivos`;
-    else if (Array.isArray(j.empresas)) info = `Conectado ✓ · ${j.empresas.length} empresas`;
+    else if (Array.isArray(j.empresas) && j.empresas.length) info = `Conectado ✓ · ${j.empresas.length} empresas`;
+    else if (Array.isArray(j.conceptos) && j.conceptos.length) info = `Conectado ✓ · ${j.conceptos.length} conceptos`;
     if (st) { st.textContent = info; st.className = 'src-status ok'; }
   } catch (e) {
     if (st) { st.textContent = 'No conecta: ' + e.message + ' (¿compartiste la carpeta/archivo con la cuenta de servicio?)'; st.className = 'src-status err'; }
@@ -2214,9 +1974,10 @@ async function testDriveSource(key) {
 }
 
 async function boot() {
-  await loadContentFromDB();
-  await loadBaseFromDrive();
-  initDashboard();
+  await loadContentFromDB();            // calendario + fuentes de Drive
+  await loadBaseFromDrive();            // El Grupo, Empresas, hitos y agenda
+  loadMarcoFromDrive();                 // marco conceptual (no bloquea la portada)
+  initDashboard();                      // actividad reciente: carpetas de Drive
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
 else boot();

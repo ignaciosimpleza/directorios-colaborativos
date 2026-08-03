@@ -124,6 +124,21 @@ function parseBase(wb) {
       urlLogo: r['url_logo'] || '',
     })) : [];
 
+  // EVENTOS (agenda del grupo: congresos, viajes, encuentros). Opcional.
+  // La fecha es texto libre: "4-5-6/8", "23 y 24/10", "29 Jun 2026"…
+  const evtRows = findSheet(wb, ['fecha', 'titulo']);
+  const eventos = evtRows ? tableObjects(evtRows, ['fecha', 'titulo'])
+    .filter(r => r['mostrar_en_web'] === '' || truthy(r['mostrar_en_web']))
+    .filter(r => r['fecha'] || r['titulo'])
+    .map(r => ({ fecha: r['fecha'], titulo: r['titulo'], desc: r['descripcion'] || '', empresa: r['lugar'] || r['empresa'] || '' })) : [];
+
+  // CONCEPTOS (marco conceptual). Vive en su propio archivo, pero se parsea igual.
+  const conRows = findSheet(wb, ['titulo', 'formula', 'descripcion']);
+  const conceptos = conRows ? tableObjects(conRows, ['titulo', 'formula', 'descripcion'])
+    .filter(r => r['mostrar_en_web'] === '' || truthy(r['mostrar_en_web']))
+    .filter(r => r['titulo'])
+    .map(r => ({ icon: r['icono'] || '📌', titulo: r['titulo'], formula: r['formula'] || '', desc: r['descripcion'] || '' })) : [];
+
   // CONFIG_DRIVE (mapeo slug → carpeta)
   const cfgRows = findSheet(wb, ['slug', 'id_carpeta_empresa']);
   const config = cfgRows ? tableObjects(cfgRows, ['slug', 'id_carpeta_empresa'])
@@ -134,7 +149,7 @@ function parseBase(wb) {
   config.forEach(c => { cfgBySlug[c.slug] = c; });
   empresas.forEach(e => { const c = cfgBySlug[e.slug]; if (c) { e.driveFolderId = c.driveFolderId || ''; if (!e.urlLogo) e.urlLogo = c.urlLogo || ''; } });
 
-  return { grupo, hitos, ejes, empresas };
+  return { grupo, hitos, ejes, empresas, eventos, conceptos };
 }
 
 export { parseBase };
