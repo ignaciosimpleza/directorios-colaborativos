@@ -118,7 +118,8 @@ body.editing .edit-toggle { background:var(--verde-menta); color:#1E2A2E; }
 .chooser-list button:hover { border-color:var(--azul-pizarra); }
 
 /* ── MAIN ── */
-#main { margin-left: 220px; margin-top: 56px; flex: 1; overflow-y: auto; padding: 24px 28px; }
+/* El sidebar ya ocupa su lugar en el flex: no hace falta margin-left (duplicaba el espacio) */
+#main { margin-top: 56px; flex: 1; min-width: 0; overflow-y: auto; padding: 20px 24px; }
 .section { display: none; animation: fadeIn 0.22s ease; }
 .section.active { display: block; }
 /* ── CALENDARIO NATIVO ── */
@@ -170,6 +171,24 @@ body.editing .edit-toggle { background:var(--verde-menta); color:#1E2A2E; }
 .src-status { font-size:12px; margin-top:8px; color:var(--gris-medio); }
 .src-status.ok { color:#1a7a55; font-weight:600; }
 .src-status.err { color:var(--terracota); }
+/* ── RECURSOS: herramientas ── */
+.btn-tool { display:inline-flex; align-items:center; gap:6px; background:var(--navy,#1E2A2E); color:#fff; font-size:13px; font-weight:700; padding:10px 16px; border-radius:10px; text-decoration:none; }
+.btn-tool:hover { opacity:.9; }
+.drive-embed { width:100%; height:420px; border:1px solid var(--beige-suave); border-radius:10px; background:#fff; margin-top:10px; }
+.tools-links { margin-top:8px; font-size:12px; }
+.tools-links a { color:var(--azul-pizarra); font-weight:700; text-decoration:none; }
+.tools-links a:hover { text-decoration:underline; }
+.tools-empty { font-size:13px; color:var(--gris-medio); line-height:1.6; padding:14px; background:#fcfaf7; border:1px dashed var(--beige-suave); border-radius:10px; margin-top:10px; }
+.tools-empty a { color:var(--azul-pizarra); font-weight:700; cursor:pointer; text-decoration:underline; }
+
+/* ── EVENTOS: chips ── */
+.ev-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.ev-chip { font-size:10.5px; font-weight:600; color:var(--gris-oscuro,#616A6B); background:#f1f5f4; border:1px solid var(--beige-suave); padding:3px 9px; border-radius:20px; }
+.ev-chip.cat-congreso { background:#fef5e0; border-color:#f5e0a8; color:#8a6d1f; }
+.ev-chip.cat-viaje { background:#e6f0f9; border-color:#c2d9ee; color:#245b8a; }
+.ev-chip.cat-reunión, .ev-chip.cat-reunion { background:#e8f8f2; border-color:#b2e8d4; color:#1a7a55; }
+.ev-chip.cat-capacitación, .ev-chip.cat-capacitacion { background:#f0eaf8; border-color:#d9c9ee; color:#5b3a8a; }
+
 .drive-hint { margin-top:10px; font-size:12px; color:var(--gris-oscuro,#616A6B); background:#eef4f2; border:1px solid #d6e8e2; border-radius:8px; padding:8px 12px; }
 .drive-hint a { color:var(--azul-pizarra); font-weight:700; text-decoration:underline; cursor:pointer; }
 @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
@@ -439,7 +458,7 @@ canvas { display:block; }
     </a>
     <a onclick="navigate('procesos')" id="nav-procesos">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      Procesos
+      Procesos y Bitácoras
     </a>
     <div class="nav-group-label">Agenda</div>
     <a onclick="navigate('calendario')" id="nav-calendario">
@@ -560,8 +579,8 @@ canvas { display:block; }
   <!-- ═══════════ PROCESOS ═══════════ -->
   <div id="sec-procesos" class="section">
     <div class="page-header">
-      <h1>Procesos Estratégicos</h1>
-      <p>Historial de presentaciones por empresa · Hacé click en una empresa para expandir su proceso</p>
+      <h1>Procesos y Bitácoras</h1>
+      <p>La bitácora del proceso de cada empresa · Hacé click en una empresa para ver sus documentos</p>
     </div>
     <div id="procesos-content"></div>
   </div>
@@ -629,31 +648,32 @@ canvas { display:block; }
         <div class="evento-timeline" id="timeline-proximos"></div>
       </div>
     </div>
-    <div class="card">
-      <div class="card-title">Marco conceptual <span>Metodología Simpleza</span></div>
-      <div class="concepto-grid" id="conceptos-grid"></div>
-    </div>
   </div>
 
   <!-- ═══════════ RECURSOS ═══════════ -->
   <div id="sec-recursos" class="section">
     <div class="page-header">
       <h1>Recursos del Grupo</h1>
-      <p>Herramientas, metodologías, minutas y documentación transversal del grupo</p>
+      <p>Marco conceptual y herramientas de trabajo</p>
     </div>
 
-    <div class="card" style="margin-bottom:18px">
-      <div class="card-title">📁 Minutas generales del grupo <span>Actualización semanal</span></div>
-      <div class="pdf-list" id="minutas-generales"></div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Marco conceptual <span>Metodología Simpleza</span></div>
+      <div class="concepto-grid" id="conceptos-grid" style="margin-top:10px"></div>
     </div>
 
-    <div class="filter-bar">
-      <button class="filter-btn active" onclick="renderRecursos('todos',this)">Todos</button>
-      <button class="filter-btn" onclick="renderRecursos('herramienta',this)">Herramientas</button>
-      <button class="filter-btn" onclick="renderRecursos('metodologia',this)">Metodologías</button>
-      <button class="filter-btn" onclick="renderRecursos('documento',this)">Documentos</button>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Herramientas de Simpleza</div>
+      <p style="font-size:13px;color:var(--gris-oscuro,#616A6B);line-height:1.6;margin:8px 0 12px">
+        Tableros, matrices y herramientas de gestión disponibles en el sitio de Simpleza.
+      </p>
+      <a class="btn-tool" href="https://www.simpleza.com.ar/herramientas/" target="_blank" rel="noopener">🧰 Ir a Herramientas de Simpleza ↗</a>
     </div>
-    <div class="recursos-grid" id="recursos-grid"></div>
+
+    <div class="card">
+      <div class="card-title">Herramientas del grupo <span id="tools-folder-note"></span></div>
+      <div id="tools-folder"></div>
+    </div>
   </div>
 
   <!-- ═══════════ CONFIGURACIÓN · FUENTES DE DATOS (solo edición) ═══════════ -->
@@ -840,25 +860,6 @@ let EMPRESAS = [
   }
 ];
 
-let PROCESOS = [
-  { empresaId:1, titulo:'Estrategias de Crecimiento 2025/2026', fecha:'29 Sep 2025', resumen:'Hoja de ruta: pecán, gerenciamiento de terceros y ordenamiento patrimonial. El grupo aportó foco en la brecha entre ambición y estructura.' },
-  { empresaId:1, titulo:'Validación de diagnóstico y delegación operativa', fecha:'23 Jun 2025', resumen:'16ª reunión del proceso. Validación del diagnóstico Simpleza y discusión de la estrategia de delegación para liberar tiempo de dirección.' },
-  { empresaId:2, titulo:'Nueva Visión 2030 y Proyecto Inmobiliario', fecha:'15 Sep 2025', resumen:'Visión renovada a 5 años: crecimiento agrícola, consolidación familiar y proyecto inmobiliario como diversificación.' },
-  { empresaId:2, titulo:'Avance: proyecto inmobiliario y acuerdo familiar', fecha:'22 Dic 2025', resumen:'Avances en el proyecto inmobiliario y trabajo en el acuerdo entre socios familiares para alinear roles y retiros.' },
-  { empresaId:3, titulo:'Análisis Patrimonial y escenarios de decisión', fecha:'14 Jul 2025', resumen:'Evolución patrimonial del escritorio (USD 2M → USD 4.2M en 4 años) y escenarios de inversión para los próximos años.' },
-  { empresaId:3, titulo:'Presentación: visión estratégica del escritorio', fecha:'1 Dic 2025', resumen:'Primera presentación formal como miembro nuevo. Modelo de negocio, clientes bajo gestión y líneas estratégicas.' },
-  { empresaId:3, titulo:'Avance Líneas Estratégicas: crecimiento y socio operativo', fecha:'27 Abr 2026', resumen:'Expansión a nuevas zonas, búsqueda de socio operativo y ordenamiento patrimonial propio.' },
-  { empresaId:4, titulo:'Gobierno corporativo, feedlot y proyecto Necochea', fecha:'17 Nov 2025', resumen:'Avances en gobierno corporativo, proyecto de feedlot 10.000 cab. en 3 etapas y oportunidad de compra en Necochea.' },
-  { empresaId:4, titulo:'Visión de largo plazo e incorporación de la 4ª generación', fecha:'13 Abr 2026', resumen:'Construcción de visión de largo plazo que integre a la cuarta generación familiar en la empresa.' },
-  { empresaId:5, titulo:'Estructura vs. tamaño: eficiencia y crecimiento', fecha:'4 Ago 2025', resumen:'Análisis de la evolución de Tricampo: crecimiento agrícola y preocupación por gastos de estructura vs. resultado.' },
-  { empresaId:5, titulo:'Nueva Gerencia General y plan de profesionalización', fecha:'16 Mar 2026', resumen:'Nuevo esquema organizacional: Alejandro (Gerente General Comercial-Financiero) y Federico (Gerente de Producción). Marco Estratégico 2024-2028.' },
-  { empresaId:6, titulo:'Primera presentación: gobernanza y reorganización', fecha:'9 Feb 2026', resumen:'Historia familiar, ganadería de ciclo completo, y proceso de reorganización tras salida de socio en 2021.' },
-  { empresaId:6, titulo:'Rediseño de la reunión anual de accionistas', fecha:'1 Jun 2026', resumen:'Consulta al grupo sobre cómo organizar y conducir efectivamente la reunión anual de accionistas.' },
-  { empresaId:7, titulo:'Primera presentación: planta balanceados y feedlot', fecha:'10 Nov 2025', resumen:'Presentación de la planta de alimentos balanceados (4.500 tn/mes), feedlot y desafíos de sucesión.' },
-  { empresaId:8, titulo:'Primera presentación: empresa citrícola familiar', fecha:'4 May 2026', resumen:'Empresa familiar de 3ª generación en Tucumán: citricultura, integración vertical hacia la exportación y reorganización societaria.' },
-  { empresaId:9, titulo:'Primera presentación: servicios agrícolas', fecha:'22 Sep 2025', resumen:'Servicios de pulverización y siembra (180.000 ha/año), fideicomiso Rubro Producción y brechas de gestión.' },
-  { empresaId:9, titulo:'Avance: sistema de gestión y lectura por unidad', fecha:'20 Abr 2026', resumen:'Avances en Sinagro (30% de uso), cambios en el equipo administrativo y necesidad de ordenar info por unidad de negocio.' }
-];
 
 // Todas las reuniones del periodo jun 2025 – ago 2026
 let REUNIONES_HISTORIAL = [
@@ -934,25 +935,7 @@ let CONCEPTOS = [
   { icon:'🤝', titulo:'Acuerdo de Accionistas', formula:'derechos + obligaciones + mecanismos', desc:'Documento que regula la relación entre socios: roles, retiros, decisiones y protocolos ante situaciones especiales.' }
 ];
 
-let MINUTAS_GENERALES = [
-  { nombre:'Minuta 22 junio 2026 — Tricampo S.A.', fecha:'22 Jun 2026', url:'#' },
-  { nombre:'Minuta 8 junio 2026 — Técnica: Análisis de Negocios', fecha:'8 Jun 2026', url:'#' },
-  { nombre:'Minuta 1 junio 2026 — Beheran Sarciat SA', fecha:'1 Jun 2026', url:'#' },
-  { nombre:'Minuta 4 mayo 2026 — Donato Álvarez SRL', fecha:'4 May 2026', url:'#' },
-  { nombre:'Minuta 27 abril 2026 — Estudio Becker', fecha:'27 Abr 2026', url:'#' }
-];
 
-let RECURSOS = [
-  { id:1, categoria:'herramienta', icon:'📊', titulo:'Tablero de Indicadores de Empresa', desc:'Planilla de seguimiento de indicadores clave por empresa: resultado económico, patrimonio, superficie, cabezas y liquidez.', link:'#' },
-  { id:2, categoria:'herramienta', icon:'📅', titulo:'Plantilla de Minuta de Reunión', desc:'Estructura estándar para registrar los temas, devoluciones y compromisos de cada reunión semanal.', link:'#' },
-  { id:3, categoria:'metodologia', icon:'🧭', titulo:'Metodología Simpleza — Resumen ejecutivo', desc:'Descripción del proceso de directorio colaborativo, sus etapas, herramientas y principios de funcionamiento.', link:'#' },
-  { id:4, categoria:'metodologia', icon:'🎯', titulo:'Guía de Líneas Estratégicas', desc:'Cómo definir, priorizar y hacer seguimiento de líneas estratégicas en empresas agropecuarias familiares.', link:'#' },
-  { id:5, categoria:'documento', icon:'📝', titulo:'Acuerdo de Confidencialidad del Grupo', desc:'Documento firmado por todos los miembros estableciendo los principios de reserva y uso de la información compartida.', link:'#' },
-  { id:6, categoria:'documento', icon:'📋', titulo:'Reglamento de funcionamiento', desc:'Normas de participación, frecuencia de asistencia, criterios de ingreso y egreso, y forma de trabajo del grupo.', link:'#' },
-  { id:7, categoria:'herramienta', icon:'💰', titulo:'Modelo de Análisis Patrimonial', desc:'Hoja de cálculo para construir el estado patrimonial de una empresa agropecuaria y analizar su evolución año a año.', link:'#' },
-  { id:8, categoria:'metodologia', icon:'🏛️', titulo:'Guía de Gobierno Corporativo', desc:'Introducción al gobierno corporativo en empresas agropecuarias familiares: directorio, acuerdo de socios y protocolos.', link:'#' },
-  { id:9, categoria:'documento', icon:'📌', titulo:'Cronograma histórico del grupo', desc:'Registro de todas las reuniones del Grupo El Faro desde 2022, con la empresa presentante y el tema de cada sesión.', link:'#' }
-];
 
 // ══════════════════════════════════════════════════════════════
 // ESTADO
@@ -1016,7 +999,7 @@ function navigate(section, data) {
     grupo: 'El Grupo',
     empresas: 'Empresas',
     'empresa-detalle': 'Detalle de empresa',
-    procesos: 'Procesos Estratégicos',
+    procesos: 'Procesos y Bitácoras',
     calendario: 'Calendario',
     eventos: 'Eventos e Hitos',
     recursos: 'Recursos del grupo',
@@ -1374,46 +1357,66 @@ function renderEmpresaDetalle(empresa) {
 // ══════════════════════════════════════════════════════════════
 // PROCESOS
 // ══════════════════════════════════════════════════════════════
+// Muestra SOLO la bitácora del proceso de cada empresa (carpeta "Proceso" del
+// Drive). Las presentaciones y minutas viven en Empresas → Documentos del proceso.
 function renderProcesos() {
   const el = document.getElementById('procesos-content');
   if (!el) return;
-
-  el.innerHTML = EMPRESAS.map(empresa => {
-    const procs = PROCESOS.filter(p => p.empresaId === empresa.id);
-    if (!procs.length) return '';
-    return `
-      <div class="proceso-empresa-section">
-        <div class="proceso-empresa-header" onclick="toggleProceso('proc-${empresa.id}', this)">
-          <div class="peh-sigla" style="background:${empresa.color}">${empresa.sigla}</div>
-          <div>
-            <div class="peh-nombre">${empresa.nombre}</div>
-            <div class="peh-sector">${empresa.sector} · ${empresa.zona}</div>
-          </div>
-          <div class="peh-count">${procs.length} presentaciones</div>
-          <div class="peh-arrow" id="arrow-proc-${empresa.id}">›</div>
+  if (!EMPRESAS.length) {
+    el.innerHTML = '<div class="cal-empty">No hay empresas cargadas todavía.</div>';
+    return;
+  }
+  el.innerHTML = EMPRESAS.map(empresa => `
+    <div class="proceso-empresa-section">
+      <div class="proceso-empresa-header" onclick="toggleBitacora(${empresa.id})">
+        <div class="peh-sigla" style="background:${empresa.color || '#6C868C'}">${esc(empresa.sigla || '')}</div>
+        <div style="flex:1">
+          <div class="peh-nombre">${esc(empresa.nombre)}</div>
+          <div class="peh-sector">${esc(empresa.zona || '')}</div>
         </div>
-        <div class="proceso-list" id="proc-${empresa.id}">
-          ${procs.map(p => `
-            <div class="proceso-item" style="border-left-color:${empresa.color}">
-              <div class="pi-fecha">${p.fecha}</div>
-              <div style="flex:1">
-                <div class="pi-titulo">${p.titulo}</div>
-                <div class="pi-resumen">${p.resumen}</div>
-                <div class="pi-pdf-link" onclick="openEmpresa(${empresa.id})">📄 Ver documentos →</div>
-              </div>
-            </div>`).join('')}
-        </div>
-      </div>`;
-  }).join('');
+        <div class="peh-count">Bitácora del proceso</div>
+        <div class="peh-arrow" id="arrow-bit-${empresa.id}">›</div>
+      </div>
+      <div class="proceso-list" id="bit-${empresa.id}"></div>
+    </div>`).join('');
 }
 
-function toggleProceso(listId, header) {
-  const list = document.getElementById(listId);
-  const arrow = document.getElementById('arrow-' + listId);
+async function toggleBitacora(empresaId) {
+  const list = document.getElementById('bit-' + empresaId);
+  const arrow = document.getElementById('arrow-bit-' + empresaId);
   if (!list) return;
   const isOpen = list.classList.contains('open');
   list.classList.toggle('open', !isOpen);
   if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
+  if (isOpen || list.dataset.loaded === '1') return;
+
+  const empresa = EMPRESAS.find(e => e.id === empresaId);
+  const folder = empresa ? empresaDriveFolder(empresa) : '';
+  if (!folder) {
+    list.innerHTML = '<div style="padding:14px;font-size:12px;color:var(--gris-medio)">Esta empresa todavía no tiene carpeta de Drive vinculada (se configura en la planilla base, pestaña CONFIG_DRIVE).</div>';
+    list.dataset.loaded = '1';
+    return;
+  }
+  list.innerHTML = '<div style="padding:14px;font-size:12px;color:var(--gris-medio)">Cargando bitácora del Drive…</div>';
+  try {
+    const r = await fetch(`${API_BASE_DRIVE}?op=empresa&folderId=${encodeURIComponent(folder)}`);
+    const j = await r.json();
+    if (j.error) throw new Error(j.error);
+    const docs = j.minutas || [];
+    list.innerHTML = docs.length ? docs.map(f => `
+      <div class="proceso-item" style="border-left-color:${empresa.color || '#6C868C'};cursor:pointer" onclick="openLink('${jsq(f.url)}')">
+        <div class="pi-fecha">${esc(f.fecha)}</div>
+        <div style="flex:1">
+          <div class="pi-titulo">${iconTipo(f.tipo)} ${esc(f.nombre)}</div>
+          <div class="pi-resumen">${esc(f.tipo)} · Bitácora del proceso</div>
+        </div>
+        <div class="pdf-item-action">Abrir</div>
+      </div>`).join('')
+      : '<div style="padding:14px;font-size:12px;color:var(--gris-medio)">La carpeta "Proceso" de esta empresa está vacía.</div>';
+    list.dataset.loaded = '1';
+  } catch (e) {
+    list.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--terracota)">No se pudo cargar la bitácora.<br><small>${esc(e.message)}</small></div>`;
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1428,13 +1431,30 @@ function renderEventos() {
     `<div class="evento-item ${e.tipo}"><div class="evento-fecha">${e.fecha}</div><div class="evento-titulo">${e.titulo}</div><div class="evento-desc">${e.desc}</div></div>`
   ).join('');
 
-  if (elP) elP.innerHTML = PROXIMOS_EVENTOS.map(e =>
-    `<div class="evento-item proxima"><div class="evento-fecha">${e.fecha}</div><div class="evento-titulo">${e.titulo}</div><div class="evento-desc">${e.desc}</div><span class="evento-empresa">🏢 ${e.empresa}</span></div>`
-  ).join('');
+  if (elP) elP.innerHTML = PROXIMOS_EVENTOS.length ? PROXIMOS_EVENTOS.map(e => {
+    const chips = [
+      e.categoria ? `<span class="ev-chip cat-${esc(String(e.categoria).toLowerCase())}">${esc(e.categoria)}</span>` : '',
+      e.lugar ? `<span class="ev-chip">📍 ${esc(e.lugar)}</span>` : '',
+      e.hora ? `<span class="ev-chip">🕒 ${esc(e.hora)}</span>` : '',
+      e.empresa ? `<span class="ev-chip">🏢 ${esc(e.empresa)}</span>` : '',
+    ].filter(Boolean).join('');
+    return `<div class="evento-item proxima">
+      <div class="evento-fecha">${esc(e.fecha)}</div>
+      <div class="evento-titulo">${esc(e.titulo)}</div>
+      ${e.desc ? `<div class="evento-desc">${esc(e.desc)}</div>` : ''}
+      ${chips ? `<div class="ev-chips">${chips}</div>` : ''}
+      ${e.enlace && e.enlace !== '#' ? `<div class="pi-pdf-link" onclick="openLink('${jsq(e.enlace)}')">🔗 Más info →</div>` : ''}
+    </div>`;
+  }).join('') : '<div style="padding:12px;font-size:12px;color:var(--gris-medio)">Sin eventos cargados. En modo edición: ✏️ Editar → Agenda y eventos.</div>';
+}
 
-  if (elC) elC.innerHTML = CONCEPTOS.map(c =>
-    `<div class="concepto-card"><div class="concepto-icon">${c.icon}</div><div class="concepto-titulo">${c.titulo}</div><div class="concepto-formula">${c.formula}</div><div class="concepto-desc">${c.desc}</div></div>`
-  ).join('');
+// Marco conceptual (ahora vive en Recursos)
+function renderConceptos() {
+  const elC = document.getElementById('conceptos-grid');
+  if (!elC) return;
+  elC.innerHTML = CONCEPTOS.length ? CONCEPTOS.map(c =>
+    `<div class="concepto-card"><div class="concepto-icon">${esc(c.icon)}</div><div class="concepto-titulo">${esc(c.titulo)}</div>${c.formula ? `<div class="concepto-formula">${esc(c.formula)}</div>` : ''}<div class="concepto-desc">${esc(c.desc)}</div></div>`
+  ).join('') : '<div style="padding:12px;font-size:12px;color:var(--gris-medio)">Sin conceptos cargados.</div>';
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1453,38 +1473,32 @@ function openLink(url) {
 }
 
 function renderRecursosSec() {
-  const elM = document.getElementById('minutas-generales');
-  if (elM) {
-    elM.innerHTML = MINUTAS_GENERALES.map(m => `
-      <div class="pdf-item" style="cursor:pointer" onclick="openLink('${jsq(m.url)}')">
-        <div class="pdf-icon">📋</div>
-        <div>
-          <div class="pdf-item-name">${esc(m.nombre)}</div>
-          <div class="pdf-item-date">${esc(m.fecha)}</div>
-        </div>
-        <div class="pdf-item-action">Ver minuta</div>
-      </div>`).join('');
-  }
-  renderRecursos('todos');
+  renderConceptos();
+  renderToolsFolder();
 }
 
-function renderRecursos(filtro, btn) {
-  if (btn) {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  }
-  const lista = filtro === 'todos' ? RECURSOS : RECURSOS.filter(r => r.categoria === filtro);
-  const colorCat = { herramienta:'#27AE60', metodologia:'#2980B9', documento:'#8E44AD' };
-  const el = document.getElementById('recursos-grid');
+// Herramientas del grupo: se muestran embebidas desde una carpeta de Drive.
+// El ID de la carpeta se configura en Configuración → Fuentes de datos.
+function renderToolsFolder() {
+  const el = document.getElementById('tools-folder');
+  const note = document.getElementById('tools-folder-note');
   if (!el) return;
-  el.innerHTML = lista.map(r => `
-    <div class="recurso-card" style="border-top-color:${colorCat[r.categoria] || 'var(--azul-pizarra)'};cursor:pointer" onclick="openLink('${jsq(r.link)}')">
-      <div class="rc-icon">${r.icon}</div>
-      <div class="rc-categoria" style="color:${colorCat[r.categoria]}">${esc(r.categoria)}</div>
-      <div class="rc-titulo">${esc(r.titulo)}</div>
-      <div class="rc-desc">${esc(r.desc)}</div>
-      <div class="rc-link">📎 Abrir recurso →</div>
-    </div>`).join('');
+  const folder = DRIVE_CONFIG.herramientasFolderId || '';
+  if (!folder) {
+    if (note) note.textContent = '';
+    el.innerHTML = `<div class="tools-empty">
+      Todavía no hay una carpeta de Drive vinculada.<br>
+      Creá una carpeta con las herramientas del grupo (tableros, matrices, plantillas) y conectala en
+      <a onclick="navigate('config')">Configuración → Fuentes de datos</a>.
+    </div>`;
+    return;
+  }
+  if (note) note.textContent = 'Carpeta de Drive';
+  el.innerHTML = `
+    <iframe class="drive-embed" src="https://drive.google.com/embeddedfolderview?id=${encodeURIComponent(folder)}#grid" title="Herramientas del grupo"></iframe>
+    <div class="tools-links">
+      <a href="https://drive.google.com/drive/folders/${encodeURIComponent(folder)}" target="_blank" rel="noopener">Abrir la carpeta en Drive ↗</a>
+    </div>`;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1502,12 +1516,9 @@ async function loadContentFromDB() {
     const c = (j && j.content) || {};
     if (c.drive_config && typeof c.drive_config === 'object') DRIVE_CONFIG = Object.assign({}, DRIVE_CONFIG, c.drive_config);
     if (Array.isArray(c.empresas))  EMPRESAS = c.empresas;
-    if (Array.isArray(c.procesos))  PROCESOS = c.procesos;
     if (Array.isArray(c.hitos))     HITOS = c.hitos;
     if (Array.isArray(c.proximos))  PROXIMOS_EVENTOS = c.proximos;
     if (Array.isArray(c.conceptos)) CONCEPTOS = c.conceptos;
-    if (Array.isArray(c.minutas))   MINUTAS_GENERALES = c.minutas;
-    if (Array.isArray(c.recursos))  RECURSOS = c.recursos;
     if (c.home && typeof c.home === 'object') {
       HOME = Object.assign({}, HOME, c.home);
       if (!HOME.banner) HOME.banner = {};
@@ -1563,8 +1574,8 @@ const DEFAULT_MEETINGS = [
 const CAL_MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const CAL_DOWS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 const CAL_HOLIDAYS = ['01-01','03-24','04-02','05-01','05-25','06-20','07-09','08-17','10-12','11-20','12-08','12-25'];
-const CAL_SPECIALS = ['Ronda de novedades', 'Técnica', 'Feriado', 'Sin reunión'];
-const CAL_SPECIAL_COLOR = { 'Ronda de novedades':'#89B4C8', 'Técnica':'#6C868C', 'Feriado':'#CD6155', 'Sin reunión':'#D9CCC1' };
+const CAL_SPECIALS = ['Ronda de novedades', 'Técnica', 'Flexible', 'Feriado', 'Sin reunión'];
+const CAL_SPECIAL_COLOR = { 'Ronda de novedades':'#89B4C8', 'Técnica':'#6C868C', 'Flexible':'#F7DC6F', 'Feriado':'#CD6155', 'Sin reunión':'#D9CCC1' };
 const CAL_TODAY = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
 
 function calLocalStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -1804,27 +1815,20 @@ async function calResetAll() {
 function esc(s){ return String(s ?? '').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
 
 const SCHEMAS = {
-  procesos: {
-    title: 'Procesos estratégicos', titleField: 'titulo',
-    getData: () => PROCESOS, setData: v => { PROCESOS = v; },
-    fields: [
-      { name:'empresaId', label:'Empresa', type:'empresaSelect' },
-      { name:'titulo', label:'Título', type:'text' },
-      { name:'fecha', label:'Fecha', type:'text' },
-      { name:'resumen', label:'Resumen', type:'textarea' },
-    ],
-    newItem: () => ({ empresaId: (EMPRESAS[0]||{}).id || 1, titulo:'Nuevo proceso', fecha:'', resumen:'' }),
-  },
   proximos: {
-    title: 'Próximos eventos', titleField: 'titulo',
+    title: 'Agenda y eventos', titleField: 'titulo',
     getData: () => PROXIMOS_EVENTOS, setData: v => { PROXIMOS_EVENTOS = v; },
     fields: [
-      { name:'fecha', label:'Fecha', type:'text' },
-      { name:'titulo', label:'Título', type:'text' },
-      { name:'desc', label:'Descripción', type:'textarea' },
-      { name:'empresa', label:'Empresa', type:'text' },
+      { name:'fecha', label:'Fecha (texto libre, ej: "4, 5 y 6 de agosto 2026" o "23 y 24/10")', type:'text' },
+      { name:'titulo', label:'Título (ej: Congreso Aapresid)', type:'text' },
+      { name:'categoria', label:'Categoría', type:'select', options:['Congreso','Viaje','Reunión','Capacitación','Encuentro presencial','Visita a empresa','Otro'] },
+      { name:'lugar', label:'Lugar (ej: Laboulaye – Buenos Aires)', type:'text' },
+      { name:'hora', label:'Hora (opcional)', type:'text' },
+      { name:'desc', label:'Descripción (opcional)', type:'textarea' },
+      { name:'enlace', label:'Enlace (opcional)', type:'text' },
+      { name:'empresa', label:'Empresa (opcional)', type:'text' },
     ],
-    newItem: () => ({ fecha:'', titulo:'Nuevo evento', desc:'', empresa:'' }),
+    newItem: () => ({ fecha:'', titulo:'Nuevo evento', categoria:'Reunión', lugar:'', hora:'', desc:'', enlace:'', empresa:'' }),
   },
   conceptos: {
     title: 'Marco conceptual', titleField: 'titulo',
@@ -1836,28 +1840,6 @@ const SCHEMAS = {
       { name:'desc', label:'Descripción', type:'textarea' },
     ],
     newItem: () => ({ icon:'📌', titulo:'Nuevo concepto', formula:'', desc:'' }),
-  },
-  minutas: {
-    title: 'Minutas generales', titleField: 'nombre',
-    getData: () => MINUTAS_GENERALES, setData: v => { MINUTAS_GENERALES = v; },
-    fields: [
-      { name:'nombre', label:'Nombre', type:'text' },
-      { name:'fecha', label:'Fecha', type:'text' },
-      { name:'url', label:'URL / enlace', type:'text' },
-    ],
-    newItem: () => ({ nombre:'Nueva minuta', fecha:'', url:'#' }),
-  },
-  recursos: {
-    title: 'Recursos del grupo', titleField: 'titulo',
-    getData: () => RECURSOS, setData: v => { RECURSOS = v; },
-    fields: [
-      { name:'icon', label:'Ícono (emoji)', type:'text' },
-      { name:'categoria', label:'Categoría', type:'select', options:['herramienta','metodologia','documento'] },
-      { name:'titulo', label:'Título', type:'text' },
-      { name:'desc', label:'Descripción', type:'textarea' },
-      { name:'link', label:'Enlace', type:'text' },
-    ],
-    newItem: () => ({ id: Date.now(), icon:'📌', categoria:'herramienta', titulo:'Nuevo recurso', desc:'', link:'#' }),
   },
   // ── Portada: actividad reciente ──
   home_actividad: {
@@ -1872,28 +1854,24 @@ const SCHEMAS = {
 };
 
 const RENDER_AFTER = {
-  procesos: () => renderProcesos(),
   proximos: () => renderEventos(),
-  conceptos: () => renderEventos(),
-  minutas: () => renderRecursosSec(),
-  recursos: () => renderRecursos('todos'),
+  conceptos: () => renderConceptos(),
   home_actividad: () => renderActividadReciente(),
 };
 
 // Secciones cuyo contenido se edita EN EL SITIO (formularios).
-// El Grupo y Empresas ya NO están acá: se cargan desde el archivo base de Drive.
+// El Grupo, Empresas y Procesos/Bitácoras NO están acá: vienen del Drive.
 const SECTION_DATASETS = {
   dashboard: [{ key:'home_actividad', label:'Actividad reciente' }],
-  procesos: [{ key:'procesos', label:'Procesos' }],
-  eventos:  [{ key:'proximos', label:'Próximos eventos' }, { key:'conceptos', label:'Marco conceptual' }],
-  recursos: [{ key:'minutas', label:'Minutas generales' }, { key:'recursos', label:'Recursos' }],
+  eventos:  [{ key:'proximos', label:'Agenda y eventos' }],
+  recursos: [{ key:'conceptos', label:'Marco conceptual' }],
 };
 
 let editorState = null;
 
 // Hook llamado por setEditing(): agrega/quita los botones "Editar" por sección
 // Secciones cuyo contenido viene del Drive (no se editan con formulario)
-const DRIVE_SECTIONS = { grupo: 'El Grupo', empresas: 'Empresas' };
+const DRIVE_SECTIONS = { grupo: 'El Grupo', empresas: 'Empresas', procesos: 'Procesos y Bitácoras' };
 
 function onEditingChange(on) {
   document.querySelectorAll('.section-edit-btn, .drive-hint').forEach(b => b.remove());
@@ -1913,7 +1891,9 @@ function onEditingChange(on) {
     if (!ph) continue;
     const d = document.createElement('div');
     d.className = 'drive-hint';
-    d.innerHTML = '📄 Este contenido se carga desde la planilla de Drive. Editalo en ese archivo, o cambiá la fuente en <a onclick="navigate(\'config\')">Configuración</a>.';
+    d.innerHTML = sec === 'procesos'
+      ? '📄 Las bitácoras se leen de la carpeta <strong>Proceso</strong> de cada empresa en Drive. Subí ahí el documento y aparece solo. Fuentes en <a onclick="navigate(\'config\')">Configuración</a>.'
+      : '📄 Este contenido se carga desde la planilla de Drive. Editalo en ese archivo, o cambiá la fuente en <a onclick="navigate(\'config\')">Configuración</a>.';
     ph.appendChild(d);
   }
 }
