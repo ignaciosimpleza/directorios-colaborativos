@@ -1494,8 +1494,10 @@ async function vincularCarpetasDeEmpresas() {
     VINCULOS.push({ empresa: e.nombre, carpeta: c.nombre });
   }
   const sinCarpeta = EMPRESAS.filter(e => !empresaDriveFolder(e));
-  marcarFuente('empresasFolderId', 'ok',
-    `${VINCULOS.length} de ${EMPRESAS.length} empresas vinculadas` + (sinCarpeta.length ? ` · ⚠ ${sinCarpeta.length} sin carpeta` : ''));
+  marcarFuente('empresasFolderId', sinCarpeta.length ? 'ok' : 'ok',
+    sinCarpeta.length
+      ? `⚠ ${sinCarpeta.length} sin carpeta: ${sinCarpeta.map(e => e.nombre).join(', ')}`
+      : `${EMPRESAS.length} empresas vinculadas`);
 }
 
 function iconTipo(t) {
@@ -2183,8 +2185,9 @@ async function loadBaseFromDrive() {
     if (Array.isArray(j.hitos)) partes.push(plural(j.hitos.length, 'hito', 'hitos'));
     if (Array.isArray(j.ejes)) partes.push(plural(j.ejes.length, 'eje', 'ejes'));
     if (Array.isArray(j.eventos)) partes.push(plural(j.eventos.length, 'evento', 'eventos'));
-    const sinCarpeta = (j.empresas || []).filter(e => !e.driveFolderId).length;
-    marcarFuente('baseFileId', 'ok', partes.join(' · ') + (sinCarpeta ? ` · ⚠ ${sinCarpeta} sin carpeta en CONFIG_DRIVE` : ''));
+    // El aviso de «sin carpeta» se calcula recién después de vincular, si no
+    // marca en rojo empresas que el sitio igual va a encontrar solo.
+    marcarFuente('baseFileId', 'ok', partes.join(' · '));
     if (j.grupo && j.grupo.nombre) GRUPO_INFO = Object.assign({}, GRUPO_INFO, j.grupo);
     if (Array.isArray(j.hitos) && j.hitos.length) GRUPO_HITOS = j.hitos;
     if (Array.isArray(j.ejes) && j.ejes.length) GRUPO_EJES = j.ejes;
