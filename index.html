@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Grupo El Faro — Dashboard</title>
+<title>Directorio Colaborativo</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -300,6 +300,18 @@ td { padding: 10px 14px; vertical-align: middle; }
 .hist-tema { font-size:11.5px; color:var(--gris-medio); margin-top:1px; }
 .hist-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
 
+/* ── MAPA: QUÉ SE VE Y DE DÓNDE SALE ── */
+.mapa { margin-top:14px; }
+.mapa-bloque { margin-bottom:14px; }
+.mapa-sec { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--gris-medio); margin-bottom:5px; }
+.mapa-sec a { color:var(--azul-pizarra); cursor:pointer; text-decoration:none; }
+.mapa-fila { display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid #f0ece6; flex-wrap:wrap; }
+.mapa-fila:last-child { border-bottom:none; }
+.mapa-que { flex:0 0 190px; font-size:12.5px; font-weight:600; color:var(--navy); }
+.mapa-fuente { flex:1; min-width:220px; font-size:12px; color:var(--gris-oscuro); }
+.mapa-badge { flex-shrink:0; }
+.src-destacada { outline:2px solid var(--verde-menta); outline-offset:3px; }
+
 /* ── PANTALLA DE ACCESO ── */
 .gate { display:none; position:fixed; inset:0; z-index:400; background:var(--sidebar-bg); overflow:auto; padding:40px 20px; }
 .gate.open { display:block; }
@@ -415,7 +427,7 @@ canvas { display:block; }
 <!-- SIDEBAR -->
 <aside id="sidebar">
   <div class="sidebar-logo">
-    <div class="sidebar-logo-icon">
+    <div class="sidebar-logo-icon" id="brand-logo-side">
       <svg width="38" height="38" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="5"/>
         <!-- Waves -->
@@ -442,9 +454,9 @@ canvas { display:block; }
       </svg>
     </div>
     <div class="sidebar-logo-text">
-      <div class="logo-name">Grupo El Faro</div>
-      <div class="logo-sub">Directorio Colaborativo</div>
-      <div class="logo-badge">Grupo IV · Simpleza</div>
+      <div class="logo-name" id="brand-name"></div>
+      <div class="logo-sub" id="brand-sub"></div>
+      <div class="logo-badge" id="brand-badge" style="display:none"></div>
     </div>
   </div>
   <div class="sidebar-simpleza">
@@ -493,21 +505,14 @@ canvas { display:block; }
       Configuración
     </a>
   </nav>
-  <div class="sidebar-footer">
-    <div class="faci">
-      <strong>Cecilia Panizzo</strong>
-      Coordinadora del grupo
-    </div>
-    <div class="faci" style="margin-top:7px">
-      <strong>Federico C. Guyot</strong>
-      Co-facilitador
-    </div>
+  <div class="sidebar-footer" id="sidebar-equipo">
+    <!-- El equipo del grupo sale de la pestaña EQUIPO de la planilla base -->
   </div>
 </aside>
 
 <!-- TOPBAR -->
 <div id="topbar">
-  <div class="topbar-logo">
+  <div class="topbar-logo" id="brand-logo-top">
     <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <circle cx="50" cy="50" r="46" fill="none" stroke="#1E2A2E" stroke-width="5"/>
       <path d="M20 72 Q32 66 44 72 Q56 78 68 72 Q74 69 80 72" fill="none" stroke="#1E2A2E" stroke-width="3" stroke-linecap="round"/>
@@ -522,8 +527,8 @@ canvas { display:block; }
       <line x1="57" y1="26" x2="80" y2="22" stroke="#1E2A2E" stroke-width="3" stroke-linecap="round"/>
     </svg>
     <div>
-      <div class="topbar-logo-text">Grupo El Faro</div>
-      <div class="topbar-logo-sub">Directorio Colaborativo · Simpleza</div>
+      <div class="topbar-logo-text" id="topbar-brand"></div>
+      <div class="topbar-logo-sub" id="topbar-brand-sub"></div>
     </div>
   </div>
   <span id="topbar-title" style="color:var(--gris-medio)">›</span>
@@ -547,7 +552,7 @@ canvas { display:block; }
   <div id="sec-dashboard" class="section active">
     <div class="page-header">
       <h1 id="home-title">Dashboard</h1>
-      <p id="home-subtitle">Resumen del Grupo El Faro · Activo desde febrero 2022</p>
+      <p id="home-subtitle"></p>
     </div>
     <div class="proxima-banner" id="home-banner"></div>
     <div class="card" id="home-grupo" style="margin-bottom:24px"></div>
@@ -575,7 +580,7 @@ canvas { display:block; }
   <div id="sec-grupo" class="section">
     <div class="page-header">
       <h1 id="grupo-title">El Grupo</h1>
-      <p id="grupo-subtitle">Información institucional del Grupo El Faro</p>
+      <p id="grupo-subtitle"></p>
     </div>
     <div id="grupo-content"></div>
   </div>
@@ -584,7 +589,7 @@ canvas { display:block; }
   <div id="sec-empresas" class="section">
     <div class="page-header">
       <h1>Empresas del Grupo</h1>
-      <p>9 empresas agropecuarias · Hacé click en una empresa para ver su ficha completa</p>
+      <p id="empresas-subtitle">Hacé click en una empresa para ver su ficha completa</p>
     </div>
     <div class="empresa-grid" id="empresa-grid"></div>
   </div>
@@ -659,7 +664,7 @@ canvas { display:block; }
     </div>
     <div class="two-col">
       <div class="card">
-        <div class="card-title">Hitos del Grupo El Faro</div>
+        <div class="card-title">Hitos del grupo</div>
         <div class="evento-timeline" id="timeline-hitos"></div>
       </div>
       <div class="card">
@@ -688,7 +693,7 @@ canvas { display:block; }
     </div>
 
     <div class="card" id="card-herr-web">
-      <div class="card-title">🧰 Herramientas de Simpleza <span>simpleza.com.ar</span></div>
+      <div class="card-title"><span id="herr-web-titulo">🧰 Herramientas</span> <span id="herr-web-sub"></span></div>
       <div id="herramientas-web"></div>
     </div>
 
@@ -738,7 +743,7 @@ canvas { display:block; }
         <path d="M42 22 L50 16 L58 22 Z" fill="#fff"/>
       </svg>
       <div>
-        <div class="gate-title" id="gate-grupo">Grupo El Faro</div>
+        <div class="gate-title" id="gate-grupo"></div>
         <div class="gate-sub">Directorio Colaborativo · Simpleza</div>
       </div>
     </div>
@@ -759,7 +764,7 @@ canvas { display:block; }
       </div>
 
       <div id="gate-panel-registro" class="hidden">
-        <p class="gate-lead">Alcanza con <strong>una cuenta por empresa</strong>: registrala y compartila con tu equipo. El grupo la autoriza antes del primer ingreso.</p>
+        <p class="gate-lead">Alcanza con <strong>una cuenta por empresa</strong>: registrala y compartila con tu equipo. Solo se puede registrar un email que el grupo ya tenga en su lista, y la coordinación autoriza la cuenta antes del primer ingreso.</p>
         <input id="gate-r-nombre" type="text" class="modal-input" placeholder="Tu nombre">
         <input id="gate-r-empresa" type="text" class="modal-input" placeholder="Empresa">
         <input id="gate-r-email" type="email" class="modal-input" placeholder="Email">
@@ -776,165 +781,28 @@ canvas { display:block; }
 
 <script>
 // ══════════════════════════════════════════════════════════════
-// DATOS
+// DATOS — TODO viene de Google Drive. Acá no hay contenido.
 // ══════════════════════════════════════════════════════════════
+// Estas estructuras arrancan VACÍAS a propósito: se llenan con la planilla
+// base (/api/base) y con las carpetas de Drive (/api/drive). Si una sección
+// aparece vacía, es que falta conectar o completar su fuente; el sitio lo
+// dice y linkea a Configuración. Nunca se carga contenido con formularios ni
+// se escribe acá.
 
-// Información institucional del grupo — proviene del archivo base de Drive
-// (Base_Estructurada_Grupo_El_Faro). Por ahora se siembra acá; cuando se conecte
-// Drive en vivo, se leerá directamente de ese archivo.
 let GRUPO_INFO = {
-  nombre: 'Grupo Estratégico El Faro',
-  subtitulo: 'Directorio colaborativo de empresas agropecuarias.',
-  descripcion: 'El Grupo Estratégico El Faro es un espacio de trabajo colaborativo entre empresarios agropecuarios. Nació en 2021 como Grupo IV de pensamiento estratégico y, desde 2025, adoptó la identidad El Faro. Las empresas comparten sus procesos, desafíos y decisiones relevantes para recibir preguntas, experiencias y perspectivas de otros empresarios. El grupo funciona como un directorio colaborativo: ayuda a ampliar la mirada, profundizar el análisis y sostener la implementación de decisiones que transformen a las empresas.',
-  inicio: '2021',
-  nombreDesde: '2025',
-  objetivoGeneral: 'Incrementar la capacidad de crear valor sostenible de las empresas participantes mediante un proceso colaborativo de pensamiento estratégico, definición de líneas de trabajo, implementación y seguimiento.',
-  objetivo2026: 'Consolidar un directorio colaborativo maduro y estratégico, que ayude a sus empresas a pensar el futuro, profesionalizar su gestión y tomar mejores decisiones.',
-  objetivo2026Ampliado: 'Durante 2026, El Faro busca elevar la profundidad y la calidad de los intercambios, trabajar sobre problemáticas estratégicas reales y transformar cada reunión en aportes aplicables a las decisiones de las empresas.',
-  principios: [
-    'Profundidad antes que cantidad.',
-    'Reuniones con impacto concreto en las empresas.',
-    'Casos reales y ejemplos aplicados.',
-    'Preparación previa y claridad en la inquietud estratégica.',
-    'Escucha activa, confianza, confidencialidad y participación responsable.',
-    'Seguimiento de las decisiones y continuidad de los procesos.',
-    'Aprendizaje a partir de la diversidad de empresas y experiencias.',
-  ],
-  fraseDestacada: 'Profundidad antes que cantidad. Reuniones con impacto concreto en las decisiones de las empresas.',
+  nombre: '', subtitulo: '', descripcion: '', inicio: '', nombreDesde: '',
+  objetivoGeneral: '', objetivo2026: '', objetivo2026Ampliado: '',
+  principios: [], fraseDestacada: '',
+  ejesTitulo: '', equipo: [],
 };
 
-let GRUPO_HITOS = [
-  { anio:'2021', titulo:'Inicio del grupo', desc:'Comienzan las primeras presentaciones empresariales y el trabajo colaborativo sobre escenarios, análisis interno y pensamiento estratégico.' },
-  { anio:'2022', titulo:'Brechas y líneas estratégicas', desc:'Las empresas profundizan la identificación de brechas, el diagnóstico de causas y la definición de transformaciones prioritarias.' },
-  { anio:'2023', titulo:'Implementación y seguimiento', desc:'Se incorporan objetivos, OKR y rutinas de seguimiento para llevar las líneas estratégicas a la acción.' },
-  { anio:'2024', titulo:'Profundización de los procesos', desc:'El grupo avanza sobre profesionalización, gobierno empresario, organización, crecimiento y calidad de la toma de decisiones.' },
-  { anio:'2025', titulo:'Nace Grupo Estratégico El Faro', desc:'El grupo adopta su identidad actual y consolida un mayor nivel de confianza, compromiso y profundidad en los intercambios.' },
-  { anio:'2025', titulo:'Instancias presenciales y directorios ampliados', desc:'Se fortalecen los espacios presenciales, los viajes y las presentaciones conjuntas para analizar con mayor profundidad los procesos de las empresas.' },
-  { anio:'2026', titulo:'Plan de Trabajo compartido', desc:'El grupo revisa su funcionamiento y acuerda priorizar pensamiento estratégico, profesionalización del directorio, crecimiento y herramientas de gestión.' },
-  { anio:'2026', titulo:'Consolidación como directorio colaborativo', desc:'El Faro busca sostener reuniones mejor preparadas, con foco estratégico e impacto real en las decisiones empresarias.' },
-];
+let GRUPO_HITOS = [];        // pestaña HITOS
+let GRUPO_EJES = [];         // pestaña EJES_2026
+let EMPRESAS = [];           // pestaña EMPRESAS + CONFIG_DRIVE
+let HITOS = [];              // los mismos hitos, para «Eventos e Hitos»
+let PROXIMOS_EVENTOS = [];   // pestaña EVENTOS
+let CONCEPTOS = [];          // archivo Marco Conceptual, pestaña CONCEPTOS
 
-let GRUPO_EJES = [
-  { titulo:'Directorio y funcionamiento', desc:'Pensamiento estratégico; profesionalización del directorio; mejora de su dinámica; información necesaria para reuniones efectivas; construcción de órganos de gobierno que orienten y acompañen a la gestión.' },
-  { titulo:'Estrategia y crecimiento', desc:'Dirección estratégica; planificación del crecimiento; análisis de escenarios; nuevos negocios; presentación de proyectos; evaluación de inversiones y definición de criterios para decidir cómo, cuándo y para qué crecer.' },
-  { titulo:'Herramientas de gestión', desc:'Indicadores de salud empresarial; lectura de Estado de Resultados, patrimonio y balances; ratios y semáforos; procesos; presupuestos; información para el directorio y control de gestión.' },
-];
-
-let EMPRESAS = [
-  { id:1, nombre:'Agropecuaria El Sueño', sigla:'AES', color:'#27AE60', sector:'Agropecuaria diversificada', zona:'NOA / Córdoba', referentes:'Sebastián Valdez & Paola Graña', ingreso:'2022', descripcion:'Empresa de primera generación fundada en 2011. Diversificada en gerenciamiento agropecuario, agricultura de grano, cultivo de pecán e inversiones inmobiliarias.', tags:['Granos','Pecán','Inmobiliario','Gerenciamiento'],
-    historia:'Fundada en 2011 por Sebastián Valdez y Paola Graña, la empresa comenzó como un escritorio de asesoramiento agropecuario y fue incorporando actividades productivas propias. La diversificación hacia el pecán representa la apuesta de largo plazo, con horizonte de producción plena en 2030. El gerenciamiento de terceros es la actividad que más escala sin comprometer capital propio.',
-    lineasEstrategicas:['Consolidar el escritorio de gerenciamiento agropecuario como actividad core','Escalar la superficie bajo cultivo de pecán','Ordenamiento patrimonial y societario familiar','Delegar la operación para liberar capacidad de dirección'],
-    pdfs:[
-      { nombre:'Proceso Agropecuaria El Sueño 2025', fecha:'Sep 2025', tipo:'Proceso completo', url:'#' },
-      { nombre:'Presentación: Estrategias de Crecimiento', fecha:'29 Sep 2025', tipo:'Presentación', url:'#' },
-      { nombre:'Validación diagnóstico y delegación', fecha:'23 Jun 2025', tipo:'Presentación', url:'#' }
-    ]
-  },
-  { id:2, nombre:'El Motivo S.A.', sigla:'EM', color:'#E67E22', sector:'Agrícola pampeana', zona:'Río Cuarto, Córdoba', referentes:'Adriana Ponzio · Esteban, Federico & Simón Vissio', ingreso:'2022', descripcion:'Empresa agrícola familiar con ~3.900 ha bajo gestión (soja, maíz, maní). 80-85% arrendadas, maquinaria propia y proyecto inmobiliario en desarrollo. Trabajando su visión 2030.', tags:['Soja/Maíz/Maní','Maquinaria','Inmobiliario','Sucesión'],
-    historia:'El Motivo S.A. opera principalmente sobre tierras arrendadas en la región de Río Cuarto (Córdoba). La empresa está en pleno proceso de construcción de su visión 2030, que incluye el crecimiento en superficie agrícola, la consolidación del equipo familiar de socios y el desarrollo de un proyecto inmobiliario propio como diversificación de activos fuera del agro.',
-    lineasEstrategicas:['Construcción de visión 2030 con los socios familiares','Desarrollo del proyecto inmobiliario como activo propio','Formalización del acuerdo de socios y protocolos de decisión','Clarificación de roles entre los integrantes de la familia'],
-    pdfs:[
-      { nombre:'Proceso El Motivo 2025', fecha:'Dic 2025', tipo:'Proceso completo', url:'#' },
-      { nombre:'Avance: proyecto inmobiliario y acuerdo', fecha:'22 Dic 2025', tipo:'Presentación', url:'#' },
-      { nombre:'Nueva Visión 2030 y Proyecto Inmobiliario', fecha:'15 Sep 2025', tipo:'Presentación', url:'#' }
-    ]
-  },
-  { id:3, nombre:'Estudio Tomás Becker', sigla:'ETB', color:'#2980B9', sector:'Escritorio agropecuario', zona:'Azul, Buenos Aires', referentes:'Tomás Becker', ingreso:'2022', descripcion:'Escritorio de gestión agropecuaria que administra ~15.000 ha de terceros. También produce en campos propios. Crecimiento patrimonial USD 2M→4.2M desde 2021.', tags:['Escritorio','Ganadería','Agricultura','Asesoramiento'],
-    historia:'El Estudio Becker es un escritorio de gestión agropecuaria con sede en Azul, Buenos Aires. Administra carteras de clientes productores (aprox. 15.000 ha bajo gestión) y también produce directamente en campos propios. El crecimiento patrimonial de USD 2M a USD 4.2M entre 2021 y 2025 refleja tanto la escala del negocio como la gestión estratégica del patrimonio propio.',
-    lineasEstrategicas:['Expansión del escritorio a nuevas zonas geográficas','Incorporación de un socio operativo para escalar sin comprometer tiempo','Ordenamiento del patrimonio personal de Tomás','Diversificación de la cartera de clientes para reducir concentración'],
-    pdfs:[
-      { nombre:'Proceso Estudio Becker 2025-2026', fecha:'Abr 2026', tipo:'Proceso completo', url:'#' },
-      { nombre:'Avance Líneas Estratégicas', fecha:'27 Abr 2026', tipo:'Presentación', url:'#' },
-      { nombre:'Presentación: visión estratégica', fecha:'1 Dic 2025', tipo:'Presentación', url:'#' },
-      { nombre:'Análisis Patrimonial y escenarios', fecha:'14 Jul 2025', tipo:'Presentación', url:'#' }
-    ]
-  },
-  { id:4, nombre:'MACSA Agro', sigla:'MAC', color:'#16A085', sector:'Agropecuaria familiar', zona:'Córdoba / Bs.As. / San Luis', referentes:'Carlos Vidal y familia', ingreso:'2022', descripcion:'Empresa agropecuaria familiar con más de 80 años de historia. Opera ~13.500 ha combinando agricultura y ganadería. Gobierno corporativo consolidado con directorio activo.', tags:['Agricultura','Ganadería','Gobierno corp.','Feedlot'],
-    historia:'MACSA tiene más de 80 años de historia familiar. Hoy opera ~13.500 ha en tres provincias (Córdoba, Buenos Aires y San Luis), combinando agricultura de secano, ganadería de cría y feedlot. En los últimos años consolidó su gobierno corporativo: directorio activo, acuerdo de accionistas firmado, y sistema de gestión en implementación. La próxima etapa es incorporar a la cuarta generación en la construcción de la visión.',
-    lineasEstrategicas:['Incorporación de la cuarta generación familiar en la estrategia','Desarrollo del feedlot de 10.000 cabezas en tres etapas','Proyecto de expansión en zona de Necochea','Consolidación del gobierno corporativo y protocolos de decisión'],
-    pdfs:[
-      { nombre:'Proceso MACSA 2025-2026', fecha:'Abr 2026', tipo:'Proceso completo', url:'#' },
-      { nombre:'Visión de largo plazo y 4ª generación', fecha:'13 Abr 2026', tipo:'Presentación', url:'#' },
-      { nombre:'Gobierno corporativo y proyecto Necochea', fecha:'17 Nov 2025', tipo:'Presentación', url:'#' }
-    ]
-  },
-  { id:5, nombre:'Tricampo S.A.', sigla:'TRI', color:'#5D8A97', sector:'Agropecuaria familiar', zona:'Córdoba / Buenos Aires', referentes:'Alejandro & Federico Stoppa', ingreso:'2022', descripcion:'Empresa agropecuaria familiar en proceso de profesionalización. Agricultura (~2.570 ha), ganadería propia (~1.500 cabezas) y maquinaria agrícola. Nueva Gerencia General en 2026.', tags:['Agricultura','Ganadería','Maquinaria','Profesionalización'],
-    historia:'Tricampo es una empresa familiar conducida por los hermanos Alejandro y Federico Stoppa. Opera en agricultura comercial (soja, maíz, sorgo), ganadería de ciclo completo y maquinaria propia. En 2026 implementó una nueva estructura gerencial: Alejandro asumió como Gerente General Comercial y Financiero, y Federico como Gerente de Producción. El Marco Estratégico 2024-2028 orienta el crecimiento hacia la ganadería y la consolidación de su base patrimonial.',
-    lineasEstrategicas:['Implementación de la nueva estructura gerencial dual','Marco Estratégico 2024-2028: crecimiento en ganadería','Definición de política de endeudamiento y perfil de riesgo','Profesionalización del directorio y separación de roles'],
-    pdfs:[
-      { nombre:'Proceso Tricampo 2025-2026', fecha:'Mar 2026', tipo:'Proceso completo', url:'#' },
-      { nombre:'Nueva Gerencia General y profesionalización', fecha:'16 Mar 2026', tipo:'Presentación', url:'#' },
-      { nombre:'Estructura vs. tamaño: análisis de eficiencia', fecha:'4 Ago 2025', tipo:'Presentación', url:'#' }
-    ]
-  },
-  { id:6, nombre:'Beheran Sarciat SA', sigla:'BSA', color:'#8E44AD', sector:'Ganadería ciclo completo', zona:'Ayacucho / Rauch / Azul, BA', referentes:'Alfredo Beheran', ingreso:'2026', descripcion:'Empresa ganadera familiar centenaria (SA constituida 2013). Opera ~3.500 ha arrendadas con ganadería de ciclo completo. Reorganización tras salida de socio en 2021. Conocida como "El Porvenir".', tags:['Ganadería','Ciclo completo','Cría/Recría','Reorganización'],
-    historia:'La familia Beheran tiene historia centenaria en la ganadería del centro de Buenos Aires. La empresa hoy (Beheran Sarciat SA, también conocida como El Porvenir) opera ~3.500 ha bajo arrendamiento en los partidos de Ayacucho, Rauch y Azul, con ganadería de ciclo completo. En 2021 atravesó una reorganización profunda tras la salida de un socio fundador. Ingresó al grupo en 2026 como parte de un proceso de profesionalización y gobierno.',
-    lineasEstrategicas:['Consolidación del gobierno de la empresa post-reorganización','Diseño del protocolo y reunión anual de accionistas','Medición de resultado por unidad ganadera','Definición del plan de crecimiento sobre base arrendada vs. campo propio'],
-    pdfs:[
-      { nombre:'Proceso Beheran Sarciat 2026', fecha:'Jun 2026', tipo:'Proceso completo', url:'#' },
-      { nombre:'Reunión anual de accionistas: rediseño', fecha:'1 Jun 2026', tipo:'Presentación', url:'#' },
-      { nombre:'Primera presentación: gobernanza y reorganización', fecha:'9 Feb 2026', tipo:'Presentación', url:'#' }
-    ]
-  },
-  { id:7, nombre:'Altos de Bermúdez SA', sigla:'ALB', color:'#CD6155', sector:'Alimentos balanceados / feedlot', zona:'Córdoba', referentes:'Alfredo Moreno', ingreso:'2025', descripcion:'Planta de alimentos balanceados con capacidad de 4.500 tn/mes (operando 2.200 tn). Feedlot de hasta 1.100 cabezas. Proceso de sucesión y profesionalización en curso.', tags:['Alimentos balanceados','Feedlot','Sucesión','Industria'],
-    historia:'Altos de Bermúdez SA es la empresa de Alfredo Moreno, con una planta de alimentos balanceados operativa desde 2014 (capacidad: 4.500 tn/mes; producción actual: 2.200 tn/mes) y un feedlot complementario de hasta 1.100 cabezas. La empresa está en proceso de sucesión y cuenta con una oportunidad clara de crecimiento: aumentar la utilización de la planta instalada sin inversión adicional. Ingresó al grupo en 2025.',
-    lineasEstrategicas:['Aumentar la capacidad utilizada de la planta de balanceados','Definir el plan de sucesión con los hijos','Medir rentabilidad por unidad de negocio (planta vs. feedlot)','Profesionalización de la gestión operativa'],
-    pdfs:[
-      { nombre:'Proceso Altos de Bermúdez 2025-2026', fecha:'Nov 2025', tipo:'Proceso completo', url:'#' },
-      { nombre:'Primera presentación al grupo', fecha:'10 Nov 2025', tipo:'Presentación', url:'#' }
-    ]
-  },
-  { id:8, nombre:'Donato Álvarez SRL', sigla:'DAL', color:'#D4AC0D', sector:'Citricultura / agroindustria', zona:'Sur de Tucumán', referentes:'José Luis Cebe (padre e hijo)', ingreso:'2026', descripcion:'Empresa familiar de tercera generación en el Sur de Tucumán. Producción citrícola (limón, naranja, palta), caña de azúcar y granos. Integración vertical hacia la exportación.', tags:['Citricultura','Caña de azúcar','Exportación','3ª generación'],
-    historia:'Donato Álvarez SRL es una empresa familiar de tercera generación con más de 60 años de historia en el sur de Tucumán. Produce limón, naranja, palta, caña de azúcar y granos en campo propio. La integración vertical con Frutucumán SA e Indocítrica le permite llegar a la exportación, generando una ventaja competitiva importante. En 2026, José Luis Cebe hijo inició el proceso de traspaso generacional, ingresando al grupo para acompañar la transición.',
-    lineasEstrategicas:['Definición del proceso de traspaso generacional padre-hijo','Formalización del acuerdo societario','Evaluación de nuevas variedades y cultivos complementarios','Optimización de la cadena exportadora integrada'],
-    pdfs:[
-      { nombre:'Proceso Donato Álvarez 2026', fecha:'May 2026', tipo:'Proceso completo', url:'#' },
-      { nombre:'Primera presentación: empresa citrícola familiar', fecha:'4 May 2026', tipo:'Presentación', url:'#' }
-    ]
-  },
-  { id:9, nombre:'Rubro Agropecuario SRL', sigla:'RUB', color:'#00897B', sector:'Servicios agrícolas', zona:'Quimilí, Santiago del Estero', referentes:'Manuel Monedero', ingreso:'2025', descripcion:'Servicios agrícolas (pulverización y siembra, 180.000 ha/año), fideicomiso agrícola de ~19.600 ha y ganadería propia (300 madres Brangus) en campo de 5.500 ha.', tags:['Servicios agrícolas','Fideicomiso','Ganadería','Stgo. del Estero'],
-    historia:'Rubro Agropecuario SRL es la empresa de Manuel Monedero, con base en Quimilí (Santiago del Estero). Tiene tres unidades de negocio: (1) servicios de pulverización y siembra para terceros (~180.000 ha/año), (2) el fideicomiso Rubro Producción (~19.600 ha de agricultura contratada), y (3) ganadería Brangus en campo propio de 5.500 ha. El principal desafío del proceso es pasar de una empresa personalizada en Manuel a una organización con dirección, sistemas y personas delegadas.',
-    lineasEstrategicas:['Implementación efectiva del sistema de gestión Sinagro','Lectura económica por unidad de negocio','Construcción de un organigrama funcional y delegación real','Definición de misión y visión como marco para las decisiones'],
-    pdfs:[
-      { nombre:'Proceso Rubro Agropecuario 2025-2026', fecha:'Abr 2026', tipo:'Proceso completo', url:'#' },
-      { nombre:'Avance: sistema de gestión y unidades de negocio', fecha:'20 Abr 2026', tipo:'Presentación', url:'#' },
-      { nombre:'Primera presentación al grupo', fecha:'22 Sep 2025', tipo:'Presentación', url:'#' }
-    ]
-  }
-];
-
-// Hitos, agenda y marco conceptual: valores por defecto. Se reemplazan con lo que
-// venga de Drive (pestañas HITOS y EVENTOS de la planilla base; archivo Marco
-// Conceptual). Nada de esto se carga con formularios.
-let HITOS = [
-  { fecha:'Feb 2022', titulo:'Inicio del Grupo El Faro', desc:'Primera reunión del Grupo IV con las empresas fundadoras. Facilitado por Cecilia Panizzo y Federico C. Guyot (Simpleza).', tipo:'pasada' },
-  { fecha:'Dic 2022', titulo:'Cierre del primer año', desc:'25 reuniones realizadas. Primeras presentaciones empresariales y devoluciones del ciclo.', tipo:'pasada' },
-  { fecha:'Oct 2024', titulo:'Directorio Ampliado', desc:'Jornada presencial de directorio ampliado. Tricampo presentó análisis patrimonial y flujo de fondos.', tipo:'pasada' },
-  { fecha:'Sep 2025', titulo:'Nuevas empresas incorporadas', desc:'Se suman Altos de Bermúdez SA (Alfredo Moreno) y Rubro Agropecuario SRL (Manuel Monedero).', tipo:'pasada' },
-  { fecha:'Feb 2026', titulo:'El grupo llega a su composición actual', desc:'Ingresan Beheran Sarciat SA y Donato Álvarez SRL. 9 empresas de 7 provincias del país.', tipo:'pasada' },
-  { fecha:'Jun 2026', titulo:'Más de 150 reuniones realizadas', desc:'El grupo supera las 150 reuniones acumuladas desde su inicio. Más de 200 devoluciones registradas.', tipo:'pasada' }
-];
-
-// Agenda del grupo (pestaña EVENTOS de la planilla base): congresos, viajes y
-// encuentros. La fecha es texto libre: "4-5-6/8", "23 y 24/10", "Octubre 2026".
-// Las presentaciones semanales de las empresas no van acá: están en el Calendario.
-let PROXIMOS_EVENTOS = [
-  { fecha:'4-5-6/8', titulo:'Congreso Aapresid', desc:'', empresa:'' },
-  { fecha:'23 y 24/10', titulo:'Viaje Grupo El Faro: Laboulaye – Buenos Aires', desc:'', empresa:'' },
-];
-
-let CONCEPTOS = [
-  { icon:'🏛️', titulo:'Directorio Colaborativo', formula:'empresa × grupo = aprendizaje', desc:'Espacio de dirección donde cada empresa aporta y recibe perspectivas externas para tomar mejores decisiones.' },
-  { icon:'📋', titulo:'Proceso Estratégico', formula:'consulta → aportes → acción', desc:'Presentación de una empresa sobre un desafío estratégico concreto para recibir devoluciones del grupo.' },
-  { icon:'🔄', titulo:'Devolución', formula:'escucha + experiencia → aporte', desc:'Respuesta honesta de un par empresario. No es consejo, es perspectiva desde la propia experiencia de gestión.' },
-  { icon:'🎯', titulo:'Línea Estratégica', formula:'visión → brecha → plan', desc:'Área de trabajo prioritaria que define la hoja de ruta de una empresa a 2-5 años.' },
-  { icon:'📊', titulo:'Análisis Patrimonial', formula:'activos − pasivos = patrimonio neto', desc:'Evaluación del estado y evolución del patrimonio empresarial como base para decisiones de crecimiento.' },
-  { icon:'🤝', titulo:'Acuerdo de Accionistas', formula:'derechos + obligaciones + mecanismos', desc:'Documento que regula la relación entre socios: roles, retiros, decisiones y protocolos ante situaciones especiales.' }
-];
-
-// Sitio de Simpleza (sección Herramientas). Se puede sobreescribir desde
-// Configuración → "Herramientas de Simpleza (web)".
-const SIMPLEZA_TOOLS_URL = 'https://www.simpleza.com.ar/';
 
 // ══════════════════════════════════════════════════════════════
 // ESTADO
@@ -945,7 +813,10 @@ let currentEmpresaId = null;
 // ══════════════════════════════════════════════════════════════
 // EDICIÓN UNIFICADA (login del dashboard + passthrough a la app embebida)
 // ══════════════════════════════════════════════════════════════
-const EDIT_PASSWORD = 'faro26';
+// La clave de edición NO está en el código: se valida contra el servidor
+// (variable EDIT_PASSWORD de Vercel) y solo queda en memoria mientras dura la
+// sesión de edición, para firmar los guardados.
+let ADMIN_PASSWORD = '';
 let dashEditing = false;
 
 function onEditToggle() {
@@ -961,13 +832,22 @@ function openDashLogin() {
 function closeDashLogin() {
   document.getElementById('login-modal').classList.remove('open');
 }
-function tryDashLogin() {
-  if (document.getElementById('login-pwd').value === EDIT_PASSWORD) {
+// La clave se valida en el servidor, así no viaja ni queda escrita en el HTML
+async function tryDashLogin() {
+  const inp = document.getElementById('login-pwd');
+  const err = document.getElementById('login-error');
+  const clave = inp.value;
+  if (!clave) return;
+  err.classList.add('hidden');
+  try {
+    await authPost('adminLogin', { password: clave });
+    ADMIN_PASSWORD = clave;
     closeDashLogin();
     setEditing(true);
-  } else {
-    document.getElementById('login-error').classList.remove('hidden');
-    document.getElementById('login-pwd').select();
+  } catch (e) {
+    err.textContent = /autorizado|incorrect/i.test(e.message) ? 'Clave incorrecta. Probá de nuevo.' : e.message;
+    err.classList.remove('hidden');
+    inp.select();
   }
 }
 function setEditing(on) {
@@ -1036,11 +916,6 @@ function openEmpresa(id) {
 // Títulos de la portada. El resto del dashboard (banner, próximas reuniones,
 // reuniones realizadas y actividad reciente) se deriva solo del calendario y de
 // las carpetas de Drive.
-let HOME = {
-  title: 'Dashboard',
-  subtitle: 'Resumen del Grupo El Faro',
-};
-
 function initDashboard() {
   renderHome();
   renderActividadReciente();
@@ -1055,10 +930,59 @@ function setTopbarDate() {
   if (el) el.textContent = CAL_TODAY.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// Identidad del grupo: nombre, bajada, etiqueta y equipo. Nada de esto está
+// escrito en el HTML: sale de la pestaña GRUPO y de la pestaña EQUIPO.
+function aplicarIdentidad() {
+  const g = GRUPO_INFO;
+  const set = (id, txt) => { const e = document.getElementById(id); if (e) e.textContent = txt || ''; };
+  const tipo = g.tipo || g.subtitulo || '';
+  set('brand-name', g.nombre);
+  set('brand-sub', tipo);
+  set('topbar-brand', g.nombre);
+  set('topbar-brand-sub', tipo + (g.facilitadoPor ? ' · ' + g.facilitadoPor : ''));
+  const badge = document.getElementById('brand-badge');
+  if (badge) { badge.textContent = g.etiqueta || ''; badge.style.display = g.etiqueta ? '' : 'none'; }
+  // Si la planilla trae un logo propio (clave grupo_logo_url), reemplaza al
+  // dibujo que viene por defecto.
+  if (g.logoUrl) {
+    const side = document.getElementById('brand-logo-side');
+    if (side && !side.dataset.listo) { side.innerHTML = `<img src="${esc(g.logoUrl)}" alt="${esc(g.nombre)}" style="width:38px;height:38px;object-fit:contain" onerror="this.parentElement.dataset.listo=''">`; side.dataset.listo = '1'; }
+    const top = document.getElementById('brand-logo-top');
+    const topImg = top && top.querySelector('svg');
+    if (topImg) topImg.outerHTML = `<img src="${esc(g.logoUrl)}" alt="" style="width:32px;height:32px;object-fit:contain">`;
+  }
+  const gg = document.getElementById('gate-grupo');
+  if (gg && g.nombre) gg.textContent = g.nombre;
+  if (g.nombre) document.title = `${g.nombre} — ${tipo || 'Dashboard'}`;
+
+  const eq = document.getElementById('sidebar-equipo');
+  if (eq) {
+    eq.innerHTML = (g.equipo || []).map((m, i) =>
+      `<div class="faci"${i ? ' style="margin-top:7px"' : ''}><strong>${esc(m.nombre)}</strong>${esc(m.rol)}</div>`
+    ).join('');
+    eq.style.display = (g.equipo || []).length ? '' : 'none';
+  }
+  set('home-subtitle', g.nombre ? `Resumen de ${g.nombre}${g.inicio ? ' · Activo desde ' + g.inicio : ''}` : '');
+  set('grupo-subtitle', g.nombre ? `Información institucional de ${g.nombre}` : '');
+  const es = document.getElementById('empresas-subtitle');
+  if (es) es.textContent = EMPRESAS.length
+    ? `${EMPRESAS.length} empresa${EMPRESAS.length === 1 ? '' : 's'} · Hacé click en una empresa para ver su ficha completa`
+    : '';
+}
+
+// Cartel único para cuando falta la fuente de una sección
+function vacioHtml(texto, campo) {
+  const link = campo
+    ? ` <a onclick="navigate('config')" style="cursor:pointer;font-weight:700">Conectar en Configuración →</a>`
+    : '';
+  return `<div class="rec-empty">${texto}${link}</div>`;
+}
+
 function renderHome() {
   setTopbarDate();
-  const t = document.getElementById('home-title');    if (t) t.textContent = HOME.title || 'Dashboard';
-  const s = document.getElementById('home-subtitle'); if (s) s.textContent = HOME.subtitle || '';
+  aplicarIdentidad();
+  // El título y la bajada de la portada los pone aplicarIdentidad() con lo que
+  // trae la planilla.
   const b = document.getElementById('home-banner');
   if (b) {
     // Banner "Próxima reunión" derivado del calendario real
@@ -1091,8 +1015,10 @@ function renderHome() {
   }
   // Información general del grupo (sin indicadores inventados)
   const g = document.getElementById('home-grupo');
-  if (g) g.innerHTML =
-    `<div class="card-title">${esc(GRUPO_INFO.nombre)} <span>${esc(GRUPO_INFO.subtitulo)}</span></div>
+  if (g && !GRUPO_INFO.nombre) {
+    g.innerHTML = vacioHtml('El sitio todavía no tiene conectada la <strong>planilla base</strong> de Drive: de ahí salen el nombre del grupo, su descripción, las empresas y la agenda.', true);
+  } else if (g) g.innerHTML =
+    `<div class="card-title">${esc(GRUPO_INFO.nombre)} <span>${esc(GRUPO_INFO.subtitulo || GRUPO_INFO.tipo || '')}</span></div>
      <p style="font-size:13px;color:var(--gris-oscuro,#616A6B);line-height:1.6;margin-top:6px">${esc(GRUPO_INFO.descripcion)}</p>
      <div style="margin-top:12px"><a onclick="navigate('grupo')" style="cursor:pointer;font-size:12px;font-weight:700;color:var(--azul-pizarra)">Ver información del grupo →</a></div>`;
 }
@@ -1105,6 +1031,14 @@ function renderGrupo() {
   const sEl = document.getElementById('grupo-subtitle'); if (sEl) sEl.textContent = GRUPO_INFO.subtitulo;
   const el = document.getElementById('grupo-content');
   if (!el) return;
+
+  // Si todavía no hay planilla conectada, la sección lo dice en vez de
+  // mostrar una página en blanco.
+  if (!GRUPO_INFO.nombre && !GRUPO_HITOS.length && !EMPRESAS.length) {
+    el.innerHTML = vacioHtml('Esta sección sale de la <strong>planilla base</strong> de Drive (pestañas GRUPO, HITOS, EJES_2026 y EMPRESAS). Todavía no hay ninguna conectada.', true);
+    aplicarVisibilidad();
+    return;
+  }
 
   const principios = GRUPO_INFO.principios.map(p => `<li style="margin-bottom:5px">${esc(p)}</li>`).join('');
   const hitos = GRUPO_HITOS.map(h =>
@@ -1120,45 +1054,47 @@ function renderGrupo() {
         <div style="flex:1"><div class="ec-name">${esc(e.nombre)}</div><div class="ec-sector">${esc(e.zona || '')}</div></div>
         <span class="ec-arrow">›</span>
       </div>
-      <div style="font-size:11.5px;color:var(--gris-medio);margin-top:8px"><strong>Participan:</strong> ${esc(e.participantes || e.referentes || '—')}</div>
-      <div style="font-size:12px;color:var(--gris-oscuro,#616A6B);line-height:1.5;margin-top:6px">${esc(e.resumen || e.descripcion || '')}</div>
+      <div style="font-size:11.5px;color:var(--gris-medio);margin-top:8px"><strong>Participan:</strong> ${esc(e.participantes || '—')}</div>
+      <div style="font-size:12px;color:var(--gris-oscuro,#616A6B);line-height:1.5;margin-top:6px">${esc(e.resumen || '')}</div>
     </div>`).join('');
 
-  el.innerHTML = `
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-title">Identidad</div>
-      <p style="font-size:13.5px;color:var(--gris-oscuro,#616A6B);line-height:1.65;margin-top:8px">${esc(GRUPO_INFO.descripcion)}</p>
-      <div style="font-size:11.5px;color:var(--gris-medio);margin-top:10px">Inicio del grupo: <strong>${esc(GRUPO_INFO.inicio)}</strong> · Nombre «El Faro» desde: <strong>${esc(GRUPO_INFO.nombreDesde)}</strong></div>
-    </div>
-    <div class="two-col" style="margin-bottom:16px">
-      <div class="card">
-        <div class="card-title">Objetivo general</div>
-        <p style="font-size:13px;color:var(--gris-oscuro,#616A6B);line-height:1.6;margin-top:8px">${esc(GRUPO_INFO.objetivoGeneral)}</p>
-      </div>
-      <div class="card">
-        <div class="card-title">Objetivo 2026</div>
-        <p style="font-size:13px;color:var(--gris-oscuro,#616A6B);line-height:1.6;margin-top:8px">${esc(GRUPO_INFO.objetivo2026)}</p>
-        <p style="font-size:12px;color:var(--gris-medio);line-height:1.55;margin-top:8px">${esc(GRUPO_INFO.objetivo2026Ampliado)}</p>
-      </div>
-    </div>
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-title">Principios que orientan el funcionamiento</div>
-      <ul style="font-size:13px;color:var(--gris-oscuro,#616A6B);line-height:1.5;margin-top:10px;padding-left:18px">${principios}</ul>
-      <div style="margin-top:10px;padding:12px 14px;background:#eef4f2;border-radius:10px;font-size:13px;font-weight:600;color:#1a7a55">${esc(GRUPO_INFO.fraseDestacada)}</div>
-    </div>
-    <div class="card" id="grupo-card-hitos" style="margin-bottom:16px">
-      <div class="card-title">Hitos del grupo</div>
-      <div class="evento-timeline" style="margin-top:10px">${hitos}</div>
-    </div>
-    <div class="card" id="grupo-card-ejes" style="margin-bottom:16px">
-      <div class="card-title">Ejes temáticos 2026</div>
-      <div class="concepto-grid" style="margin-top:10px">${ejes}</div>
-    </div>
-    <div id="grupo-card-empresas">
-      <div class="page-header" style="margin-top:8px"><h1 style="font-size:16px">Empresas participantes</h1><p>Hacé click en una empresa para ver su ficha</p></div>
-      <div class="empresa-grid">${empresas}</div>
-    </div>
-  `;
+  // Cada tarjeta se arma solo si la planilla trae ese dato
+  const card = (titulo, cuerpo, id) => cuerpo
+    ? `<div class="card"${id ? ` id="${id}"` : ''} style="margin-bottom:16px"><div class="card-title">${esc(titulo)}</div>${cuerpo}</div>`
+    : (id ? `<div class="card" id="${id}" style="display:none"></div>` : '');
+
+  const identidad = GRUPO_INFO.descripcion
+    ? `<p style="font-size:13.5px;color:var(--gris-oscuro,#616A6B);line-height:1.65;margin-top:8px">${esc(GRUPO_INFO.descripcion)}</p>` +
+      (GRUPO_INFO.inicio || GRUPO_INFO.nombreDesde
+        ? `<div style="font-size:11.5px;color:var(--gris-medio);margin-top:10px">${GRUPO_INFO.inicio ? `Inicio del grupo: <strong>${esc(GRUPO_INFO.inicio)}</strong>` : ''}${GRUPO_INFO.inicio && GRUPO_INFO.nombreDesde ? ' · ' : ''}${GRUPO_INFO.nombreDesde ? `Nombre actual desde: <strong>${esc(GRUPO_INFO.nombreDesde)}</strong>` : ''}</div>`
+        : '')
+    : '';
+
+  const objetivos = [
+    GRUPO_INFO.objetivoGeneral ? card('Objetivo general', `<p style="font-size:13px;color:var(--gris-oscuro,#616A6B);line-height:1.6;margin-top:8px">${esc(GRUPO_INFO.objetivoGeneral)}</p>`) : '',
+    GRUPO_INFO.objetivo2026 ? card(GRUPO_INFO.objetivoAnioTitulo || 'Objetivo del año',
+      `<p style="font-size:13px;color:var(--gris-oscuro,#616A6B);line-height:1.6;margin-top:8px">${esc(GRUPO_INFO.objetivo2026)}</p>` +
+      (GRUPO_INFO.objetivo2026Ampliado ? `<p style="font-size:12px;color:var(--gris-medio);line-height:1.55;margin-top:8px">${esc(GRUPO_INFO.objetivo2026Ampliado)}</p>` : '')) : '',
+  ].filter(Boolean).join('');
+
+  const principiosCard = principios
+    ? card('Principios que orientan el funcionamiento',
+        `<ul style="font-size:13px;color:var(--gris-oscuro,#616A6B);line-height:1.5;margin-top:10px;padding-left:18px">${principios}</ul>` +
+        (GRUPO_INFO.fraseDestacada ? `<div style="margin-top:10px;padding:12px 14px;background:#eef4f2;border-radius:10px;font-size:13px;font-weight:600;color:#1a7a55">${esc(GRUPO_INFO.fraseDestacada)}</div>` : ''))
+    : '';
+
+  el.innerHTML =
+    card('Identidad', identidad) +
+    (objetivos ? `<div class="two-col" style="margin-bottom:16px">${objetivos}</div>` : '') +
+    principiosCard +
+    card('Hitos del grupo', hitos ? `<div class="evento-timeline" style="margin-top:10px">${hitos}</div>` : '', 'grupo-card-hitos') +
+    card(GRUPO_INFO.ejesTitulo || 'Ejes temáticos', ejes ? `<div class="concepto-grid" style="margin-top:10px">${ejes}</div>` : '', 'grupo-card-ejes') +
+    (empresas
+      ? `<div id="grupo-card-empresas">
+           <div class="page-header" style="margin-top:8px"><h1 style="font-size:16px">Empresas participantes</h1><p>Hacé click en una empresa para ver su ficha</p></div>
+           <div class="empresa-grid">${empresas}</div>
+         </div>`
+      : '<div id="grupo-card-empresas" style="display:none"></div>');
   aplicarVisibilidad();
 }
 
@@ -1215,7 +1151,7 @@ async function renderActividadReciente() {
     el.innerHTML = recientes.map(i => {
       const emp = i.empresa;
       const color = emp ? (emp.color || '#6C868C') : '#6C868C';
-      const quien = emp ? esc(emp.nombre) : 'Grupo El Faro';
+      const quien = emp ? esc(emp.nombre) : esc(GRUPO_INFO.nombre || 'El grupo');
       const donde = i.carpeta ? ` · ${esc(i.carpeta)}` : '';
       // El nombre del archivo suele repetir el de la empresa: no se muestra dos veces
       const archivo = emp ? sinNombreEmpresa(i.nombre, emp.nombre) : i.nombre;
@@ -1385,6 +1321,11 @@ async function renderReuniones() {
 function renderEmpresas() {
   const el = document.getElementById('empresa-grid');
   if (!el) return;
+  aplicarIdentidad();
+  if (!EMPRESAS.length) {
+    el.innerHTML = vacioHtml('Las empresas salen de la pestaña <strong>EMPRESAS</strong> de la planilla base de Drive (nombre, zona, participantes, resumen). Todavía no hay ninguna cargada.', true);
+    return;
+  }
   el.innerHTML = EMPRESAS.map(e => {
     const color = e.color || '#6C868C';
     const tags = Array.isArray(e.tags) ? e.tags : [];
@@ -1413,34 +1354,15 @@ function renderEmpresas() {
 // ══════════════════════════════════════════════════════════════
 // Mapeo empresa → carpeta de Drive (auto-listado de documentos).
 // Para otros grupos, esto vendrá del archivo base (CONFIG_DRIVE); acá se siembra
-// con las carpetas reales de El Faro para que funcione de una.
-const EMPRESA_DRIVE = {
-  'Agropecuaria El Sueño': '1glfNT1MAjDSUIjbzmyrI6F2VEUWksXvA',
-  'El Motivo S.A.':        '1y2YwY8LZ7rWrMiXHeptHbF2BtUbjbujj',
-  'Estudio Tomás Becker':  '15QaIy-KJjQXhKF1mEoO1QbgE0cfWmHkP',
-  'MACSA Agro':            '1caOZM90DLaM4hndwGp1b6VTllF6dGetn',
-  'Tricampo S.A.':         '1zWyvbl7uXmOK0uGKmd4E0nZ6CbvVe1Wv',
-  'Beheran Sarciat SA':    '128TkRPbDmwaZ2vDAAL3bivuIEmscmDl4',
-  'Altos de Bermúdez SA':  '14ZxVrWmK2EZE2odajRF2tE29mPZnmqbo',
-  'Donato Álvarez SRL':    '1DCQHpkahHiVte2uVtogTjECvw2GsOGWE',
-  'Rubro Agropecuario SRL':'104yiDQ-q09UeWC3pQcbMKB06aN-f9vxQ',
-};
-// Fallback por slug (los que usa la planilla base). Prioridad: driveFolderId del
-// archivo base (CONFIG_DRIVE) → slug → nombre.
-const EMPRESA_DRIVE_BY_SLUG = {
-  'el-sueno': '1glfNT1MAjDSUIjbzmyrI6F2VEUWksXvA',
-  'el-motivo': '1y2YwY8LZ7rWrMiXHeptHbF2BtUbjbujj',
-  'estudio-becker': '15QaIy-KJjQXhKF1mEoO1QbgE0cfWmHkP',
-  'macsa': '1caOZM90DLaM4hndwGp1b6VTllF6dGetn',
-  'tricampo': '1zWyvbl7uXmOK0uGKmd4E0nZ6CbvVe1Wv',
-  'el-porvenir': '128TkRPbDmwaZ2vDAAL3bivuIEmscmDl4',
-  'altos-de-bermudez': '14ZxVrWmK2EZE2odajRF2tE29mPZnmqbo',
-  'donato-alvarez': '1DCQHpkahHiVte2uVtogTjECvw2GsOGWE',
-  'rubro-agropecuario': '104yiDQ-q09UeWC3pQcbMKB06aN-f9vxQ',
-};
+// con las carpetas que declare la planilla del grupo.
 const API_BASE_DRIVE = '/api/drive';
+
+// La carpeta de cada empresa sale ÚNICAMENTE de la pestaña CONFIG_DRIVE de la
+// planilla base (columna id_carpeta_empresa). No hay ninguna lista en el código:
+// si una empresa no tiene carpeta cargada ahí, el sitio lo dice y explica dónde
+// completarla.
 function empresaDriveFolder(e) {
-  return e.driveFolderId || EMPRESA_DRIVE_BY_SLUG[e.slug] || EMPRESA_DRIVE[e.nombre] || '';
+  return (e && e.driveFolderId) || '';
 }
 
 function iconTipo(t) {
@@ -1540,10 +1462,19 @@ async function renderProcesos() {
     el.innerHTML = `<div class="proc-loading">No se pudieron leer las carpetas de Drive.<br><small>${esc(e.message)}</small></div>`;
     return;
   }
+  if (!EMPRESAS.length) {
+    el.innerHTML = vacioHtml('Los procesos se arman con las carpetas de Drive de cada empresa. Primero hay que conectar la <strong>planilla base</strong> (pestañas EMPRESAS y CONFIG_DRIVE).', true);
+    return;
+  }
+  const sinCarpeta = EMPRESAS.filter(e => !empresaDriveFolder(e));
+  const aviso = sinCarpeta.length
+    ? `<div class="rec-empty" style="margin-bottom:14px">${sinCarpeta.length} empresa${sinCarpeta.length === 1 ? ' no tiene' : 's no tienen'} carpeta de Drive vinculada (${esc(sinCarpeta.map(e => e.nombre).join(', '))}). Se carga en la pestaña <strong>CONFIG_DRIVE</strong> de la planilla, columna <strong>id_carpeta_empresa</strong>.</div>`
+    : '';
+
   const porEmpresa = {};
   items.forEach(i => { if (i.empresa) (porEmpresa[i.empresa.id] = porEmpresa[i.empresa.id] || []).push(i); });
 
-  el.innerHTML = EMPRESAS.map(empresa => {
+  el.innerHTML = aviso + EMPRESAS.map(empresa => {
     const todos = porEmpresa[empresa.id] || [];
     const pres = todos.filter(esPresentacion);
     const lista = pres.length ? pres : todos.filter(i => !/proceso|bitacora|minuta/i.test(i.carpeta || ''));
@@ -1625,13 +1556,17 @@ function renderEventos() {
   const elH = document.getElementById('timeline-hitos');
   const elP = document.getElementById('timeline-proximos');
 
-  if (elH) elH.innerHTML = HITOS.map(e =>
-    `<div class="evento-item ${esc(e.tipo || 'pasada')}"><div class="evento-fecha">${esc(e.fecha)}</div><div class="evento-titulo">${esc(e.titulo)}</div><div class="evento-desc">${esc(e.desc)}</div></div>`
-  ).join('');
+  if (elH) elH.innerHTML = HITOS.length
+    ? HITOS.map(e =>
+        `<div class="evento-item ${esc(e.tipo || 'pasada')}"><div class="evento-fecha">${esc(e.fecha)}</div><div class="evento-titulo">${esc(e.titulo)}</div><div class="evento-desc">${esc(e.desc)}</div></div>`
+      ).join('')
+    : vacioHtml('Los hitos salen de la pestaña <strong>HITOS</strong> de la planilla base.', true);
 
   // La fecha es texto libre: sirve tanto "29 Jun 2026" como "4-5-6/8" o "23 y 24/10".
   // La referencia (empresa, lugar u organizador) es opcional.
-  if (elP) elP.innerHTML = PROXIMOS_EVENTOS.map(e => {
+  if (elP && !PROXIMOS_EVENTOS.length) {
+    elP.innerHTML = vacioHtml('La agenda sale de la pestaña <strong>EVENTOS</strong> de la planilla base (fecha, titulo, descripcion, lugar). La fecha es texto libre: «4-5-6/8», «23 y 24/10».', true);
+  } else if (elP) elP.innerHTML = PROXIMOS_EVENTOS.map(e => {
     const ref = e.empresa || e.referencia || '';
     return `<div class="evento-item proxima"><div class="evento-fecha">${esc(e.fecha)}</div><div class="evento-titulo">${esc(e.titulo)}</div>${
       e.desc ? `<div class="evento-desc">${esc(e.desc)}</div>` : ''
@@ -1657,7 +1592,9 @@ function openLink(url) {
 // Recursos = Marco conceptual + herramientas (web de Simpleza + carpeta de Drive)
 function renderRecursosSec() {
   const elC = document.getElementById('conceptos-grid');
-  if (elC) elC.innerHTML = CONCEPTOS.map(c =>
+  if (elC && !CONCEPTOS.length) {
+    elC.innerHTML = vacioHtml('El marco conceptual sale de su propio archivo de Drive (pestaña <strong>CONCEPTOS</strong>: icono, titulo, formula, descripcion). Todavía no está conectado.', true);
+  } else if (elC) elC.innerHTML = CONCEPTOS.map(c =>
     `<div class="concepto-card"><div class="concepto-icon">${esc(c.icon)}</div><div class="concepto-titulo">${esc(c.titulo)}</div>${
       c.formula ? `<div class="concepto-formula">${esc(c.formula)}</div>` : ''
     }<div class="concepto-desc">${esc(c.desc)}</div></div>`
@@ -1670,9 +1607,16 @@ function renderRecursosSec() {
 
   const elW = document.getElementById('herramientas-web');
   if (elW) {
-    const url = DRIVE_CONFIG.herramientasUrl || SIMPLEZA_TOOLS_URL;
-    elW.innerHTML = `<p class="rec-lead">Las herramientas publicadas por Simpleza (guías, tableros y materiales de trabajo) están en su sitio web.</p>
-      <a class="rec-cta" href="${esc(url)}" target="_blank" rel="noopener">Ir a las herramientas de Simpleza ↗</a>`;
+    const url = DRIVE_CONFIG.herramientasUrl || '';
+    const quien = GRUPO_INFO.facilitadoPor || '';
+    const tit = document.getElementById('herr-web-titulo');
+    if (tit) tit.textContent = quien ? `🧰 Herramientas de ${quien}` : '🧰 Herramientas';
+    const sub = document.getElementById('herr-web-sub');
+    if (sub) { try { sub.textContent = url ? new URL(url).host.replace(/^www\./, '') : ''; } catch (e) { sub.textContent = ''; } }
+    elW.innerHTML = url
+      ? `<p class="rec-lead">Las herramientas publicadas por el facilitador (guías, tableros y materiales de trabajo) están en su sitio web.</p>
+         <a class="rec-cta" href="${esc(url)}" target="_blank" rel="noopener">Ir a las herramientas ↗</a>`
+      : vacioHtml('Falta la dirección del sitio de herramientas.', true);
   }
 
   const elF = document.getElementById('herramientas-carpeta');
@@ -1708,13 +1652,16 @@ async function renderTecnicas() {
     const arbol = j.arbol || {};
     const total = contarArchivos(arbol);
     if (!total) {
+      marcarFuente('tecnicasFolderId', 'ok', 'carpeta vacía');
       el.innerHTML = '<div class="rec-empty">La carpeta de reuniones técnicas está vacía.</div>';
       aplicarVisibilidad();
       return;
     }
+    marcarFuente('tecnicasFolderId', 'ok', `${total} archivos`);
     el.innerHTML = arbolHtml(arbol, true) +
       `<div class="rec-note">${total} archivo${total === 1 ? '' : 's'} · <a class="src-link" href="https://drive.google.com/drive/folders/${esc(fid)}" target="_blank" rel="noopener">Abrir la carpeta en Drive ↗</a></div>`;
   } catch (e) {
+    marcarFuente('tecnicasFolderId', 'error', e.message);
     el.innerHTML = `<div class="act-empty">No se pudo leer la carpeta.<br><small>${esc(e.message)}</small></div>`;
   }
   aplicarVisibilidad();
@@ -1757,15 +1704,17 @@ async function loadContentFromDB() {
     const j = await r.json();
     const c = (j && j.content) || {};
     if (c.drive_config && typeof c.drive_config === 'object') DRIVE_CONFIG = Object.assign({}, DRIVE_CONFIG, c.drive_config);
+    // Si el id de la planilla no se cargó en Configuración, puede venir de la
+    // variable BASE_FILE_ID de Vercel. En el código no hay ninguno.
+    if (!DRIVE_CONFIG.baseFileId && j.env && j.env.baseFileId) DRIVE_CONFIG.baseFileId = j.env.baseFileId;
     if (c.ui_config && typeof c.ui_config === 'object') {
       UI_CONFIG = Object.assign({ autoHide: true, ocultos: [] }, c.ui_config);
       if (!Array.isArray(UI_CONFIG.ocultos)) UI_CONFIG.ocultos = [];
     }
     // Reuniones y configuración del calendario (tablas meetings/config de Turso).
-    // Si la base todavía no tiene reuniones, se usa el seed de conocidas (fijadas).
-    MEETINGS = (Array.isArray(j.meetings) && j.meetings.length)
-      ? j.meetings
-      : JSON.parse(JSON.stringify(DEFAULT_MEETINGS));
+    // El calendario es lo único que se edita en el sitio: no hay reuniones
+    // escritas en el código.
+    MEETINGS = Array.isArray(j.meetings) ? j.meetings : [];
     if (j.config && typeof j.config === 'object') {
       CALCFG.cadenceDays      = j.config.cadence_days        ?? CALCFG.cadenceDays;
       CALCFG.novedadesRatio   = j.config.novedades_ratio     ?? CALCFG.novedadesRatio;
@@ -1786,7 +1735,7 @@ async function apiWrite(payload) {
   const r = await fetch(API_BASE, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(Object.assign({ group_id: GROUP_ID, password: EDIT_PASSWORD }, payload))
+    body: JSON.stringify(Object.assign({ group_id: GROUP_ID, password: ADMIN_PASSWORD }, payload))
   });
   const j = await r.json().catch(() => ({}));
   if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
@@ -1801,14 +1750,8 @@ let CALCFG = { cadenceDays: 42, novedadesRatio: 1, tecnicaRatio: 1, meetingDayOf
 // Reuniones conocidas iniciales: quedan FIJADAS (📌) en el calendario. Al generar
 // las futuras, se respetan estas y se completa el resto. Se usan cuando la base
 // todavía no tiene reuniones cargadas.
-const DEFAULT_MEETINGS = [
-  { date:'2026-06-29', assignment:'El Motivo S.A.',          obs:'', topic:'', fixed:true },
-  { date:'2026-07-06', assignment:'Agropecuaria El Sueño',   obs:'', topic:'', fixed:true },
-  { date:'2026-07-13', assignment:'Altos de Bermúdez SA',    obs:'', topic:'', fixed:true },
-  { date:'2026-07-20', assignment:'MACSA Agro',              obs:'', topic:'', fixed:true },
-  { date:'2026-07-27', assignment:'Rubro Agropecuario SRL',  obs:'', topic:'', fixed:true },
-  { date:'2026-08-03', assignment:'Estudio Tomás Becker',    obs:'', topic:'', fixed:true },
-];
+// El calendario arranca vacío: las reuniones se cargan en la sección
+// Calendario (que se edita en el sitio) o se generan con «Generar futuras».
 const CAL_MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const CAL_DOWS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 const CAL_HOLIDAYS = ['01-01','03-24','04-02','05-01','05-25','06-20','07-09','08-17','10-12','11-20','12-08','12-25'];
@@ -1981,7 +1924,7 @@ async function calSaveConfig() {
   renderCalendarNative();
   calStatus('Guardando…');
   try {
-    await apiWrite({ action: 'saveConfig', config: { group_name: 'Grupo El Faro', cadence_days: CALCFG.cadenceDays, novedades_ratio: CALCFG.novedadesRatio, tecnica_ratio: CALCFG.tecnicaRatio, meeting_day_of_week: CALCFG.meetingDayOfWeek } });
+    await apiWrite({ action: 'saveConfig', config: { group_name: GRUPO_INFO.nombre || '', cadence_days: CALCFG.cadenceDays, novedades_ratio: CALCFG.novedadesRatio, tecnica_ratio: CALCFG.tecnicaRatio, meeting_day_of_week: CALCFG.meetingDayOfWeek } });
     calStatus('Guardado ✓');
   } catch (e) { calStatus('Error: ' + e.message); }
 }
@@ -2094,9 +2037,9 @@ const API_BASE_SHEET = '/api/base';
 const EMP_PALETTE = ['#6C868C','#E67E22','#2980B9','#16A085','#5D8A97','#8E44AD','#CD6155','#D4AC0D','#00897B'];
 
 // Fuentes de datos de Drive configurables por grupo (persistido en Turso 'drive_config').
-// Por defecto apunta a los archivos de El Faro para que funcione de una.
+// Arranca vacío: no hay ningún archivo escrito en el código.
 let DRIVE_CONFIG = {
-  baseFileId: '1hdGYpzGrqIh5gADoVkp9yNp8pPGM29dt',
+  baseFileId: '',
   marcoFileId: '',
   herramientasFolderId: '',
   herramientasUrl: '',
@@ -2110,13 +2053,28 @@ function siglaFrom(nombre) {
   const s = words.slice(0, 3).map(w => w[0]).join('');
   return (s || String(nombre || '?').slice(0, 2)).toUpperCase();
 }
+// Estado de cada fuente, para que Configuración pueda mostrar qué está
+// conectado, qué falta completar y qué está fallando.
+let FUENTES = {};
+const marcarFuente = (key, estado, detalle) => { FUENTES[key] = { estado, detalle: detalle || '' }; };
+
 async function loadBaseFromDrive() {
   try {
     const fileId = DRIVE_CONFIG.baseFileId || '';
     const r = await fetch(API_BASE_SHEET + (fileId ? `?fileId=${encodeURIComponent(fileId)}` : ''));
-    if (!r.ok) return;
-    const j = await r.json();
-    if (!j || j.error) return;
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j || j.error) {
+      marcarFuente('baseFileId', j && j.faltaConectar ? 'falta' : 'error', (j && j.error) || `HTTP ${r.status}`);
+      return;
+    }
+    const plural = (n, uno, muchos) => `${n} ${n === 1 ? uno : muchos}`;
+    const partes = [];
+    if (Array.isArray(j.empresas)) partes.push(plural(j.empresas.length, 'empresa', 'empresas'));
+    if (Array.isArray(j.hitos)) partes.push(plural(j.hitos.length, 'hito', 'hitos'));
+    if (Array.isArray(j.ejes)) partes.push(plural(j.ejes.length, 'eje', 'ejes'));
+    if (Array.isArray(j.eventos)) partes.push(plural(j.eventos.length, 'evento', 'eventos'));
+    const sinCarpeta = (j.empresas || []).filter(e => !e.driveFolderId).length;
+    marcarFuente('baseFileId', 'ok', partes.join(' · ') + (sinCarpeta ? ` · ⚠ ${sinCarpeta} sin carpeta en CONFIG_DRIVE` : ''));
     if (j.grupo && j.grupo.nombre) GRUPO_INFO = Object.assign({}, GRUPO_INFO, j.grupo);
     if (Array.isArray(j.hitos) && j.hitos.length) GRUPO_HITOS = j.hitos;
     if (Array.isArray(j.ejes) && j.ejes.length) GRUPO_EJES = j.ejes;
@@ -2132,9 +2090,8 @@ async function loadBaseFromDrive() {
     // Agenda del grupo: pestaña EVENTOS (opcional) de la misma planilla
     if (Array.isArray(j.eventos) && j.eventos.length) PROXIMOS_EVENTOS = j.eventos;
     // Los hitos de "Eventos e Hitos" son los mismos de la planilla
-    if (Array.isArray(j.hitos) && j.hitos.length) {
-      HITOS = j.hitos.map(h => ({ fecha: h.anio || h.fecha || '', titulo: h.titulo, desc: h.desc, tipo: 'pasada' }));
-    }
+    HITOS = (j.hitos || []).map(h => ({ fecha: h.anio || h.fecha || '', titulo: h.titulo, desc: h.desc, tipo: 'pasada' }));
+    aplicarIdentidad();
   } catch (err) {
     console.warn('No se pudo cargar el archivo base de Drive (se usan los datos por defecto):', err);
   }
@@ -2143,14 +2100,15 @@ async function loadBaseFromDrive() {
 // Marco Conceptual: archivo aparte de Drive (pestaña CONCEPTOS)
 async function loadMarcoFromDrive() {
   const fileId = DRIVE_CONFIG.marcoFileId;
-  if (!fileId) return;
+  if (!fileId) { marcarFuente('marcoFileId', 'falta'); return; }
   try {
     const r = await fetch(`${API_BASE_SHEET}?fileId=${encodeURIComponent(fileId)}`);
-    if (!r.ok) return;
-    const j = await r.json();
-    if (j && Array.isArray(j.conceptos) && j.conceptos.length) CONCEPTOS = j.conceptos;
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j || j.error) { marcarFuente('marcoFileId', 'error', (j && j.error) || `HTTP ${r.status}`); return; }
+    CONCEPTOS = Array.isArray(j.conceptos) ? j.conceptos : [];
+    marcarFuente('marcoFileId', 'ok', `${CONCEPTOS.length} conceptos`);
   } catch (err) {
-    console.warn('No se pudo cargar el Marco Conceptual de Drive (se usan los conceptos por defecto):', err);
+    marcarFuente('marcoFileId', 'error', err.message);
   }
 }
 
@@ -2168,8 +2126,8 @@ async function getServiceAccountEmail() {
 const DRIVE_SOURCES = [
   { key:'baseFileId', tipo:'archivo', label:'El Grupo, Empresas y Agenda', obligatorio:true,
     desc:'Identidad del grupo, objetivos, principios, hitos, ejes temáticos, la ficha de cada empresa y la agenda de eventos. La pestaña CONFIG_DRIVE es la que vincula cada empresa con su carpeta de Drive: de ahí salen la actividad reciente, los Procesos, la Bitácora y el conteo de reuniones.',
-    donde:'El Grupo · Empresas · Eventos e Hitos · Dashboard',
-    estructura:'Pestañas: GRUPO, HITOS, EJES_2026, EMPRESAS, CONFIG_DRIVE y EVENTOS (opcional: fecha, titulo, descripcion, lugar).',
+    donde:'El Grupo · Empresas · Eventos e Hitos · Dashboard · nombre del grupo y equipo del menú · quién puede crear cuenta',
+    estructura:'Pestañas: GRUPO (clave/contenido), HITOS, EJES_2026, EMPRESAS, CONFIG_DRIVE, EQUIPO (nombre, rol), EVENTOS (fecha, titulo, descripcion, lugar) y ACCESOS (email, empresa, nombre: quiénes pueden crear cuenta).',
     plantilla:'plantillas/Plantilla_Base_Grupo.xlsx' },
   { key:'marcoFileId', tipo:'archivo', label:'Marco Conceptual',
     desc:'Conceptos y criterios metodológicos del grupo (directorio colaborativo, línea estratégica, etc.). El link al archivo aparece debajo de los conceptos.',
@@ -2188,11 +2146,108 @@ const DRIVE_SOURCES = [
     desc:'Carpeta con las herramientas, tableros y matrices que el grupo comparte. Se muestra embebida (iframe): lo que suban a la carpeta aparece solo.',
     donde:'Recursos del grupo → tarjeta «Herramientas del grupo»',
     estructura:'Una carpeta de Drive compartida como «Cualquiera con el enlace · Lector» (si no, el iframe no se ve desde otros navegadores).' },
-  { key:'herramientasUrl', tipo:'enlace', label:'Herramientas de Simpleza (web)',
-    desc:'Link a la sección de herramientas del sitio de Simpleza.',
-    donde:'Recursos del grupo → tarjeta «Herramientas de Simpleza»',
-    estructura:`Una URL completa. Si se deja vacío, se usa ${SIMPLEZA_TOOLS_URL}` },
+  { key:'herramientasUrl', tipo:'enlace', label:'Herramientas del facilitador (web)',
+    desc:'Link al sitio de herramientas de quien facilita el grupo (el nombre sale de la clave facilitado_por de la planilla).',
+    donde:'Recursos del grupo → tarjeta «Herramientas»',
+    estructura:'Una URL completa (https://…). Si se deja vacío, la tarjeta no se muestra.' },
 ];
+
+// ── Mapa: cada cosa que se ve en el sitio y de dónde sale ──
+// Es la respuesta a «¿por qué aparece esto acá?». Cada fila linkea a la
+// sección donde se ve y al campo que la alimenta.
+const MAPA_SITIO = [
+  { sec:'dashboard', titulo:'Dashboard', filas:[
+    { que:'Descripción del grupo',    fuente:'Planilla base · pestaña GRUPO (grupo_descripcion)', key:'baseFileId' },
+    { que:'Ronda de novedades',       fuente:'Carpeta de Drive «Ronda de novedades» · última pieza subida', key:'novedadesFolderId' },
+    { que:'Actividad reciente',       fuente:'Carpetas de Drive de las empresas (pestaña CONFIG_DRIVE)', key:'baseFileId' },
+    { que:'Próximas reuniones',       fuente:'Calendario del sitio (única sección que se edita acá)', key:'@calendario' },
+    { que:'Reuniones realizadas',     fuente:'Bitácora de cada empresa (subcarpeta Proceso) + carpeta de técnicas', key:'@bitacora' },
+  ]},
+  { sec:'grupo', titulo:'El Grupo', filas:[
+    { que:'Identidad y objetivos',    fuente:'Planilla base · pestaña GRUPO', key:'baseFileId' },
+    { que:'Principios',               fuente:'Planilla base · GRUPO, claves principio_1, principio_2…', key:'baseFileId' },
+    { que:'Hitos del grupo',          fuente:'Planilla base · pestaña HITOS', key:'baseFileId' },
+    { que:'Ejes temáticos',           fuente:'Planilla base · pestaña EJES_2026', key:'baseFileId' },
+  ]},
+  { sec:'empresas', titulo:'Empresas', filas:[
+    { que:'Ficha de cada empresa',    fuente:'Planilla base · pestaña EMPRESAS', key:'baseFileId' },
+    { que:'Documentos de la ficha',   fuente:'Subcarpeta Presentaciones de la carpeta de la empresa', key:'baseFileId' },
+  ]},
+  { sec:'procesos', titulo:'Procesos', filas:[
+    { que:'Archivos por empresa',     fuente:'Carpeta de Drive de la empresa (CONFIG_DRIVE · id_carpeta_empresa)', key:'baseFileId' },
+    { que:'Botón Bitácora',           fuente:'Subcarpeta Proceso de la carpeta de la empresa', key:'baseFileId' },
+  ]},
+  { sec:'calendario', titulo:'Calendario', filas:[
+    { que:'Reuniones y rotación',     fuente:'Se edita en el sitio y se guarda en la base (Turso)', key:'@calendario' },
+  ]},
+  { sec:'eventos', titulo:'Eventos e Hitos', filas:[
+    { que:'Hitos',                    fuente:'Planilla base · pestaña HITOS', key:'baseFileId' },
+    { que:'Agenda de eventos',        fuente:'Planilla base · pestaña EVENTOS (fecha en texto libre)', key:'baseFileId' },
+  ]},
+  { sec:'recursos', titulo:'Recursos del grupo', filas:[
+    { que:'Marco conceptual',         fuente:'Archivo Marco Conceptual · pestaña CONCEPTOS', key:'marcoFileId' },
+    { que:'Reuniones técnicas',       fuente:'Carpeta de Drive «Reuniones Técnicas» (con subcarpetas)', key:'tecnicasFolderId' },
+    { que:'Herramientas del facilitador', fuente:'URL configurada en Configuración', key:'herramientasUrl' },
+    { que:'Herramientas del grupo',   fuente:'Carpeta de Drive embebida', key:'herramientasFolderId' },
+  ]},
+];
+
+// Estado de una fila del mapa: qué le pasa a su fuente hoy
+function estadoFuente(key) {
+  if (key === '@calendario') {
+    return MEETINGS.length
+      ? { txt: `${MEETINGS.length} reuniones`, cls: 'badge-green' }
+      : { txt: 'Sin reuniones cargadas', cls: 'badge-yellow' };
+  }
+  if (key === '@bitacora') {
+    if (!REUNIONES_DATA) return { txt: 'Leyendo…', cls: 'badge-gray' };
+    const n = Object.values(REUNIONES_DATA.porEmpresa || {}).reduce((s, f) => s + f.length, 0);
+    return n ? { txt: `${n} reuniones en bitácoras`, cls: 'badge-green' }
+             : { txt: 'Sin registros en las bitácoras', cls: 'badge-yellow' };
+  }
+  const f = FUENTES[key];
+  if (f && f.estado === 'ok') {
+    const ojo = /⚠/.test(f.detalle || '');
+    return { txt: ojo ? 'Conectado, con avisos' : 'Conectado', detalle: f.detalle, cls: ojo ? 'badge-yellow' : 'badge-green' };
+  }
+  if (f && f.estado === 'error') return { txt: 'No conecta', detalle: f.detalle, cls: 'badge-gray' };
+  if (DRIVE_CONFIG[key])         return { txt: 'Conectado', cls: 'badge-green' };
+  return { txt: 'Falta conectar', cls: 'badge-yellow' };
+}
+
+function configMapaHtml() {
+  const bloques = MAPA_SITIO.map(b => {
+    const filas = b.filas.map(f => {
+      const e = estadoFuente(f.key);
+      const irAlCampo = f.key.startsWith('@') ? '' :
+        `<a class="src-link" onclick="irAFuente('${f.key}')">Configurar ↓</a>`;
+      return `<div class="mapa-fila">
+        <div class="mapa-que">${esc(f.que)}</div>
+        <div class="mapa-fuente">${esc(f.fuente)}</div>
+        <span class="badge ${e.cls} mapa-badge"${e.detalle ? ` title="${esc(e.detalle)}"` : ''}>${esc(e.txt)}</span>
+        ${irAlCampo}
+      </div>`;
+    }).join('');
+    return `<div class="mapa-bloque">
+      <div class="mapa-sec"><a onclick="navigate('${b.sec}')">${esc(b.titulo)} →</a></div>
+      ${filas}
+    </div>`;
+  }).join('');
+  return `<div class="card">
+    <div class="card-title" style="margin-bottom:10px">2) Qué se ve y de dónde sale</div>
+    <div class="src-estructura">Todo el contenido del sitio sale de Google Drive. Acá está, sección por sección, qué alimenta cada cosa y cómo está hoy. Lo único que se edita adentro del sitio es el Calendario.</div>
+    <div class="mapa">${bloques}</div>
+  </div>`;
+}
+
+function irAFuente(key) {
+  const el = document.getElementById('src-' + key);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.focus();
+  const card = el.closest('.src-card');
+  if (card) { card.classList.add('src-destacada'); setTimeout(() => card.classList.remove('src-destacada'), 1600); }
+}
 
 // Extrae el ID de Drive de un link pegado (o devuelve el valor si ya es un ID)
 function extractDriveId(v) {
@@ -2212,7 +2267,8 @@ async function renderConfig() {
   }
   const cont = document.getElementById('config-sources');
   if (cont) {
-    cont.innerHTML = `<div class="card-title" style="margin:6px 0 12px">2) Conectá los archivos y carpetas</div>` +
+    cont.innerHTML = configMapaHtml() +
+      `<div class="card-title" style="margin:6px 0 12px">3) Conectá los archivos y carpetas</div>` +
       DRIVE_SOURCES.map(configSourceHtml).join('') +
       configVisibilidadHtml();
   }
@@ -2313,7 +2369,7 @@ const UI_BLOQUES = [
   { key:'grupo.empresas',  el:'grupo-card-empresas', sec:'El Grupo', label:'Empresas participantes' },
   { key:'rec.marco',       el:'card-marco',      sec:'Recursos',  label:'Marco conceptual' },
   { key:'rec.tecnicas',    el:'card-tecnicas',   sec:'Recursos',  label:'Reuniones técnicas' },
-  { key:'rec.herrweb',     el:'card-herr-web',   sec:'Recursos',  label:'Herramientas de Simpleza (web)' },
+  { key:'rec.herrweb',     el:'card-herr-web',   sec:'Recursos',  label:'Herramientas del facilitador (web)' },
   { key:'rec.herrdrive',   el:'card-herr-drive', sec:'Recursos',  label:'Herramientas del grupo (Drive)' },
   { key:'nav.procesos',    nav:'procesos',       sec:'Menú',      label:'Sección Procesos', soloManual:true },
   { key:'nav.calendario',  nav:'calendario',     sec:'Menú',      label:'Sección Calendario', soloManual:true },
@@ -2333,6 +2389,36 @@ function bloqueTieneDatos(el) {
   return nodos.some(c => c.textContent.trim().length > 0 || c.querySelector('img, iframe'));
 }
 
+// Qué decir cuando una sección quedó entera sin contenido (porque todavía no
+// se conectaron sus fuentes). Sin esto, auto-ocultar dejaría una página en blanco.
+const SECCION_VACIA = {
+  dashboard: 'La portada se arma con la planilla base del grupo, las carpetas de Drive de las empresas y el Calendario.',
+  recursos:  'Recursos se arma con el archivo del <strong>Marco Conceptual</strong> y con las carpetas de Drive de <strong>Reuniones Técnicas</strong> y <strong>Herramientas</strong>.',
+  eventos:   'Los hitos y la agenda salen de las pestañas <strong>HITOS</strong> y <strong>EVENTOS</strong> de la planilla base.',
+};
+
+function avisarSeccionesVacias() {
+  for (const [sec, texto] of Object.entries(SECCION_VACIA)) {
+    const cont = document.getElementById('sec-' + sec);
+    if (!cont) continue;
+    const bloques = [...cont.querySelectorAll(':scope > .card, :scope > .two-col')];
+    const algoVisible = bloques.some(el => getComputedStyle(el).display !== 'none');
+    let aviso = cont.querySelector('.seccion-vacia');
+    if (!algoVisible && bloques.length) {
+      if (!aviso) {
+        aviso = document.createElement('div');
+        aviso.className = 'rec-empty seccion-vacia';
+        cont.appendChild(aviso);
+      }
+      aviso.innerHTML = `${texto} Todavía no hay nada conectado.` +
+        (dashEditing ? ` <a onclick="navigate('config')" style="cursor:pointer;font-weight:700">Conectar en Configuración →</a>` : '');
+      aviso.style.display = '';
+    } else if (aviso) {
+      aviso.style.display = 'none';
+    }
+  }
+}
+
 function aplicarVisibilidad() {
   for (const b of UI_BLOQUES) {
     const oculto = bloqueOculto(b.key);
@@ -2347,6 +2433,7 @@ function aplicarVisibilidad() {
     const auto = UI_CONFIG.autoHide && !bloqueTieneDatos(el);
     el.style.display = (oculto || auto) ? 'none' : '';
   }
+  avisarSeccionesVacias();
 }
 
 async function guardarUIConfig() {
@@ -2379,7 +2466,7 @@ function configVisibilidadHtml() {
     return `<div class="vis-group"><div class="vis-group-title">${esc(sec)}</div>${filas}</div>`;
   }).join('');
   return `<div class="card">
-    <div class="card-title" style="margin-bottom:10px">3) Qué se muestra</div>
+    <div class="card-title" style="margin-bottom:10px">4) Qué se muestra</div>
     <label class="vis-row" style="margin-bottom:10px">
       <input type="checkbox" ${UI_CONFIG.autoHide ? 'checked' : ''} onchange="toggleAutoHide(this.checked)">
       <span><strong>Ocultar automáticamente lo que no tiene datos</strong></span>
@@ -2415,6 +2502,7 @@ async function renderNovedades() {
       aplicarVisibilidad();
       return;
     }
+    marcarFuente('novedadesFolderId', 'ok', `${archivos.length} piezas`);
     if (sub) sub.textContent = fechaCorta(ultima.fecha);
     const esImagen = RX_IMAGEN.test(ultima.tipo || '');
     const visor = esImagen
@@ -2423,6 +2511,7 @@ async function renderNovedades() {
     box.innerHTML = `${visor}
       <div class="rec-note">${esc(ultima.nombre)} · <a class="src-link" href="${esc(ultima.url)}" target="_blank" rel="noopener">Abrir en Drive ↗</a></div>`;
   } catch (e) {
+    marcarFuente('novedadesFolderId', 'error', e.message);
     box.innerHTML = `<div class="act-empty">No se pudo leer la carpeta de novedades.<br><small>${esc(e.message)}</small></div>`;
   }
   aplicarVisibilidad();
@@ -2566,14 +2655,20 @@ async function gateLogout() {
 async function renderAccesos() {
   const el = document.getElementById('config-accesos');
   if (!el) return;
-  el.innerHTML = `<div class="card"><div class="card-title">4) Quién puede entrar</div><div class="act-empty">Cargando cuentas…</div></div>`;
+  el.innerHTML = `<div class="card"><div class="card-title">5) Quién puede entrar</div><div class="act-empty">Cargando cuentas…</div></div>`;
   try {
     const [u, a] = await Promise.all([
-      authPost('usuarios', { password: EDIT_PASSWORD }),
-      authPost('accesos', { password: EDIT_PASSWORD, limit: 30 }),
+      authPost('usuarios', { password: ADMIN_PASSWORD }),
+      authPost('accesos', { password: ADMIN_PASSWORD, limit: 30 }),
     ]);
     const usuarios = u.usuarios || [];
     const pendientes = usuarios.filter(x => x.estado === 'pendiente');
+    const la = u.listaAccesos || {};
+    const modo = la.error
+      ? `<div class="rec-empty" style="margin:10px 0">⚠ No se pudo leer la lista de la planilla (${esc(la.error)}). Mientras tanto, no se acepta ningún registro nuevo.</div>`
+      : la.activa
+        ? `<div class="src-estructura" style="margin:10px 0"><strong>Solo por lista.</strong> Únicamente los ${la.habilitados} emails de la pestaña <strong>ACCESOS</strong> de la planilla pueden crear cuenta. Cualquier otro mail (inventado o no) rebota al registrarse. Igual, cada cuenta necesita que la autorices acá antes del primer ingreso.</div>`
+        : `<div class="rec-empty" style="margin:10px 0"><strong>Registro abierto.</strong> Hoy cualquiera con el link puede crear una cuenta (queda pendiente y no ve nada hasta que la autorices). Para cerrarlo, agregá la pestaña <strong>ACCESOS</strong> a la planilla con los emails habilitados: ahí el registro pasa a ser solo por lista.</div>`;
     const filas = usuarios.map(x => {
       const badge = x.estado === 'autorizado' ? 'badge-green' : x.estado === 'bloqueado' ? 'badge-gray' : 'badge-yellow';
       const reset = x.reset
@@ -2600,12 +2695,13 @@ async function renderAccesos() {
 
     el.innerHTML = `
       <div class="card">
-        <div class="card-title" style="margin-bottom:10px">4) Quién puede entrar</div>
+        <div class="card-title" style="margin-bottom:10px">5) Quién puede entrar</div>
         <label class="vis-row" style="margin-bottom:8px">
           <input type="checkbox" ${AUTH_REQUIRED ? 'checked' : ''} onchange="cambiarRequerirLogin(this.checked)">
           <span><strong>Pedir cuenta para entrar al sitio</strong></span>
         </label>
         <div class="src-estructura">Con esto apagado el sitio se ve sin cuenta (útil mientras se arma). Prendelo cuando las empresas ya tengan su cuenta autorizada: ahí el contenido y los datos de Drive dejan de responder sin sesión.${pendientes.length ? ` <strong>Hay ${pendientes.length} cuenta${pendientes.length === 1 ? '' : 's'} esperando autorización.</strong>` : ''}</div>
+        ${modo}
         <div style="margin-top:14px">${filas}</div>
       </div>
       <div class="card">
@@ -2613,26 +2709,26 @@ async function renderAccesos() {
         ${log}
       </div>`;
   } catch (e) {
-    el.innerHTML = `<div class="card"><div class="card-title">4) Quién puede entrar</div><div class="act-empty">No se pudo leer la lista de cuentas.<br><small>${esc(e.message)}</small></div></div>`;
+    el.innerHTML = `<div class="card"><div class="card-title">5) Quién puede entrar</div><div class="act-empty">No se pudo leer la lista de cuentas.<br><small>${esc(e.message)}</small></div></div>`;
   }
 }
 
 function copiarTexto(t) { try { navigator.clipboard.writeText(t); } catch (e) {} }
 
 async function cambiarEstadoUsuario(email, estado) {
-  try { await authPost('estado', { password: EDIT_PASSWORD, email, estado }); await renderAccesos(); }
+  try { await authPost('estado', { password: ADMIN_PASSWORD, email, estado }); await renderAccesos(); }
   catch (e) { alert('No se pudo cambiar el estado: ' + e.message); }
 }
 
 async function borrarUsuario(email) {
   if (!confirm(`¿Borrar la cuenta de ${email}?`)) return;
-  try { await authPost('borrar', { password: EDIT_PASSWORD, email }); await renderAccesos(); }
+  try { await authPost('borrar', { password: ADMIN_PASSWORD, email }); await renderAccesos(); }
   catch (e) { alert('No se pudo borrar: ' + e.message); }
 }
 
 async function cambiarRequerirLogin(valor) {
   try {
-    await authPost('requerirLogin', { password: EDIT_PASSWORD, valor });
+    await authPost('requerirLogin', { password: ADMIN_PASSWORD, valor });
     AUTH_REQUIRED = !!valor;
     await renderAccesos();
   } catch (e) { alert('No se pudo cambiar: ' + e.message); }

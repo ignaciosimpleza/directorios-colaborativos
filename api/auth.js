@@ -22,8 +22,46 @@ import {
   db, ensureAuthSchema, ahora, normEmail, hashPassword, passwordOk, nuevoToken,
   tokenDeRequest, sesionDe, esAdmin, invalidarCacheAcceso, requiereLogin,
 } from './_auth.js';
+import { leerBase } from './base.js';
 
 const DIAS_SESION = 30;
+
+// ── Quién tiene permitido crear cuenta ──
+// Sale de la pestaña ACCESOS de la planilla base (columnas email, empresa,
+// nombre). Si esa pestaña existe, NADIE fuera de esa lista puede registrarse:
+// un mail inventado rebota en el acto. Si no existe, cualquiera puede
+// registrarse pero igual queda pendiente de autorización manual.
+const cacheLista = { v: null, hasta: 0 };
+
+async function listaHabilitados(groupId) {
+  const t = Date.now();
+  if (cacheLista.v && t < cacheLista.hasta) return cacheLista.v;
+  let fileId = process.env.BASE_FILE_ID || '';
+  try {
+    const r = await db.execute({
+      sql: `SELECT data FROM content WHERE group_id = ? AND key = 'drive_config'`,
+      args: [groupId],
+    });
+    if (r.rows[0]) {
+      const cfg = JSON.parse(r.rows[0].data || '{}');
+      if (cfg.baseFileId) fileId = cfg.baseFileId;
+    }
+  } catch {}
+  if (!fileId) return (cacheLista.v = { hayLista: false, porEmail: {} }, cacheLista.hasta = t + 60000, cacheLista.v);
+  try {
+    const base = await leerBase(fileId);
+    const porEmail = {};
+    (base.accesos || []).forEach(a => { porEmail[a.email] = a; });
+    cacheLista.v = { hayLista: (base.accesos || []).length > 0, porEmail };
+  } catch (e) {
+    console.warn('No se pudo leer la lista de accesos de la planilla:', e.message);
+    // Si la planilla no se puede leer, no se abre la puerta: se rechaza el
+    // registro nuevo hasta que la fuente vuelva.
+    cacheLista.v = { hayLista: true, porEmail: {}, error: e.message };
+  }
+  cacheLista.hasta = t + 60000;
+  return cacheLista.v;
+}
 
 const enDias = n => new Date(Date.now() + n * 86400000).toISOString();
 
@@ -85,6 +123,15 @@ export default async function handler(req, res) {
         const password = String(body.password || '');
         if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'Pegá un email válido.' });
         if (password.length < 6) return res.status(400).json({ error: 'La contraseña necesita al menos 6 caracteres.' });
+
+        // Solo se puede registrar quien está en la lista de la planilla
+        const lista = await listaHabilitados(groupId);
+        const invitado = lista.porEmail[email];
+        if (lista.hayLista && !invitado) {
+          return res.status(403).json({
+            error: 'Ese email no figura en la lista del grupo. Pedile a la coordinación que lo agregue a la pestaña ACCESOS de la planilla y volvé a intentar.',
+          });
+        }
         const ya = await db.execute({ sql: 'SELECT estado FROM users WHERE group_id = ? AND email = ?', args: [groupId, email] });
         if (ya.rows[0]) {
           return res.status(409).json({
@@ -94,10 +141,14 @@ export default async function handler(req, res) {
           });
         }
         const { salt, hash } = hashPassword(password);
+        // El nombre y la empresa que valen son los de la planilla, no los que
+        // escriba quien se registra.
+        const nombre = (invitado && invitado.nombre) || String(body.nombre || '').slice(0, 120);
+        const empresa = (invitado && invitado.empresa) || String(body.empresa || '').slice(0, 120);
         await db.execute({
           sql: `INSERT INTO users (group_id, email, nombre, empresa, pass_hash, salt, estado, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, 'pendiente', ?)`,
-          args: [groupId, email, String(body.nombre || '').slice(0, 120), String(body.empresa || '').slice(0, 120), hash, salt, ahora()],
+          args: [groupId, email, nombre, empresa, hash, salt, ahora()],
         });
         await registrarAcceso(groupId, email, 'registro', req);
         return res.status(200).json({ ok: true, pendiente: true });
@@ -165,6 +216,13 @@ export default async function handler(req, res) {
       }
 
       // ───────── administración (clave de edición) ─────────
+      // Valida la clave de edición contra la variable de Vercel, para que no
+      // tenga que estar escrita en el HTML del sitio.
+      case 'adminLogin': {
+        pedirAdmin(body);
+        return res.status(200).json({ ok: true });
+      }
+
       case 'usuarios': {
         pedirAdmin(body);
         const r = await db.execute({
@@ -172,7 +230,9 @@ export default async function handler(req, res) {
                 FROM users WHERE group_id = ? ORDER BY created_at DESC`,
           args: [groupId],
         });
+        const lista = await listaHabilitados(groupId);
         return res.status(200).json({
+          listaAccesos: { activa: !!lista.hayLista, habilitados: Object.keys(lista.porEmail).length, error: lista.error || '' },
           usuarios: r.rows.map(u => ({
             email: u.email, nombre: u.nombre || '', empresa: u.empresa || '', estado: u.estado,
             created_at: u.created_at || '',

@@ -1,15 +1,18 @@
-// Vercel Serverless Function — lee el archivo base institucional del Drive
-// (Base_Estructurada_Grupo_El_Faro.xlsx) y devuelve su contenido estructurado.
+// Vercel Serverless Function — lee la planilla base del grupo desde Drive y
+// devuelve su contenido estructurado. De acá sale TODO el contenido del sitio:
+// identidad, hitos, ejes, empresas, agenda, equipo y la lista de accesos.
 //
 // Usa la misma cuenta de servicio que /api/drive (GOOGLE_SERVICE_ACCOUNT_JSON).
-// El id del archivo se puede pasar por query (?fileId=) o vía la variable
-// BASE_FILE_ID; por defecto usa el archivo de El Faro.
+// El id del archivo llega por query (?fileId=, lo que el grupo pegó en
+// Configuración) o por la variable de entorno BASE_FILE_ID. No hay ninguno
+// escrito en el código.
 
 import { GoogleAuth } from 'google-auth-library';
 import * as XLSX from 'xlsx';
 import { bloqueaPorLogin } from './_auth.js';
 
-const DEFAULT_BASE_FILE_ID = '1hdGYpzGrqIh5gADoVkp9yNp8pPGM29dt';
+// No hay archivo por defecto en el código: el id llega por query (lo que el
+// grupo pegó en Configuración) o por la variable de entorno BASE_FILE_ID.
 
 function loadCreds() {
   let raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
@@ -89,17 +92,35 @@ function parseBase(wb) {
   const grupoKV = {};
   if (grupoRows) tableObjects(grupoRows, ['clave', 'contenido']).forEach(r => { grupoKV[r['clave']] = r['contenido']; });
   const principios = Object.keys(grupoKV).filter(k => k.startsWith('principio')).sort().map(k => grupoKV[k]).filter(Boolean);
+  // EQUIPO (quiénes facilitan / coordinan). Se ve al pie del menú lateral.
+  const eqRows = findSheet(wb, ['nombre', 'rol']);
+  const equipo = eqRows ? tableObjects(eqRows, ['nombre', 'rol'])
+    .filter(r => r['mostrar_en_web'] === '' || truthy(r['mostrar_en_web']))
+    .filter(r => r['nombre'])
+    .map(r => ({ nombre: r['nombre'], rol: r['rol'] || '' })) : [];
+
   const grupo = {
     nombre: grupoKV['grupo_nombre'] || '',
     subtitulo: grupoKV['grupo_subtitulo'] || '',
+    logoUrl: grupoKV['grupo_logo_url'] || '',
+    // Bajada corta del menú lateral y del encabezado (ej: "Directorio Colaborativo")
+    tipo: grupoKV['grupo_tipo'] || '',
+    // Etiqueta opcional del menú (ej: "Grupo IV · Simpleza")
+    etiqueta: grupoKV['grupo_etiqueta'] || '',
+    // Quién facilita (ej: "Simpleza"), se muestra junto al tipo en el encabezado
+    facilitadoPor: grupoKV['facilitado_por'] || '',
     descripcion: grupoKV['grupo_descripcion'] || '',
     inicio: grupoKV['grupo_inicio'] || '',
     nombreDesde: grupoKV['grupo_nombre_desde'] || '',
     objetivoGeneral: grupoKV['objetivo_general'] || '',
     objetivo2026: grupoKV['objetivo_2026'] || '',
     objetivo2026Ampliado: grupoKV['objetivo_2026_ampliado'] || '',
+    // Títulos que antes estaban fijos en el HTML
+    objetivoAnioTitulo: grupoKV['objetivo_anio_titulo'] || '',
+    ejesTitulo: grupoKV['ejes_titulo'] || '',
     principios,
     fraseDestacada: grupoKV['frase_destacada'] || '',
+    equipo,
   };
 
   // HITOS
@@ -121,7 +142,8 @@ function parseBase(wb) {
     .map(r => ({
       slug: r['slug'], orden: parseInt(r['orden']) || 0, nombre: r['nombre'], zona: r['zona'] || '',
       participantes: r['participantes'] || '', resumen: r['resumen_corto'] || '', foco: r['foco_actual'] || '',
-      identidad: r['identidad'] || '', queHace: r['que_hace_y_como_funciona'] || '', recorrido: r['recorrido_en_el_faro'] || '',
+      identidad: r['identidad'] || '', queHace: r['que_hace_y_como_funciona'] || '',
+      recorrido: r['recorrido_en_el_grupo'] || r['recorrido_en_el_faro'] || '',
       urlLogo: r['url_logo'] || '',
     })) : [];
 
@@ -140,6 +162,14 @@ function parseBase(wb) {
     .filter(r => r['titulo'])
     .map(r => ({ icon: r['icono'] || '📌', titulo: r['titulo'], formula: r['formula'] || '', desc: r['descripcion'] || '' })) : [];
 
+  // ACCESOS (quiénes pueden tener cuenta en el sitio). Opcional pero
+  // recomendada: si está, solo esos emails pueden registrarse. Nunca sale del
+  // servidor: /api/base la borra antes de responderle al navegador.
+  const accRows = findSheet(wb, ['email', 'empresa']);
+  const accesos = accRows ? tableObjects(accRows, ['email', 'empresa'])
+    .filter(r => r['email'])
+    .map(r => ({ email: norm(r['email']), empresa: r['empresa'] || '', nombre: r['nombre'] || '' })) : [];
+
   // CONFIG_DRIVE (mapeo slug → carpeta)
   const cfgRows = findSheet(wb, ['slug', 'id_carpeta_empresa']);
   const config = cfgRows ? tableObjects(cfgRows, ['slug', 'id_carpeta_empresa'])
@@ -150,7 +180,14 @@ function parseBase(wb) {
   config.forEach(c => { cfgBySlug[c.slug] = c; });
   empresas.forEach(e => { const c = cfgBySlug[e.slug]; if (c) { e.driveFolderId = c.driveFolderId || ''; if (!e.urlLogo) e.urlLogo = c.urlLogo || ''; } });
 
-  return { grupo, hitos, ejes, empresas, eventos, conceptos };
+  return { grupo, hitos, ejes, empresas, eventos, conceptos, accesos };
+}
+
+// Lee y parsea la planilla base. La usa /api/base y también /api/auth (para
+// saber qué emails tienen permitido registrarse).
+export async function leerBase(fileId) {
+  const buf = await downloadXlsx(fileId);
+  return parseBase(XLSX.read(buf, { type: 'buffer' }));
 }
 
 export { parseBase };
@@ -160,10 +197,18 @@ export default async function handler(req, res) {
   try {
     // Si el grupo exige login, la planilla no se sirve sin sesión
     if (await bloqueaPorLogin(req, res, req.query.group_id)) return;
-    const fileId = req.query.fileId || process.env.BASE_FILE_ID || DEFAULT_BASE_FILE_ID;
-    const buf = await downloadXlsx(fileId);
-    const wb = XLSX.read(buf, { type: 'buffer' });
-    return res.status(200).json(parseBase(wb));
+    const fileId = req.query.fileId || process.env.BASE_FILE_ID || '';
+    if (!fileId) {
+      return res.status(400).json({
+        error: 'Todavía no hay planilla base conectada. Pegá el id o el link del archivo en Configuración → «El Grupo, Empresas y Agenda».',
+        faltaConectar: true,
+      });
+    }
+    const data = await leerBase(fileId);
+    // La lista de emails habilitados es interna: no viaja al navegador.
+    const tieneListaAccesos = (data.accesos || []).length > 0;
+    delete data.accesos;
+    return res.status(200).json(Object.assign(data, { tieneListaAccesos }));
   } catch (e) {
     console.error('api/base error:', e);
     return res.status(e.status || 500).json({ error: e.message || 'Error del servidor' });
