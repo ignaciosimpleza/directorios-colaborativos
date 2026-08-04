@@ -12,6 +12,7 @@ node pruebas/mock-server.mjs &            # sirve el sitio en http://localhost:8
 node pruebas/check.mjs                    # dashboard, reuniones desde la bitácora, recursos, visibilidad
 node pruebas/check-limpio.mjs             # que NADA de contenido esté escrito en el código
 node pruebas/check-auth.mjs               # registro, autorización, sesión y portero
+node pruebas/check-dashboard.mjs          # números por empresa desde la bitácora, gráfico, año, técnicas
 ```
 
 El Chromium ya viene instalado en el entorno
@@ -31,6 +32,16 @@ en otro lado, cambiá `executablePath` en los tres `check-*.mjs`.
 - **check-auth.mjs** — el circuito completo de acceso: registro → pendiente →
   autorización → ingreso → sesión que sobrevive al reload → salida, y que la API
   no entregue datos sin sesión cuando el portero está prendido.
+- **check-dashboard.mjs** — lo que el grupo pidió ver: el número de reuniones de
+  cada empresa sacado de su bitácora, el gráfico, el filtro por año, la actividad
+  reciente con fecha y tema, las reuniones técnicas visibles en Recursos, la
+  autodetección de carpetas y el logo como imagen.
+
+Aparte, el parser de bitácoras tiene su propia prueba contra encabezados reales:
+
+```bash
+node --test pruebas/bitacora.test.mjs
+```
 
 Las capturas quedan en `pruebas/capturas/`.
 

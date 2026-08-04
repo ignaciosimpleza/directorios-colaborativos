@@ -348,8 +348,8 @@ td { padding: 10px 14px; vertical-align: middle; }
 .vis-row input { accent-color:var(--azul-pizarra); width:15px; height:15px; cursor:pointer; }
 
 /* ── RONDA DE NOVEDADES ── */
-.nov-img { max-width:100%; border-radius:var(--radius-sm); display:block; }
-.nov-frame { width:100%; height:420px; border:1px solid var(--beige-suave); border-radius:var(--radius-sm); }
+.nov-img { max-width:100%; max-height:520px; border-radius:var(--radius-sm); display:block; margin:0 auto; }
+.nov-frame { width:100%; height:340px; border:1px solid var(--beige-suave); border-radius:var(--radius-sm); }
 
 /* ── ÁRBOL DE CARPETAS DE DRIVE ── */
 .arb-file { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:var(--radius-sm); cursor:pointer; }
@@ -369,6 +369,7 @@ td { padding: 10px 14px; vertical-align: middle; }
 .rp-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
 .rp-stat { background:var(--crema-fondo); border-radius:var(--radius-sm); padding:12px 14px; }
 .rp-stat-num { font-size:24px; font-weight:700; color:var(--navy); line-height:1.1; }
+.rp-stat-de { font-size:15px; font-weight:600; color:var(--gris-medio); }
 .rp-stat-lbl { font-size:11px; color:var(--gris-oscuro); margin-top:3px; line-height:1.35; }
 .rp-bar-row { display:flex; align-items:center; gap:10px; margin-bottom:7px; }
 .rp-bar-name { flex:0 0 150px; font-size:12px; font-weight:600; color:var(--navy); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -407,7 +408,7 @@ td { padding: 10px 14px; vertical-align: middle; }
 .concepto-card { background:var(--white); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); border-top:3px solid var(--azul-pizarra); }
 .concepto-icon { font-size:20px; margin-bottom:6px; }
 .concepto-titulo { font-size:12.5px; font-weight:700; color:var(--navy); }
-.concepto-formula { font-size:11.5px; color:var(--azul-pizarra); font-weight:600; margin:4px 0; font-family:monospace; background:#f0f5f6; padding:2px 6px; border-radius:4px; display:inline-block; }
+.concepto-formula { font-size:11.5px; color:var(--azul-pizarra); font-weight:600; margin:4px 0; font-style:italic; }
 .concepto-desc { font-size:11px; color:var(--gris-medio); margin-top:5px; line-height:1.5; }
 
 canvas { display:block; }
@@ -555,14 +556,16 @@ canvas { display:block; }
       <p id="home-subtitle"></p>
     </div>
     <div class="proxima-banner" id="home-banner"></div>
-    <div class="card" id="home-grupo" style="margin-bottom:24px"></div>
-    <div class="card" id="card-novedades" style="display:none">
-      <div class="card-title">Ronda de novedades <span id="novedades-sub">Última edición</span></div>
-      <div id="novedades-box"></div>
+
+    <!-- Lo primero: cuántas reuniones lleva cada empresa, con su gráfico -->
+    <div class="card" id="card-reuniones">
+      <div class="card-title">Reuniones realizadas <span>Desde la bitácora de cada empresa</span></div>
+      <div id="reuniones-metricas"></div>
     </div>
+
     <div class="two-col">
       <div class="card" id="card-actividad">
-        <div class="card-title">Actividad reciente <span>Últimos archivos en Drive</span></div>
+        <div class="card-title">Actividad reciente <span>Últimas reuniones registradas</span></div>
         <div id="actividad-reciente"></div>
       </div>
       <div class="card" id="card-proximas">
@@ -570,10 +573,13 @@ canvas { display:block; }
         <div id="proximas-reuniones"></div>
       </div>
     </div>
-    <div class="card" id="card-reuniones">
-      <div class="card-title">Reuniones realizadas <span>Según la bitácora de cada empresa</span></div>
-      <div id="reuniones-metricas"></div>
+
+    <div class="card" id="card-novedades" style="display:none">
+      <div class="card-title">Ronda de novedades <span id="novedades-sub">Última edición</span></div>
+      <div id="novedades-box"></div>
     </div>
+
+    <div class="card" id="home-grupo"></div>
   </div>
 
   <!-- ═══════════ EL GRUPO ═══════════ -->
@@ -942,15 +948,9 @@ function aplicarIdentidad() {
   set('topbar-brand-sub', tipo + (g.facilitadoPor ? ' · ' + g.facilitadoPor : ''));
   const badge = document.getElementById('brand-badge');
   if (badge) { badge.textContent = g.etiqueta || ''; badge.style.display = g.etiqueta ? '' : 'none'; }
-  // Si la planilla trae un logo propio (clave grupo_logo_url), reemplaza al
-  // dibujo que viene por defecto.
-  if (g.logoUrl) {
-    const side = document.getElementById('brand-logo-side');
-    if (side && !side.dataset.listo) { side.innerHTML = `<img src="${esc(g.logoUrl)}" alt="${esc(g.nombre)}" style="width:38px;height:38px;object-fit:contain" onerror="this.parentElement.dataset.listo=''">`; side.dataset.listo = '1'; }
-    const top = document.getElementById('brand-logo-top');
-    const topImg = top && top.querySelector('svg');
-    if (topImg) topImg.outerHTML = `<img src="${esc(g.logoUrl)}" alt="" style="width:32px;height:32px;object-fit:contain">`;
-  }
+  // El logo es una IMAGEN subida a Drive (Configuración → Logo del grupo). El
+  // sitio la sirve con la cuenta de servicio, así que no tiene que ser pública.
+  aplicarLogo();
   const gg = document.getElementById('gate-grupo');
   if (gg && g.nombre) gg.textContent = g.nombre;
   if (g.nombre) document.title = `${g.nombre} — ${tipo || 'Dashboard'}`;
@@ -968,6 +968,19 @@ function aplicarIdentidad() {
   if (es) es.textContent = EMPRESAS.length
     ? `${EMPRESAS.length} empresa${EMPRESAS.length === 1 ? '' : 's'} · Hacé click en una empresa para ver su ficha completa`
     : '';
+}
+
+function aplicarLogo() {
+  const id = DRIVE_CONFIG.logoFileId;
+  const src = id ? `${API_BASE_DRIVE}?op=imagen&fileId=${encodeURIComponent(id)}` : '';
+  for (const [cont, tam] of [['brand-logo-side', 38], ['brand-logo-top', 32]]) {
+    const el = document.getElementById(cont);
+    if (!el) continue;
+    if (!el.dataset.original) el.dataset.original = el.innerHTML;
+    el.innerHTML = src
+      ? `<img src="${esc(src)}" alt="${esc(GRUPO_INFO.nombre || '')}" style="width:${tam}px;height:${tam}px;object-fit:contain" onerror="this.closest('[data-original]').innerHTML=this.closest('[data-original]').dataset.original">`
+      : el.dataset.original;
+  }
 }
 
 // Cartel único para cuando falta la fuente de una sección
@@ -1137,33 +1150,43 @@ function sinNombreEmpresa(archivo, empresa) {
   return limpio || archivo;
 }
 
+// «Actividad reciente» = las últimas reuniones registradas en las bitácoras,
+// con su fecha y su tema. Es lo que pidió el grupo: ver qué pasó último, no una
+// lista de archivos sueltos.
 async function renderActividadReciente() {
   const el = document.getElementById('actividad-reciente');
   if (!el) return;
-  el.innerHTML = '<div class="act-empty">Cargando novedades de las carpetas de Drive…</div>';
-  try {
-    const { items } = await driveActivity();
-    const recientes = items.slice(0, 8);
-    if (!recientes.length) {
-      el.innerHTML = '<div class="act-empty">Todavía no hay archivos en las carpetas de Drive de las empresas.</div>';
-      return;
-    }
-    el.innerHTML = recientes.map(i => {
-      const emp = i.empresa;
-      const color = emp ? (emp.color || '#6C868C') : '#6C868C';
-      const quien = emp ? esc(emp.nombre) : esc(GRUPO_INFO.nombre || 'El grupo');
-      const donde = i.carpeta ? ` · ${esc(i.carpeta)}` : '';
-      // El nombre del archivo suele repetir el de la empresa: no se muestra dos veces
-      const archivo = emp ? sinNombreEmpresa(i.nombre, emp.nombre) : i.nombre;
-      return `<div class="activity-item" style="cursor:pointer" onclick="openLink('${jsq(i.url)}')">
-        <div class="act-icon" style="background:${color}22">${iconTipo(i.tipo)}</div>
-        <div><div class="act-text"><strong>${quien}</strong>${archivo ? ' · ' + esc(archivo) : ''}</div>
-        <div class="act-time">${esc(fechaCorta(i.fecha))}${donde}</div></div>
-      </div>`;
-    }).join('');
-  } catch (e) {
-    el.innerHTML = `<div class="act-empty">No se pudo leer la actividad de Drive.<br><small>${esc(e.message)}</small></div>`;
+  if (!EMPRESAS.length) {
+    el.innerHTML = vacioHtml('La actividad sale de las bitácoras de las empresas. Falta conectar la planilla base.', true);
+    aplicarVisibilidad();
+    return;
   }
+  if (!REUNIONES_DATA) {
+    el.innerHTML = '<div class="act-empty">Leyendo las bitácoras de Drive…</div>';
+    aplicarVisibilidad();
+    return;   // renderReuniones() vuelve a llamar acá cuando termina de leerlas
+  }
+
+  const ultimas = [];
+  REUNIONES_DATA.porEmpresa.forEach(x => {
+    x.reuniones.slice(0, 4).forEach(r => ultimas.push({ ...r, empresa: x.empresa }));
+  });
+  ultimas.sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
+
+  if (!ultimas.length) {
+    el.innerHTML = '<div class="act-empty">Todavía no hay reuniones registradas en las bitácoras.</div>';
+    aplicarVisibilidad();
+    return;
+  }
+
+  el.innerHTML = ultimas.slice(0, 8).map(r => {
+    const color = r.empresa.color || '#6C868C';
+    return `<div class="activity-item" style="cursor:pointer" onclick="abrirBitacora(${r.empresa.id})">
+      <div class="act-icon" style="background:${color}22">📓</div>
+      <div><div class="act-text"><strong>${esc(r.empresa.nombre)}</strong>${r.titulo ? ' · ' + esc(r.titulo) : ''}</div>
+      <div class="act-time">${esc(fechaCorta(r.fecha))}</div></div>
+    </div>`;
+  }).join('');
   aplicarVisibilidad();
 }
 
@@ -1192,22 +1215,66 @@ function renderProximasReuniones() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// REUNIONES REALIZADAS — se cuentan desde la BITÁCORA
+// REUNIONES REALIZADAS — salen de la BITÁCORA de cada empresa
 // ══════════════════════════════════════════════════════════════
-// Las reuniones de cada empresa salen de su bitácora (los archivos de la
-// subcarpeta «Proceso») y las técnicas de la carpeta de Reuniones Técnicas.
-// El calendario NO se usa acá: de él salen solo las fechas próximas.
-// Una reunión = una fecha con registro en la bitácora, así dos archivos del
-// mismo encuentro (minuta + presentación) no cuentan doble.
-const RX_BITACORA = /proceso|bitacor|minuta/i;
-function esBitacora(item) {
-  return RX_BITACORA.test(item.carpeta || '') || (item.ruta || []).some(r => RX_BITACORA.test(r));
+// La bitácora es UN documento por empresa (en la subcarpeta «Proceso») donde
+// cada reunión es un encabezado con su fecha. /api/bitacora lo lee y devuelve
+// la lista. De ahí salen los números del Dashboard y la actividad reciente.
+// El Calendario no interviene: de él salen solo las fechas próximas.
+const API_BITACORA = '/api/bitacora';
+const BITACORAS = {};        // empresaId → promesa con { reuniones, archivo, aviso }
+
+function bitacoraDe(empresa) {
+  const folder = empresaDriveFolder(empresa);
+  if (!folder) return Promise.resolve({ reuniones: [], aviso: 'sin carpeta de Drive vinculada' });
+  if (!BITACORAS[empresa.id]) {
+    BITACORAS[empresa.id] = (async () => {
+      const r = await fetch(`${API_BITACORA}?folderId=${encodeURIComponent(folder)}`);
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
+      return j;
+    })();
+  }
+  return BITACORAS[empresa.id];
+}
+
+// Lee las bitácoras de todas las empresas activas, en paralelo, avisando el
+// avance (son documentos grandes: puede tardar unos segundos la primera vez).
+async function todasLasBitacoras(alAvanzar) {
+  const activas = EMPRESAS.filter(e => e.activa !== false);
+  let listas = 0;
+  const res = await Promise.all(activas.map(async e => {
+    try {
+      const b = await bitacoraDe(e);
+      return { empresa: e, reuniones: b.reuniones || [], archivo: b.archivo, aviso: b.aviso || '' };
+    } catch (err) {
+      return { empresa: e, reuniones: [], aviso: err.message, error: true };
+    } finally {
+      listas++;
+      if (alAvanzar) alAvanzar(listas, activas.length);
+    }
+  }));
+  return res;
+}
+
+// Archivos de la carpeta de Reuniones Técnicas: cada archivo es una técnica
+let TECNICAS_ACTIVITY = null;
+function tecnicasActividad(force) {
+  const fid = DRIVE_CONFIG.tecnicasFolderId;
+  if (!fid) return Promise.resolve([]);
+  if (TECNICAS_ACTIVITY && !force) return TECNICAS_ACTIVITY;
+  TECNICAS_ACTIVITY = (async () => {
+    const r = await fetch(`${API_BASE_DRIVE}?op=actividad&folderIds=${encodeURIComponent(fid)}&limit=400&depth=3`);
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
+    return j.items || [];
+  })();
+  return TECNICAS_ACTIVITY;
 }
 
 const pad2 = n => String(n).padStart(2, '0');
 
-// Fecha de la reunión: primero la que diga el nombre del archivo
-// («Minuta 2025-06-12», «12-06-25 Reunión»), si no la fecha del archivo en Drive.
+// Fecha de un archivo de técnicas: la del nombre si la tiene, si no la de Drive
 function fechaDeArchivo(nombre, fechaISO) {
   const n = String(nombre || '');
   let m = n.match(/(20\d{2})[-_./](\d{1,2})[-_./](\d{1,2})/);
@@ -1217,69 +1284,65 @@ function fechaDeArchivo(nombre, fechaISO) {
   return fechaISO || '';
 }
 
-// Archivos de la carpeta de Reuniones Técnicas (y sus subcarpetas)
-let TECNICAS_ACTIVITY = null;
-function tecnicasActividad(force) {
-  const fid = DRIVE_CONFIG.tecnicasFolderId;
-  if (!fid) return Promise.resolve([]);
-  if (TECNICAS_ACTIVITY && !force) return TECNICAS_ACTIVITY;
-  TECNICAS_ACTIVITY = (async () => {
-    const r = await fetch(`${API_BASE_DRIVE}?op=actividad&folderIds=${encodeURIComponent(fid)}&limit=400&depth=2`);
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
-    return j.items || [];
-  })();
-  return TECNICAS_ACTIVITY;
-}
-
 let REUNIONES_ANIO = 'todos';
-let REUNIONES_DATA = null;   // { porEmpresa: {id: [fechas]}, tecnicas: [fechas] }
+let REUNIONES_DATA = null;   // { porEmpresa: [{empresa, reuniones, aviso}], tecnicas: [fechas] }
 
-function setReunionesAnio(v) { REUNIONES_ANIO = v; renderReuniones(); }
+function setReunionesAnio(v) { REUNIONES_ANIO = v; pintarReuniones(); }
 
 async function renderReuniones() {
   const el = document.getElementById('reuniones-metricas');
   if (!el) return;
-  if (!REUNIONES_DATA) {
-    el.innerHTML = '<div class="act-empty">Leyendo las bitácoras de Drive…</div>';
-    try {
-      const [act, tec] = await Promise.all([driveActivity(), tecnicasActividad()]);
-      const porEmpresa = {};
-      act.items.filter(esBitacora).forEach(i => {
-        if (!i.empresa) return;
-        const f = fechaDeArchivo(i.nombre, i.fecha);
-        if (!f) return;
-        const arr = porEmpresa[i.empresa.id] = porEmpresa[i.empresa.id] || [];
-        if (!arr.includes(f)) arr.push(f);
-      });
-      const tecnicas = [];
-      tec.forEach(i => {
-        const f = fechaDeArchivo(i.nombre, i.fecha);
-        if (f && !tecnicas.includes(f)) tecnicas.push(f);
-      });
-      REUNIONES_DATA = { porEmpresa, tecnicas };
-    } catch (e) {
-      el.innerHTML = `<div class="act-empty">No se pudieron leer las bitácoras de Drive.<br><small>${esc(e.message)}</small></div>`;
-      aplicarVisibilidad();
-      return;
-    }
+  if (REUNIONES_DATA) { pintarReuniones(); return; }
+  if (!EMPRESAS.length) {
+    el.innerHTML = vacioHtml('Las reuniones se cuentan desde la bitácora de cada empresa. Primero hay que conectar la <strong>planilla base</strong>.', true);
+    aplicarVisibilidad();
+    return;
   }
+  el.innerHTML = '<div class="act-empty">Leyendo las bitácoras de Drive…</div>';
+  const avance = (n, total) => {
+    if (!REUNIONES_DATA) el.innerHTML = `<div class="act-empty">Leyendo las bitácoras de Drive… ${n} de ${total}</div>`;
+  };
+  try {
+    const [porEmpresa, tec] = await Promise.all([todasLasBitacoras(avance), tecnicasActividad().catch(() => [])]);
+    const tecnicas = [];
+    tec.forEach(i => {
+      const f = fechaDeArchivo(i.nombre, i.fecha);
+      if (f && !tecnicas.includes(f)) tecnicas.push(f);
+    });
+    REUNIONES_DATA = { porEmpresa, tecnicas };
+  } catch (e) {
+    el.innerHTML = `<div class="act-empty">No se pudieron leer las bitácoras.<br><small>${esc(e.message)}</small></div>`;
+    aplicarVisibilidad();
+    return;
+  }
+  pintarReuniones();
+  renderActividadReciente();   // la actividad también sale de las bitácoras
+}
 
+function pintarReuniones() {
+  const el = document.getElementById('reuniones-metricas');
+  if (!el || !REUNIONES_DATA) return;
   const { porEmpresa, tecnicas } = REUNIONES_DATA;
-  const activas = EMPRESAS.filter(e => e.activa !== false);
+
   const anios = new Set();
-  Object.values(porEmpresa).forEach(fs => fs.forEach(f => anios.add(f.slice(0, 4))));
+  porEmpresa.forEach(x => x.reuniones.forEach(r => anios.add(r.fecha.slice(0, 4))));
   tecnicas.forEach(f => anios.add(f.slice(0, 4)));
   const listaAnios = [...anios].filter(Boolean).sort().reverse();
   if (REUNIONES_ANIO !== 'todos' && !listaAnios.includes(REUNIONES_ANIO)) REUNIONES_ANIO = 'todos';
-
   const delAnio = f => REUNIONES_ANIO === 'todos' || f.slice(0, 4) === REUNIONES_ANIO;
-  const conteo = activas.map(e => ({ e, n: (porEmpresa[e.id] || []).filter(delAnio).length }));
+
+  const conteo = porEmpresa
+    .map(x => ({ empresa: x.empresa, n: x.reuniones.filter(r => delAnio(r.fecha)).length, aviso: x.aviso, error: x.error }))
+    .sort((a, b) => b.n - a.n);
   const totalEmpresas = conteo.reduce((s, c) => s + c.n, 0);
   const totalTecnicas = tecnicas.filter(delAnio).length;
+  const presentaron = conteo.filter(c => c.n > 0).length;
 
+  const problemas = conteo.filter(c => !c.n && c.aviso);
   if (!totalEmpresas && !totalTecnicas) {
-    el.innerHTML = `<div class="act-empty">Todavía no hay reuniones registradas en las bitácoras.<br><small>Cada archivo de la subcarpeta <strong>Proceso</strong> de una empresa cuenta como una reunión.</small></div>`;
+    el.innerHTML = `<div class="act-empty">No se encontraron reuniones en las bitácoras.<br>
+      <small>Cada reunión tiene que estar en el documento de la carpeta <strong>Proceso</strong> como un encabezado con su fecha, por ejemplo «13 de abril de 2026 – Avance de líneas estratégicas».</small></div>` +
+      (problemas.length ? `<div class="rp-note">${problemas.map(p => `<strong>${esc(p.empresa.nombre)}</strong>: ${esc(p.aviso)}`).join('<br>')}</div>` : '');
     aplicarVisibilidad();
     return;
   }
@@ -1288,17 +1351,21 @@ async function renderReuniones() {
     .map(a => `<option value="${esc(a)}"${a === REUNIONES_ANIO ? ' selected' : ''}>${a === 'todos' ? 'Todos los años' : esc(a)}</option>`)
     .join('');
   const max = Math.max(1, ...conteo.map(c => c.n));
-  const barras = conteo
-    .sort((a, b) => b.n - a.n)
-    .map(c => `<div class="rp-bar-row">
-      <span class="rp-bar-name" title="${esc(c.e.nombre)}">${esc(c.e.nombre)}</span>
-      <div class="rp-bar-track">${c.n ? `<div class="rp-bar-fill" style="width:${Math.round(c.n / max * 100)}%;background:${c.e.color || '#6C868C'}"></div>` : ''}</div>
+  const barras = conteo.map(c => {
+    const pct = Math.round(c.n / max * 100);
+    const detalle = c.n ? '' : (c.aviso ? ` title="${esc(c.aviso)}"` : '');
+    return `<div class="rp-bar-row"${detalle}>
+      <span class="rp-bar-name" onclick="abrirBitacora(${c.empresa.id})" style="cursor:pointer" title="Abrir la bitácora de ${esc(c.empresa.nombre)}">${esc(c.empresa.nombre)}</span>
+      <div class="rp-bar-track">${c.n ? `<div class="rp-bar-fill" style="width:${pct}%;background:${c.empresa.color || '#6C868C'}"></div>` : ''}</div>
       <span class="rp-bar-num">${c.n}</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
-  const notaTec = DRIVE_CONFIG.tecnicasFolderId
-    ? ''
-    : ' Para contar las técnicas, conectá la carpeta de <strong>Reuniones Técnicas</strong> en Configuración.';
+  const notaTec = DRIVE_CONFIG.tecnicasFolderId ? '' :
+    ' Para contar las técnicas, conectá la carpeta de <strong>Reuniones Técnicas</strong> en Configuración.';
+  const notaProblemas = problemas.length
+    ? `<br>${problemas.map(p => `⚠ <strong>${esc(p.empresa.nombre)}</strong>: ${esc(p.aviso)}`).join('<br>')}`
+    : '';
 
   el.innerHTML = `
     <div class="rp-head">
@@ -1308,11 +1375,26 @@ async function renderReuniones() {
     <div class="rp-stats">
       <div class="rp-stat"><div class="rp-stat-num">${totalEmpresas}</div><div class="rp-stat-lbl">Reuniones de empresa</div></div>
       <div class="rp-stat"><div class="rp-stat-num">${totalTecnicas}</div><div class="rp-stat-lbl">Reuniones técnicas</div></div>
-      <div class="rp-stat"><div class="rp-stat-num">${totalEmpresas + totalTecnicas}</div><div class="rp-stat-lbl">Total del período</div></div>
+      <div class="rp-stat"><div class="rp-stat-num">${presentaron}<span class="rp-stat-de">/${conteo.length}</span></div><div class="rp-stat-lbl">Empresas que presentaron</div></div>
     </div>
     ${barras}
-    <div class="rp-note">Se cuenta una reunión por cada fecha registrada en la bitácora de la empresa (subcarpeta <strong>Proceso</strong>).${notaTec}</div>`;
+    <div class="rp-note">Cada reunión sale de la bitácora de la empresa (el documento de la subcarpeta <strong>Proceso</strong>). Hacé click en el nombre para abrirla.${notaTec}${notaProblemas}</div>`;
   aplicarVisibilidad();
+}
+
+async function abrirBitacora(empresaId) {
+  const empresa = EMPRESAS.find(e => e.id === empresaId);
+  if (!empresa) return;
+  const win = window.open('', '_blank');
+  try {
+    const b = await bitacoraDe(empresa);
+    const url = (b.archivo && b.archivo.url) || b.carpeta;
+    if (!url) throw new Error(b.aviso || 'No se encontró la bitácora.');
+    if (win) win.location = url; else window.open(url, '_blank', 'noopener');
+  } catch (e) {
+    if (win) win.close();
+    alert('No se pudo abrir la bitácora de ' + empresa.nombre + '.\n\n' + e.message);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1502,7 +1584,7 @@ async function renderProcesos() {
             <div class="peh-sector">${esc(sub)}</div>
           </div>
           <div class="peh-count">${lista.length} archivo${lista.length === 1 ? '' : 's'}</div>
-          <button class="peh-bitacora" onclick="event.stopPropagation(); openBitacora(${empresa.id}, this)">📓 Bitácora</button>
+          <button class="peh-bitacora" onclick="event.stopPropagation(); abrirBitacora(${empresa.id})">📓 Bitácora</button>
           <div class="peh-arrow" id="arrow-proc-${empresa.id}">›</div>
         </div>
         <div class="proceso-list" id="proc-${empresa.id}">${cuerpo}</div>
@@ -1512,33 +1594,7 @@ async function renderProcesos() {
 
 // Abre SOLO el archivo de Bitácora del proceso (carpeta "Proceso" de la empresa
 // en Drive), sin pasar por la ficha completa de la empresa.
-const BITACORA_CACHE = {};
-async function openBitacora(empresaId, el) {
-  const empresa = EMPRESAS.find(e => e.id === empresaId);
-  if (!empresa) return;
-  const folder = empresaDriveFolder(empresa);
-  if (!folder) {
-    alert('Esta empresa todavía no tiene carpeta de Drive vinculada.\n\nCargá el id de la carpeta en la planilla base (pestaña CONFIG_DRIVE, columna id_carpeta_empresa).');
-    return;
-  }
-  if (BITACORA_CACHE[folder]) { window.open(BITACORA_CACHE[folder], '_blank', 'noopener'); return; }
-  // Se abre la pestaña ya mismo (si se abriera después del fetch, el navegador la bloquea)
-  const win = window.open('', '_blank');
-  const txt = el ? el.textContent : '';
-  if (el) el.textContent = 'Buscando la Bitácora…';
-  try {
-    const r = await fetch(`${API_BASE_DRIVE}?op=bitacora&folderId=${encodeURIComponent(folder)}`);
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok || j.error || !j.url) throw new Error(j.error || `HTTP ${r.status}`);
-    BITACORA_CACHE[folder] = j.url;
-    if (win) win.location = j.url; else window.open(j.url, '_blank', 'noopener');
-  } catch (e) {
-    if (win) win.close();
-    alert('No se pudo abrir la Bitácora de ' + empresa.nombre + '.\n\n' + e.message);
-  } finally {
-    if (el) el.textContent = txt;
-  }
-}
+// La bitácora la resuelve abrirBitacora() (arriba), que usa /api/bitacora.
 
 function toggleProceso(listId, header) {
   const list = document.getElementById(listId);
@@ -1593,7 +1649,7 @@ function openLink(url) {
 function renderRecursosSec() {
   const elC = document.getElementById('conceptos-grid');
   if (elC && !CONCEPTOS.length) {
-    elC.innerHTML = vacioHtml('El marco conceptual sale de su propio archivo de Drive (pestaña <strong>CONCEPTOS</strong>: icono, titulo, formula, descripcion). Todavía no está conectado.', true);
+    elC.innerHTML = vacioHtml('El marco conceptual sale de su propio archivo de Drive (pestaña <strong>CONCEPTOS</strong>: una fila por concepto, con su título y su descripción). Todavía no está conectado.', true);
   } else if (elC) elC.innerHTML = CONCEPTOS.map(c =>
     `<div class="concepto-card"><div class="concepto-icon">${esc(c.icon)}</div><div class="concepto-titulo">${esc(c.titulo)}</div>${
       c.formula ? `<div class="concepto-formula">${esc(c.formula)}</div>` : ''
@@ -2000,10 +2056,10 @@ function esc(s){ return String(s ?? '').replace(/[&<>"]/g, m => ({'&':'&amp;','<
 // En modo edición cada sección explica de dónde sale su contenido y linkea el
 // archivo o la carpeta de Drive que hay que tocar para cambiarlo.
 const DRIVE_SECTIONS = {
-  dashboard: { texto: 'La <strong>actividad reciente</strong> son los últimos archivos subidos a las carpetas de Drive de las empresas. Las <strong>reuniones realizadas</strong> se cuentan desde la <strong>bitácora</strong> de cada empresa activa (subcarpeta <em>Proceso</em>) y desde la carpeta de Reuniones Técnicas. Del Calendario salen solo las <strong>próximas fechas</strong>.', tipo: 'carpetas' },
+  dashboard: { texto: 'Las <strong>reuniones realizadas</strong> y la <strong>actividad reciente</strong> salen de la <strong>bitácora</strong> de cada empresa: el documento de la subcarpeta <em>Proceso</em>, donde cada reunión es un encabezado con su fecha. Las técnicas salen de su carpeta. Del Calendario salen solo las <strong>próximas fechas</strong>.', tipo: 'carpetas' },
   grupo:     { texto: 'Identidad, objetivos, principios, hitos y ejes salen de las pestañas <strong>GRUPO</strong>, <strong>HITOS</strong> y <strong>EJES_2026</strong> de la planilla base.', tipo: 'base' },
   empresas:  { texto: 'Cada ficha sale de la pestaña <strong>EMPRESAS</strong> de la planilla base: nombre, <strong>zona</strong> (📍), <strong>participantes</strong> (👤), <strong>resumen_corto</strong> y <strong>foco_actual</strong>. Para cambiar un nombre de participante, editá esa celda.', tipo: 'base' },
-  procesos:  { texto: 'Cada empresa lista los archivos de su carpeta de Drive (subcarpeta <strong>Presentaciones</strong>). Subí el archivo a Drive y aparece acá. El botón <strong>Bitácora</strong> abre el documento de la subcarpeta <strong>Proceso</strong>.', tipo: 'carpetas' },
+  procesos:  { texto: 'Cada empresa lista los archivos de su carpeta de Drive (subcarpeta <strong>Presentaciones</strong>). Subí el archivo a Drive y aparece acá. El botón <strong>Bitácora</strong> abre el documento del proceso, que está en la subcarpeta <strong>Proceso</strong>.', tipo: 'carpetas' },
   eventos:   { texto: 'Los <strong>hitos</strong> salen de la pestaña <strong>HITOS</strong> y la <strong>agenda</strong> de la pestaña <strong>EVENTOS</strong> (columnas fecha, titulo, descripcion, lugar). La fecha es texto libre: «4-5-6/8», «23 y 24/10».', tipo: 'base' },
   recursos:  { texto: 'El <strong>marco conceptual</strong> sale del archivo Marco Conceptual (pestaña CONCEPTOS) y las <strong>herramientas del grupo</strong> de la carpeta de Drive vinculada.', tipo: 'config' },
 };
@@ -2039,6 +2095,8 @@ const EMP_PALETTE = ['#6C868C','#E67E22','#2980B9','#16A085','#5D8A97','#8E44AD'
 // Fuentes de datos de Drive configurables por grupo (persistido en Turso 'drive_config').
 // Arranca vacío: no hay ningún archivo escrito en el código.
 let DRIVE_CONFIG = {
+  raizFolderId: '',
+  logoFileId: '',
   baseFileId: '',
   marcoFileId: '',
   herramientasFolderId: '',
@@ -2124,15 +2182,23 @@ async function getServiceAccountEmail() {
 }
 
 const DRIVE_SOURCES = [
+  { key:'raizFolderId', tipo:'carpeta', label:'Carpeta del grupo en Drive', destacado:true,
+    desc:'La carpeta madre del grupo, la que contiene todo lo demás. Pegala una vez y tocá «Detectar contenido»: el sitio busca adentro la planilla, las carpetas de empresas, el material técnico, las novedades y el logo, y completa los campos de abajo solo.',
+    donde:'No se ve en el sitio: sirve para completar el resto de una sola vez.',
+    estructura:'Una carpeta de Drive compartida con la cuenta de servicio. Adentro, subcarpetas con nombres reconocibles («Empresas y procesos», «Material teórico», «Información institucional», «Novedades», «Logos»).' },
+  { key:'logoFileId', tipo:'archivo', label:'Logo del grupo',
+    desc:'La imagen del logo, subida a Drive. Se muestra en el menú y en el encabezado. No hace falta que sea pública: el sitio la sirve con la cuenta de servicio.',
+    donde:'Menú lateral y barra superior',
+    estructura:'Un archivo de imagen (PNG o JPG) en Drive. Para cambiar el logo, se reemplaza el archivo en Drive.' },
   { key:'baseFileId', tipo:'archivo', label:'El Grupo, Empresas y Agenda', obligatorio:true,
     desc:'Identidad del grupo, objetivos, principios, hitos, ejes temáticos, la ficha de cada empresa y la agenda de eventos. La pestaña CONFIG_DRIVE es la que vincula cada empresa con su carpeta de Drive: de ahí salen la actividad reciente, los Procesos, la Bitácora y el conteo de reuniones.',
     donde:'El Grupo · Empresas · Eventos e Hitos · Dashboard · nombre del grupo y equipo del menú · quién puede crear cuenta',
     estructura:'Pestañas: GRUPO (clave/contenido), HITOS, EJES_2026, EMPRESAS, CONFIG_DRIVE, EQUIPO (nombre, rol), EVENTOS (fecha, titulo, descripcion, lugar) y ACCESOS (email, empresa, nombre: quiénes pueden crear cuenta).',
     plantilla:'plantillas/Plantilla_Base_Grupo.xlsx' },
   { key:'marcoFileId', tipo:'archivo', label:'Marco Conceptual',
-    desc:'Conceptos y criterios metodológicos del grupo (directorio colaborativo, línea estratégica, etc.). El link al archivo aparece debajo de los conceptos.',
+    desc:'El vocabulario común del grupo: qué es un directorio colaborativo, una línea estratégica, una devolución. Cada concepto se ve como una tarjeta. Bajate la plantilla: ya viene con ejemplos escritos para editar.',
     donde:'Recursos del grupo → tarjeta «Marco conceptual»',
-    estructura:'Pestaña CONCEPTOS: columnas icono, titulo, formula, descripcion.',
+    estructura:'Pestaña CONCEPTOS: una fila por concepto. Obligatorias: titulo y descripcion. Opcionales: icono (un emoji), frase_corta y orden. La plantilla viene con 6 conceptos de ejemplo ya escritos.',
     plantilla:'plantillas/Plantilla_Marco_Conceptual.xlsx' },
   { key:'tecnicasFolderId', tipo:'carpeta', label:'Reuniones Técnicas',
     desc:'Material teórico y técnico del grupo (presentaciones, minutas, materiales de las técnicas). Se lista con sus subcarpetas, y además de acá sale el conteo de reuniones técnicas del Dashboard.',
@@ -2157,11 +2223,12 @@ const DRIVE_SOURCES = [
 // sección donde se ve y al campo que la alimenta.
 const MAPA_SITIO = [
   { sec:'dashboard', titulo:'Dashboard', filas:[
+    { que:'Nombre y logo del grupo',  fuente:'Planilla base (pestaña GRUPO) + la imagen del logo en Drive', key:'logoFileId' },
     { que:'Descripción del grupo',    fuente:'Planilla base · pestaña GRUPO (grupo_descripcion)', key:'baseFileId' },
     { que:'Ronda de novedades',       fuente:'Carpeta de Drive «Ronda de novedades» · última pieza subida', key:'novedadesFolderId' },
-    { que:'Actividad reciente',       fuente:'Carpetas de Drive de las empresas (pestaña CONFIG_DRIVE)', key:'baseFileId' },
+    { que:'Actividad reciente',       fuente:'Últimas reuniones de las bitácoras (fecha y tema)', key:'@bitacora' },
     { que:'Próximas reuniones',       fuente:'Calendario del sitio (única sección que se edita acá)', key:'@calendario' },
-    { que:'Reuniones realizadas',     fuente:'Bitácora de cada empresa (subcarpeta Proceso) + carpeta de técnicas', key:'@bitacora' },
+    { que:'Reuniones realizadas',     fuente:'Bitácora de cada empresa: cada encabezado con fecha es una reunión', key:'@bitacora' },
   ]},
   { sec:'grupo', titulo:'El Grupo', filas:[
     { que:'Identidad y objetivos',    fuente:'Planilla base · pestaña GRUPO', key:'baseFileId' },
@@ -2175,7 +2242,7 @@ const MAPA_SITIO = [
   ]},
   { sec:'procesos', titulo:'Procesos', filas:[
     { que:'Archivos por empresa',     fuente:'Carpeta de Drive de la empresa (CONFIG_DRIVE · id_carpeta_empresa)', key:'baseFileId' },
-    { que:'Botón Bitácora',           fuente:'Subcarpeta Proceso de la carpeta de la empresa', key:'baseFileId' },
+    { que:'Botón Bitácora',           fuente:'El documento de la subcarpeta Proceso de cada empresa', key:'@bitacora' },
   ]},
   { sec:'calendario', titulo:'Calendario', filas:[
     { que:'Reuniones y rotación',     fuente:'Se edita en el sitio y se guarda en la base (Turso)', key:'@calendario' },
@@ -2201,9 +2268,13 @@ function estadoFuente(key) {
   }
   if (key === '@bitacora') {
     if (!REUNIONES_DATA) return { txt: 'Leyendo…', cls: 'badge-gray' };
-    const n = Object.values(REUNIONES_DATA.porEmpresa || {}).reduce((s, f) => s + f.length, 0);
-    return n ? { txt: `${n} reuniones en bitácoras`, cls: 'badge-green' }
-             : { txt: 'Sin registros en las bitácoras', cls: 'badge-yellow' };
+    const lista = REUNIONES_DATA.porEmpresa || [];
+    const n = lista.reduce((s, x) => s + x.reuniones.length, 0);
+    const problemas = lista.filter(x => !x.reuniones.length).length;
+    if (!n) return { txt: 'No se leyó ninguna bitácora', cls: 'badge-yellow' };
+    return problemas
+      ? { txt: `${n} reuniones · ${problemas} sin leer`, detalle: lista.filter(x => !x.reuniones.length).map(x => `${x.empresa.nombre}: ${x.aviso}`).join(' · '), cls: 'badge-yellow' }
+      : { txt: `${n} reuniones leídas`, cls: 'badge-green' };
   }
   const f = FUENTES[key];
   if (f && f.estado === 'ok') {
@@ -2294,6 +2365,7 @@ function configSourceHtml(s) {
       <input type="text" id="src-${s.key}" class="cal-input" placeholder="${esEnlace ? 'Pegá la URL (https://…)' : 'Pegá el ID o el link de Drive'}" value="${esc(id)}">
       <button class="btn-cal-primary" onclick="saveDriveSource('${s.key}')">Guardar</button>
       ${esEnlace ? '' : `<button class="btn-cal-add" onclick="testDriveSource('${s.key}')">Probar conexión</button>`}
+      ${s.key === 'raizFolderId' ? `<button class="btn-cal-primary" onclick="detectarContenido()">🔎 Detectar contenido</button>` : ''}
       ${s.plantilla ? `<a class="src-link" href="${s.plantilla}" download>⬇ Descargar plantilla</a>` : ''}
       ${abrir}
     </div>
@@ -2302,6 +2374,54 @@ function configSourceHtml(s) {
 }
 
 function copySA(email) { try { navigator.clipboard.writeText(email); } catch (e) {} }
+
+// Mira la carpeta del grupo y completa solo los campos que puede deducir.
+const NOMBRE_CAMPO = {
+  baseFileId: 'planilla base', tecnicasFolderId: 'reuniones técnicas',
+  novedadesFolderId: 'ronda de novedades', herramientasFolderId: 'herramientas del grupo',
+  logoFileId: 'logo del grupo',
+};
+
+async function detectarContenido() {
+  const st = document.getElementById('src-status-raizFolderId');
+  const inp = document.getElementById('src-raizFolderId');
+  const id = extractDriveId((inp || {}).value || DRIVE_CONFIG.raizFolderId || '');
+  if (!id) { if (st) { st.textContent = 'Pegá primero la carpeta del grupo.'; st.className = 'src-status err'; } return; }
+  if (st) { st.textContent = 'Mirando la carpeta…'; st.className = 'src-status'; }
+  try {
+    const r = await fetch(`${API_BASE_DRIVE}?op=descubrir&folderId=${encodeURIComponent(id)}`);
+    const j = await r.json();
+    if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
+
+    DRIVE_CONFIG.raizFolderId = id;
+    const aplicados = [];
+    for (const [campo, valor] of Object.entries(j.sugerencias || {})) {
+      if (!NOMBRE_CAMPO[campo]) continue;          // empresas/institucional son solo pistas
+      if (DRIVE_CONFIG[campo]) continue;           // no se pisa lo que ya cargaron a mano
+      DRIVE_CONFIG[campo] = valor;
+      const d = (j.detalle || []).find(x => x.campo === campo);
+      aplicados.push(`${NOMBRE_CAMPO[campo]} → ${d ? d.nombre : valor}`);
+    }
+    await saveContentToDB('drive_config', DRIVE_CONFIG);
+
+    // Recargar lo que dependa de las fuentes nuevas
+    await loadBaseFromDrive();
+    loadMarcoFromDrive();
+    TECNICAS_ACTIVITY = null; REUNIONES_DATA = null; DRIVE_ACTIVITY = null; Object.keys(BITACORAS).forEach(k => delete BITACORAS[k]);
+    aplicarLogo();
+    await renderConfig();
+    // El mensaje se escribe DESPUÉS de redibujar el panel, si no se pierde
+    const st2 = document.getElementById('src-status-raizFolderId');
+    if (st2) {
+      st2.innerHTML = aplicados.length
+        ? `Listo ✓ Se completaron: <strong>${aplicados.map(esc).join('</strong>, <strong>')}</strong>. Revisá los campos de abajo.`
+        : `Se leyó la carpeta (${(j.carpetas || []).length} subcarpetas) pero no se reconoció ninguna por su nombre. Cargá los campos de abajo a mano.`;
+      st2.className = 'src-status ok';
+    }
+  } catch (e) {
+    if (st) { st.textContent = 'No se pudo leer la carpeta: ' + e.message + ' (¿la compartiste con la cuenta de servicio?)'; st.className = 'src-status err'; }
+  }
+}
 
 async function saveDriveSource(key) {
   const src = DRIVE_SOURCES.find(s => s.key === key) || {};
@@ -2321,6 +2441,7 @@ async function saveDriveSource(key) {
       if (currentSection === 'grupo') renderGrupo();
       if (currentSection === 'empresas') renderEmpresas();
     }
+    if (key === 'logoFileId') aplicarLogo();
     if (key === 'marcoFileId') await loadMarcoFromDrive();
     if (key === 'tecnicasFolderId') { TECNICAS_ACTIVITY = null; REUNIONES_DATA = null; renderReuniones(); }
     if (key === 'novedadesFolderId') renderNovedades();
@@ -2430,7 +2551,9 @@ function aplicarVisibilidad() {
     }
     const el = document.getElementById(b.el);
     if (!el) continue;
-    const auto = UI_CONFIG.autoHide && !bloqueTieneDatos(el);
+    // En modo edición nunca se oculta nada: quien administra el sitio tiene que
+    // ver qué bloques están vacíos y qué les falta.
+    const auto = UI_CONFIG.autoHide && !dashEditing && !bloqueTieneDatos(el);
     el.style.display = (oculto || auto) ? 'none' : '';
   }
   avisarSeccionesVacias();
@@ -2655,6 +2778,10 @@ async function gateLogout() {
 async function renderAccesos() {
   const el = document.getElementById('config-accesos');
   if (!el) return;
+  if (!ADMIN_PASSWORD) {
+    el.innerHTML = `<div class="card"><div class="card-title">5) Quién puede entrar</div><div class="act-empty">Entrá con la clave de edición para ver y autorizar las cuentas.</div></div>`;
+    return;
+  }
   el.innerHTML = `<div class="card"><div class="card-title">5) Quién puede entrar</div><div class="act-empty">Cargando cuentas…</div></div>`;
   try {
     const [u, a] = await Promise.all([

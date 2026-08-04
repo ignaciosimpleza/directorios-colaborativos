@@ -72,7 +72,13 @@ function tableObjects(rows, requiredCols) {
   return out;
 }
 
-function findSheet(wb, requiredCols) {
+// Busca una pestaña: primero por su NOMBRE (que es lo que la persona ve y
+// controla) y, si no aparece, por las columnas que tiene adentro.
+function findSheet(wb, requiredCols, nombreRx) {
+  if (nombreRx) {
+    const name = wb.SheetNames.find(n => nombreRx.test(norm(n)));
+    if (name) return sheetRows(wb.Sheets[name]);
+  }
   const req = requiredCols.map(norm);
   for (const name of wb.SheetNames) {
     const rows = sheetRows(wb.Sheets[name]);
@@ -84,16 +90,19 @@ function findSheet(wb, requiredCols) {
   return null;
 }
 
+// Ordena por la columna «orden» si está cargada
+const porOrden = (a, b) => (parseInt(a.orden) || 9999) - (parseInt(b.orden) || 9999);
+
 const truthy = v => ['true', 'sí', 'si', 'x', '1', 'verdadero'].includes(norm(v));
 
 function parseBase(wb) {
   // GRUPO (clave/contenido)
-  const grupoRows = findSheet(wb, ['clave', 'contenido']);
+  const grupoRows = findSheet(wb, ['clave', 'contenido'], /^grupo$/);
   const grupoKV = {};
   if (grupoRows) tableObjects(grupoRows, ['clave', 'contenido']).forEach(r => { grupoKV[r['clave']] = r['contenido']; });
   const principios = Object.keys(grupoKV).filter(k => k.startsWith('principio')).sort().map(k => grupoKV[k]).filter(Boolean);
   // EQUIPO (quiénes facilitan / coordinan). Se ve al pie del menú lateral.
-  const eqRows = findSheet(wb, ['nombre', 'rol']);
+  const eqRows = findSheet(wb, ['nombre', 'rol'], /^equipo$/);
   const equipo = eqRows ? tableObjects(eqRows, ['nombre', 'rol'])
     .filter(r => r['mostrar_en_web'] === '' || truthy(r['mostrar_en_web']))
     .filter(r => r['nombre'])
@@ -102,7 +111,6 @@ function parseBase(wb) {
   const grupo = {
     nombre: grupoKV['grupo_nombre'] || '',
     subtitulo: grupoKV['grupo_subtitulo'] || '',
-    logoUrl: grupoKV['grupo_logo_url'] || '',
     // Bajada corta del menú lateral y del encabezado (ej: "Directorio Colaborativo")
     tipo: grupoKV['grupo_tipo'] || '',
     // Etiqueta opcional del menú (ej: "Grupo IV · Simpleza")
@@ -124,19 +132,19 @@ function parseBase(wb) {
   };
 
   // HITOS
-  const hitosRows = findSheet(wb, ['id_hito', 'titulo', 'descripcion']);
+  const hitosRows = findSheet(wb, ['id_hito', 'titulo', 'descripcion'], /^hitos?$/);
   const hitos = hitosRows ? tableObjects(hitosRows, ['id_hito', 'titulo', 'descripcion'])
     .filter(r => r['mostrar_en_web'] === '' || truthy(r['mostrar_en_web']))
     .map(r => ({ anio: r['ano'] || r['año'] || '', titulo: r['titulo'], desc: r['descripcion'] })) : [];
 
   // EJES_2026
-  const ejesRows = findSheet(wb, ['id_eje', 'titulo', 'descripcion']);
+  const ejesRows = findSheet(wb, ['id_eje', 'titulo', 'descripcion'], /^ejes/);
   const ejes = ejesRows ? tableObjects(ejesRows, ['id_eje', 'titulo', 'descripcion'])
     .filter(r => r['mostrar_en_web'] === '' || truthy(r['mostrar_en_web']))
     .map(r => ({ titulo: r['titulo'], desc: r['descripcion'] })) : [];
 
   // EMPRESAS
-  const empRows = findSheet(wb, ['slug', 'nombre', 'participantes']);
+  const empRows = findSheet(wb, ['slug', 'nombre', 'participantes'], /^empresas$/);
   const empresas = empRows ? tableObjects(empRows, ['slug', 'nombre', 'participantes'])
     .filter(r => r['mostrar_en_web'] === '' || truthy(r['mostrar_en_web']))
     .map(r => ({
@@ -149,29 +157,38 @@ function parseBase(wb) {
 
   // EVENTOS (agenda del grupo: congresos, viajes, encuentros). Opcional.
   // La fecha es texto libre: "4-5-6/8", "23 y 24/10", "29 Jun 2026"…
-  const evtRows = findSheet(wb, ['fecha', 'titulo']);
+  const evtRows = findSheet(wb, ['fecha', 'titulo'], /^eventos$/);
   const eventos = evtRows ? tableObjects(evtRows, ['fecha', 'titulo'])
     .filter(r => r['mostrar_en_web'] === '' || truthy(r['mostrar_en_web']))
     .filter(r => r['fecha'] || r['titulo'])
     .map(r => ({ fecha: r['fecha'], titulo: r['titulo'], desc: r['descripcion'] || '', empresa: r['lugar'] || r['empresa'] || '' })) : [];
 
   // CONCEPTOS (marco conceptual). Vive en su propio archivo, pero se parsea igual.
-  const conRows = findSheet(wb, ['titulo', 'formula', 'descripcion']);
-  const conceptos = conRows ? tableObjects(conRows, ['titulo', 'formula', 'descripcion'])
+  const conRows = findSheet(wb, ['titulo', 'descripcion'], /concepto|marco/);
+  const conceptos = conRows ? tableObjects(conRows, ['titulo', 'descripcion'])
     .filter(r => r['mostrar_en_web'] === '' || truthy(r['mostrar_en_web']))
     .filter(r => r['titulo'])
-    .map(r => ({ icon: r['icono'] || '📌', titulo: r['titulo'], formula: r['formula'] || '', desc: r['descripcion'] || '' })) : [];
+    .map(r => ({
+      icon: r['icono'] || '📌',
+      titulo: r['titulo'],
+      // «frase_corta» es el nombre nuevo; se sigue aceptando «formula» por si
+      // alguien tiene la planilla vieja.
+      formula: r['frase_corta'] || r['formula'] || '',
+      desc: r['descripcion'] || '',
+      orden: r['orden'] || '',
+    }))
+    .sort(porOrden) : [];
 
   // ACCESOS (quiénes pueden tener cuenta en el sitio). Opcional pero
   // recomendada: si está, solo esos emails pueden registrarse. Nunca sale del
   // servidor: /api/base la borra antes de responderle al navegador.
-  const accRows = findSheet(wb, ['email', 'empresa']);
+  const accRows = findSheet(wb, ['email', 'empresa'], /^accesos$/);
   const accesos = accRows ? tableObjects(accRows, ['email', 'empresa'])
     .filter(r => r['email'])
     .map(r => ({ email: norm(r['email']), empresa: r['empresa'] || '', nombre: r['nombre'] || '' })) : [];
 
   // CONFIG_DRIVE (mapeo slug → carpeta)
-  const cfgRows = findSheet(wb, ['slug', 'id_carpeta_empresa']);
+  const cfgRows = findSheet(wb, ['slug', 'id_carpeta_empresa'], /^config_drive$/);
   const config = cfgRows ? tableObjects(cfgRows, ['slug', 'id_carpeta_empresa'])
     .map(r => ({ slug: r['slug'], driveFolderId: r['id_carpeta_empresa'] || '', urlLogo: r['url_logo'] || '' })) : [];
 

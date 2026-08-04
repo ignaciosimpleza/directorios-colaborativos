@@ -52,6 +52,25 @@ const TEC_ACT = [
   { id: 't4', nombre: 'Siembra 2025-08-02.pdf', tipo: 'PDF', fecha: '2025-08-02', url: '#', carpeta: 'Material teórico 2025', ruta: ['Material teórico 2025'], empresaFolderId: 'tec' },
 ];
 
+// Bitácoras: una por empresa, con las reuniones que /api/bitacora ya parseó
+const BITACORAS = {
+  'f-macsa': { archivo: { id: 'doc-macsa', nombre: 'Proceso | MACSA Agro', url: '#' }, reuniones: [
+    { fecha: '2026-08-03', titulo: 'Crecimiento empresarial, nuevas inversiones y organigrama' },
+    { fecha: '2026-04-13', titulo: 'Avance Líneas Estratégicas' },
+    { fecha: '2025-11-17', titulo: 'Presentación MACSA' },
+    { fecha: '2025-07-21', titulo: 'Resumen de la presentación' },
+    { fecha: '2024-12-12', titulo: 'Desafíos del directorio' },
+    { fecha: '2024-10-24', titulo: 'Avances' },
+    { fecha: '2022-09-29', titulo: 'Brechas, causas y línea estratégica' },
+  ] },
+  'f-sueno': { archivo: { id: 'doc-sueno', nombre: 'Proceso | El Sueño', url: '#' }, reuniones: [
+    { fecha: '2026-07-13', titulo: 'Avances en delegación' },
+    { fecha: '2026-02-10', titulo: 'Ordenamiento societario' },
+    { fecha: '2025-08-05', titulo: 'Presentación de la empresa' },
+  ] },
+  'f-tricampo': { archivo: { id: 'doc-tri', nombre: 'Proceso | Tricampo.docx', url: '#' }, reuniones: [] , aviso: 'En la carpeta «Proceso» no hay ningún documento de bitácora.' },
+};
+
 const NOVEDADES = [
   { id: 'n1', nombre: 'Gaceta julio 2026.pdf', tipo: 'PDF', fecha: '2026-07-31', url: '#' },
   { id: 'n2', nombre: 'Gaceta junio 2026.pdf', tipo: 'PDF', fecha: '2026-06-30', url: '#' },
@@ -126,7 +145,11 @@ function authHandler(req, res, body, token) {
     }
     case 'pedirReset': return json(res, { ok: true });
     // solo para las pruebas: deja el mock como recién arrancado
-    case '_reset': { AUTH.requireLogin = false; AUTH.users = []; AUTH.sessions = {}; AUTH.log = []; return json(res, { ok: true }); }
+    case '_reset': {
+      AUTH.requireLogin = false; AUTH.users = []; AUTH.sessions = {}; AUTH.log = [];
+      DB.content = { drive_config: { baseFileId: 'base', tecnicasFolderId: 'tec', novedadesFolderId: 'nov', herramientasUrl: 'https://www.simpleza.com.ar/' } };
+      return json(res, { ok: true });
+    }
     default: return json(res, { error: 'Acción desconocida' }, 400);
   }
 }
@@ -166,6 +189,10 @@ http.createServer((req, res) => {
     return json(res, DB);
   }
   if (u.pathname === '/api/base') return json(res, BASE);
+  if (u.pathname === '/api/bitacora') {
+    const b = BITACORAS[u.searchParams.get('folderId')];
+    return json(res, b || { reuniones: [], aviso: 'sin carpeta Proceso' });
+  }
   if (u.pathname === '/api/drive') {
     const op = u.searchParams.get('op') || 'list';
     if (op === 'whoami') return json(res, { email: 'grupofaro@grupofaro.iam.gserviceaccount.com' });
@@ -175,6 +202,16 @@ http.createServer((req, res) => {
       return json(res, { items: ACT.filter(i => ids.includes(i.empresaFolderId)) });
     }
     if (op === 'arbol') return json(res, { arbol: ARBOL_TEC });
+    if (op === 'descubrir') return json(res, {
+      carpetas: [{ id: 'tec', nombre: '1. Material teórico' }, { id: 'emp', nombre: '2. Empresas y procesos' }],
+      archivos: [], 
+      sugerencias: { tecnicasFolderId: 'tec', baseFileId: 'base', logoFileId: 'logo1' },
+      detalle: [{ campo: 'tecnicasFolderId', id: 'tec', nombre: '1. Material teórico' },
+                { campo: 'baseFileId', id: 'base', nombre: 'Base_Estructurada.xlsx' },
+                { campo: 'logoFileId', id: 'logo1', nombre: 'Logo del grupo.png' }],
+    });
+    if (op === 'imagen') { res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
+      return res.end('<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\'><circle cx=\'20\' cy=\'20\' r=\'18\' fill=\'#32E8A9\'/></svg>'); }
     if (op === 'list') {
       const fid = u.searchParams.get('folderId');
       if (fid === 'nov') return json(res, { files: NOVEDADES });

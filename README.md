@@ -16,6 +16,7 @@ sitio es otro.
 | --- | --- |
 | `index.html` | Todo el front (secciones, sin build) |
 | `api/base.js` | Lee la planilla base del grupo desde Drive y la parsea |
+| `api/bitacora.js` | Lee la bitácora de cada empresa y saca de ahí sus reuniones |
 | `api/drive.js` | Lee carpetas de Drive (archivos, árboles, actividad, bitácora) |
 | `api/db.js` | Turso (libSQL): calendario y configuración |
 | `api/auth.js` | Registro, ingreso, autorización de cuentas y log de accesos |
@@ -32,14 +33,15 @@ completar.
 
 | Lo que se ve | De dónde sale |
 | --- | --- |
-| Nombre del grupo, bajada, logo y equipo del menú | Planilla base: pestañas `GRUPO` y `EQUIPO` |
+| Nombre del grupo, bajada y equipo del menú | Planilla base: pestañas `GRUPO` y `EQUIPO` |
+| Logo del grupo | Una imagen subida a Drive y conectada en Configuración |
 | El Grupo (identidad, objetivos, principios) | Planilla base: pestaña `GRUPO` |
 | Hitos · Ejes | Planilla base: pestañas `HITOS` y `EJES_2026` |
 | Empresas | Planilla base: pestaña `EMPRESAS` |
 | Carpeta de Drive de cada empresa | Planilla base: pestaña `CONFIG_DRIVE`, columna `id_carpeta_empresa` |
 | Procesos y documentos de cada ficha | Carpeta de la empresa (subcarpetas `Presentaciones` y `Proceso`) |
-| Dashboard · Actividad reciente | Últimos archivos de las carpetas de las empresas |
-| Dashboard · Reuniones realizadas | **Bitácora** de cada empresa (subcarpeta `Proceso`) + carpeta de técnicas |
+| Dashboard · Reuniones realizadas | **Bitácora** de cada empresa: cada encabezado con fecha es una reunión |
+| Dashboard · Actividad reciente | Las últimas reuniones de las bitácoras, con su fecha y su tema |
 | Dashboard · Próximas reuniones | El Calendario del sitio |
 | Dashboard · Ronda de novedades | Carpeta de Drive de novedades (última pieza subida) |
 | Agenda de eventos | Planilla base: pestaña `EVENTOS` (fecha en texto libre) |
@@ -54,12 +56,27 @@ o se edita la fila de la planilla. El sitio lo toma solo.
 
 ### Reuniones realizadas
 
-Se cuentan desde la **bitácora**: cada archivo de la subcarpeta `Proceso` de una
-empresa es un registro de reunión. Una reunión = **una fecha**, así la minuta y
-la presentación del mismo encuentro no cuentan doble. La fecha se toma del nombre
-del archivo (`Minuta 2025-06-12`, `12-06-25 …`) y, si no la tiene, de la fecha de
-modificación en Drive. El Calendario **no** interviene acá: de él salen solo las
-fechas próximas.
+Salen de la **bitácora**: el documento que cada empresa tiene en su subcarpeta
+`Proceso`. Adentro, **cada reunión es un encabezado con su fecha**, tal como ya
+las escriben los facilitadores:
+
+```
+# Lunes 3 Agosto de 2026 Reunión MACSA — Crecimiento empresarial
+# 13 DE ABRIL DE 2026 – Avance Líneas Estratégicas
+# Brechas, causas y línea estratégica | 29 de Septiembre 2022
+```
+
+`api/bitacora.js` abre ese documento (Google Doc o `.docx`, también si es un
+acceso directo), lee los encabezados y arma la lista de reuniones con su fecha y
+su tema. De ahí salen los números del Dashboard, el gráfico por empresa, el
+filtro por año y la actividad reciente.
+
+Para que una reunión cuente tiene que estar como **encabezado** (Título 1 o
+Título 2), no como texto suelto, y tener la fecha en el título. Si el documento
+no se puede leer o no se reconoce ninguna fecha, el sitio lo dice con nombre y
+apellido de la empresa en vez de mostrar un cero sin explicación.
+
+El Calendario **no** interviene acá: de él salen solo las fechas próximas.
 
 ### Qué se muestra
 
@@ -120,6 +137,12 @@ La clave de edición **no está en el HTML**: el sitio la valida contra el
 servidor. Cambiar `EDIT_PASSWORD` en Vercel alcanza.
 
 ### 3. Conectar Drive
+
+**Atajo:** pegá en Configuración la **carpeta del grupo** (la carpeta madre) y
+tocá **Detectar contenido**. El sitio mira adentro y completa solo la planilla,
+el material técnico, las novedades, las herramientas y el logo. Después revisás.
+
+A mano, paso por paso:
 
 1. Descargá `plantillas/Plantilla_Base_Grupo.xlsx`, completala y subila a Drive.
 2. Entrá al sitio con **Modo edición → Configuración**. Ahí figura el email de la

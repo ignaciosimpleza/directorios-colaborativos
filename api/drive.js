@@ -190,6 +190,56 @@ async function arbol(folderId, depth) {
   return nodo(folderId);
 }
 
+// ── Autodetección del contenido de la carpeta del grupo ──
+// Se mira UNA carpeta (la del grupo) y se propone qué es cada subcarpeta, para
+// que armar un grupo nuevo no sea pegar seis ids a mano.
+const PISTAS = [
+  { campo: 'empresasFolderId',     rx: /empresa|proceso/ },
+  { campo: 'tecnicasFolderId',     rx: /tecnic|teoric|material/ },
+  { campo: 'novedadesFolderId',    rx: /novedad|gaceta|ronda/ },
+  { campo: 'herramientasFolderId', rx: /herramienta|tablero|plantilla/ },
+  { campo: 'institucionalFolderId', rx: /institucional|informacion/ },
+  { campo: 'logosFolderId',        rx: /logo/ },
+];
+
+async function descubrir(folderId) {
+  const hijos = await driveList(
+    `'${folderId}' in parents and trashed=false`,
+    'files(id,name,mimeType,modifiedTime,webViewLink,fileExtension)'
+  );
+  const carpetas = hijos.filter(f => f.mimeType === FOLDER_MIME);
+  const archivos = hijos.filter(f => f.mimeType !== FOLDER_MIME);
+
+  const sugerencias = {};
+  const detalle = [];
+  for (const p of PISTAS) {
+    const c = carpetas.find(x => p.rx.test(normName(x.name)));
+    if (c) { sugerencias[p.campo] = c.id; detalle.push({ campo: p.campo, id: c.id, nombre: c.name }); }
+  }
+
+  // La planilla base y el logo: se buscan en la raíz y en «Información institucional»
+  const dondeBuscar = [folderId];
+  if (sugerencias.institucionalFolderId) dondeBuscar.push(sugerencias.institucionalFolderId);
+  const candidatos = dondeBuscar.length > 1
+    ? await listInParents(dondeBuscar, 'files(id,name,mimeType,fileExtension)')
+    : archivos;
+
+  const planilla = candidatos.find(f =>
+    /sheet|excel/.test(f.mimeType || '') || /^xlsx?$/i.test(f.fileExtension || ''));
+  if (planilla) { sugerencias.baseFileId = planilla.id; detalle.push({ campo: 'baseFileId', id: planilla.id, nombre: planilla.name }); }
+
+  const logo = candidatos.find(f => /^image\//.test(f.mimeType || '') && /logo|isolog|imagotipo/.test(normName(f.name)))
+            || candidatos.find(f => /^image\//.test(f.mimeType || ''));
+  if (logo) { sugerencias.logoFileId = logo.id; detalle.push({ campo: 'logoFileId', id: logo.id, nombre: logo.name }); }
+
+  return {
+    carpetas: carpetas.map(c => ({ id: c.id, nombre: c.name })),
+    archivos: archivos.map(mapFile),
+    sugerencias,
+    detalle,
+  };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
   try {
@@ -213,13 +263,34 @@ export default async function handler(req, res) {
       return res.status(200).json({ items: await actividad(ids.slice(0, 40), limit, depth) });
     }
 
-    const folderId = req.query.folderId;
+    // op=imagen recibe un archivo; el resto, una carpeta
+    const folderId = req.query.folderId || req.query.fileId;
     if (!folderId) return res.status(400).json({ error: 'Falta folderId' });
 
     if (op === 'list') {
       const files = await driveList(`'${folderId}' in parents and trashed=false`);
       return res.status(200).json({ files: files.map(mapFile) });
     }
+
+    // Imagen de Drive servida por el sitio (logos). Va por acá y no por un link
+    // directo para que la imagen no tenga que ser pública: alcanza con que esté
+    // compartida con la cuenta de servicio, como todo lo demás.
+    if (op === 'imagen') {
+      const token = await getToken();
+      const r = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folderId)}?alt=media&supportsAllDrives=true`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!r.ok) return res.status(r.status).json({ error: `No se pudo leer la imagen (${r.status}).` });
+      const tipo = r.headers.get('content-type') || 'image/png';
+      if (!/^image\//.test(tipo)) return res.status(415).json({ error: 'Ese archivo de Drive no es una imagen.' });
+      res.setHeader('Content-Type', tipo);
+      res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
+      return res.send(Buffer.from(await r.arrayBuffer()));
+    }
+
+    // Descubrir el contenido de la carpeta del grupo y proponer qué es cada cosa
+    if (op === 'descubrir') return res.status(200).json(await descubrir(folderId));
 
     // Árbol de carpetas: subcarpetas anidadas con sus archivos
     if (op === 'arbol') {
