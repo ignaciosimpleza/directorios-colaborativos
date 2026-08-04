@@ -7,6 +7,7 @@
 
 import { GoogleAuth } from 'google-auth-library';
 import * as XLSX from 'xlsx';
+import { bloqueaPorLogin } from './_auth.js';
 
 const DEFAULT_BASE_FILE_ID = '1hdGYpzGrqIh5gADoVkp9yNp8pPGM29dt';
 
@@ -157,6 +158,8 @@ export { parseBase };
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
   try {
+    // Si el grupo exige login, la planilla no se sirve sin sesión
+    if (await bloqueaPorLogin(req, res, req.query.group_id)) return;
     const fileId = req.query.fileId || process.env.BASE_FILE_ID || DEFAULT_BASE_FILE_ID;
     const buf = await downloadXlsx(fileId);
     const wb = XLSX.read(buf, { type: 'buffer' });

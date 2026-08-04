@@ -18,6 +18,7 @@
 //                                               Bitácora dentro de la carpeta "Proceso"
 
 import { GoogleAuth } from 'google-auth-library';
+import { bloqueaPorLogin } from './_auth.js';
 
 function loadCreds() {
   let raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
@@ -199,6 +200,9 @@ export default async function handler(req, res) {
       const creds = loadCreds();
       return res.status(200).json({ email: creds.client_email || '' });
     }
+
+    // Si el grupo exige login, no se devuelve nada de Drive sin sesión
+    if (await bloqueaPorLogin(req, res, req.query.group_id)) return;
 
     // Actividad: novedades de las carpetas de todas las empresas de una vez
     if (op === 'actividad') {

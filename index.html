@@ -300,6 +300,35 @@ td { padding: 10px 14px; vertical-align: middle; }
 .hist-tema { font-size:11.5px; color:var(--gris-medio); margin-top:1px; }
 .hist-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
 
+/* ── PANTALLA DE ACCESO ── */
+.gate { display:none; position:fixed; inset:0; z-index:400; background:var(--sidebar-bg); overflow:auto; padding:40px 20px; }
+.gate.open { display:block; }
+.gate-box { max-width:420px; margin:0 auto; }
+.gate-logo { display:flex; align-items:center; gap:14px; margin-bottom:22px; justify-content:center; }
+.gate-title { font-size:19px; font-weight:700; color:#fff; }
+.gate-sub { font-size:11.5px; color:rgba(255,255,255,0.6); margin-top:2px; }
+.gate-card { background:#fff; border-radius:16px; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.3); }
+.gate-tabs { display:flex; gap:6px; margin-bottom:16px; }
+.gate-tab { flex:1; background:#f4f1ec; border:0; font-family:inherit; font-size:12.5px; font-weight:700; color:var(--gris-medio); padding:9px; border-radius:9px; cursor:pointer; }
+.gate-tab.active { background:var(--navy); color:#fff; }
+.gate-lead { font-size:12.5px; color:var(--gris-oscuro); line-height:1.55; margin-bottom:14px; }
+.gate-btn { width:100%; margin-top:4px; }
+.gate-link { display:block; text-align:center; font-size:12px; color:var(--azul-pizarra); font-weight:600; margin-top:12px; cursor:pointer; }
+.gate-msg { font-size:12.5px; line-height:1.5; margin-top:12px; padding:10px 12px; border-radius:9px; display:none; }
+.gate-msg.ok  { display:block; background:#e8f8f2; color:#1a7a55; }
+.gate-msg.err { display:block; background:#fdecea; color:var(--terracota); }
+.gate-pie { text-align:center; font-size:11.5px; color:rgba(255,255,255,0.55); margin-top:18px; }
+.sesion-chip { font-size:11px; font-weight:600; color:var(--gris-oscuro); background:#f1f1f1; padding:4px 10px; border-radius:20px; cursor:pointer; }
+
+/* ── ACCESOS (administración) ── */
+.acc-row { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--beige-suave); flex-wrap:wrap; }
+.acc-row:last-child { border-bottom:none; }
+.acc-mail { font-size:12.5px; font-weight:600; color:var(--navy); }
+.acc-meta { font-size:11px; color:var(--gris-medio); }
+.acc-actions { margin-left:auto; display:flex; gap:6px; }
+.acc-log { font-size:11.5px; color:var(--gris-oscuro); padding:5px 0; border-bottom:1px solid #f0ece6; display:flex; gap:10px; }
+.acc-log-ts { color:var(--gris-medio); min-width:120px; }
+
 /* ── QUÉ SE MUESTRA (visibilidad) ── */
 .vis-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-top:12px; }
 .vis-group-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--gris-medio); margin-bottom:6px; }
@@ -503,6 +532,7 @@ canvas { display:block; }
   <div class="topbar-right">
     <span class="topbar-date" id="topbar-date"></span>
     <span class="next-chip" id="next-chip" style="display:none"></span>
+    <span class="sesion-chip" id="sesion-chip" style="display:none" title="Cerrar sesión" onclick="gateLogout()"></span>
     <button id="edit-toggle" class="edit-toggle" onclick="onEditToggle()">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
       <span id="edit-toggle-label">Modo edición</span>
@@ -676,6 +706,7 @@ canvas { display:block; }
     </div>
     <div class="card" id="config-sa" style="margin-bottom:16px"></div>
     <div id="config-sources"></div>
+    <div id="config-accesos"></div>
   </div>
 
 </div><!-- /main -->
@@ -692,6 +723,54 @@ canvas { display:block; }
       <button class="btn-ghost" onclick="closeDashLogin()">Cancelar</button>
       <button class="btn-primary" onclick="tryDashLogin()">Ingresar</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════ PANTALLA DE ACCESO (cuando el grupo pide login) ═══════════ -->
+<div id="gate" class="gate">
+  <div class="gate-box">
+    <div class="gate-logo">
+      <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="50" cy="50" r="46" fill="none" stroke="#fff" stroke-width="5"/>
+        <rect x="38" y="54" width="24" height="18" rx="2" fill="#fff"/>
+        <path d="M41 54 L44 28 L56 28 L59 54 Z" fill="#fff"/>
+        <rect x="43" y="22" width="14" height="8" rx="2" fill="#fff"/>
+        <path d="M42 22 L50 16 L58 22 Z" fill="#fff"/>
+      </svg>
+      <div>
+        <div class="gate-title" id="gate-grupo">Grupo El Faro</div>
+        <div class="gate-sub">Directorio Colaborativo · Simpleza</div>
+      </div>
+    </div>
+
+    <div class="gate-card">
+      <div class="gate-tabs">
+        <button class="gate-tab active" id="gate-tab-login" onclick="gateTab('login')">Ingresar</button>
+        <button class="gate-tab" id="gate-tab-registro" onclick="gateTab('registro')">Crear cuenta</button>
+      </div>
+
+      <div id="gate-panel-login">
+        <p class="gate-lead">Este espacio tiene información de las empresas del grupo, así que pide una cuenta.</p>
+        <input id="gate-email" type="email" class="modal-input" placeholder="Email" autocomplete="username">
+        <input id="gate-pwd" type="password" class="modal-input" placeholder="Contraseña" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter') gateLogin()">
+        <button class="btn-primary gate-btn" onclick="gateLogin()">Ingresar</button>
+        <a class="gate-link" onclick="gatePedirReset()">Olvidé mi contraseña</a>
+      </div>
+
+      <div id="gate-panel-registro" class="hidden">
+        <p class="gate-lead">Alcanza con <strong>una cuenta por empresa</strong>: registrala y compartila con tu equipo. El grupo la autoriza antes del primer ingreso.</p>
+        <input id="gate-r-nombre" type="text" class="modal-input" placeholder="Tu nombre">
+        <input id="gate-r-empresa" type="text" class="modal-input" placeholder="Empresa">
+        <input id="gate-r-email" type="email" class="modal-input" placeholder="Email">
+        <input id="gate-r-pwd" type="password" class="modal-input" placeholder="Contraseña (mínimo 6 caracteres)" autocomplete="new-password"
+          onkeydown="if(event.key==='Enter') gateRegistro()">
+        <button class="btn-primary gate-btn" onclick="gateRegistro()">Crear la cuenta</button>
+      </div>
+
+      <div id="gate-msg" class="gate-msg"></div>
+    </div>
+    <div class="gate-pie">¿Problemas para entrar? Escribile a la coordinación del grupo.</div>
   </div>
 </div>
 
@@ -2137,6 +2216,7 @@ async function renderConfig() {
       DRIVE_SOURCES.map(configSourceHtml).join('') +
       configVisibilidadHtml();
   }
+  renderAccesos();
 }
 
 function configSourceHtml(s) {
@@ -2348,13 +2428,263 @@ async function renderNovedades() {
   aplicarVisibilidad();
 }
 
-async function boot() {
+// ══════════════════════════════════════════════════════════════
+// ACCESO AL SITIO (cuentas por empresa)
+// ══════════════════════════════════════════════════════════════
+// Una cuenta por empresa, autogestionada, que el equipo del grupo autoriza
+// antes del primer ingreso. El token de sesión se guarda en el navegador y
+// viaja en cada llamada a /api (el sitio se embebe en un iframe, donde las
+// cookies de terceros no son confiables).
+const API_AUTH = '/api/auth';
+const TOKEN_KEY = 'faro_token';
+
+const guardarToken = t => { try { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); } catch (e) {} };
+const leerToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } };
+
+let AUTH_TOKEN = leerToken();
+let AUTH_REQUIRED = false;
+let AUTH_USER = null;
+
+// Todas las llamadas a /api/* llevan el token si hay sesión
+const _fetch = window.fetch.bind(window);
+window.fetch = function (input, init) {
+  const url = typeof input === 'string' ? input : (input && input.url) || '';
+  if (AUTH_TOKEN && url.indexOf('/api/') === 0) {
+    init = Object.assign({}, init);
+    init.headers = Object.assign({}, init.headers || {}, { Authorization: 'Bearer ' + AUTH_TOKEN });
+  }
+  return _fetch(input, init);
+};
+
+async function authPost(action, extra) {
+  const r = await fetch(API_AUTH, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({ action, group_id: GROUP_ID }, extra || {})),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
+  return j;
+}
+
+async function initAuth() {
+  try {
+    const r = await fetch(`${API_AUTH}?group_id=${encodeURIComponent(GROUP_ID)}`);
+    const j = await r.json().catch(() => ({}));
+    AUTH_REQUIRED = !!j.requireLogin;
+    AUTH_USER = j.usuario || null;
+    if (!AUTH_USER && AUTH_TOKEN) { AUTH_TOKEN = ''; guardarToken(''); }
+    // El nombre del grupo en la pantalla de acceso sale de la base, no del HTML
+    const gg = document.getElementById('gate-grupo');
+    if (gg && j.grupo) gg.textContent = j.grupo;
+  } catch (e) {
+    AUTH_REQUIRED = false;   // si la función no responde, no dejamos el sitio trabado
+  }
+  pintarSesion();
+}
+
+function pintarSesion() {
+  const chip = document.getElementById('sesion-chip');
+  if (!chip) return;
+  if (AUTH_USER) {
+    chip.textContent = `👤 ${AUTH_USER.empresa || AUTH_USER.nombre || AUTH_USER.email} · Salir`;
+    chip.style.display = '';
+  } else {
+    chip.style.display = 'none';
+  }
+}
+
+function gateAbrir(on) {
+  const g = document.getElementById('gate');
+  if (g) g.classList.toggle('open', !!on);
+}
+
+function gateTab(cual) {
+  document.getElementById('gate-tab-login').classList.toggle('active', cual === 'login');
+  document.getElementById('gate-tab-registro').classList.toggle('active', cual === 'registro');
+  document.getElementById('gate-panel-login').classList.toggle('hidden', cual !== 'login');
+  document.getElementById('gate-panel-registro').classList.toggle('hidden', cual !== 'registro');
+  gateMsg('');
+}
+
+function gateMsg(texto, tipo) {
+  const el = document.getElementById('gate-msg');
+  if (!el) return;
+  el.innerHTML = texto || '';
+  el.className = 'gate-msg' + (texto ? ' ' + (tipo || 'ok') : '');
+}
+
+async function gateLogin() {
+  const email = (document.getElementById('gate-email').value || '').trim();
+  const password = document.getElementById('gate-pwd').value || '';
+  if (!email || !password) return gateMsg('Completá el email y la contraseña.', 'err');
+  gateMsg('Entrando…');
+  try {
+    const j = await authPost('login', { email, password });
+    AUTH_TOKEN = j.token;
+    guardarToken(j.token);
+    AUTH_USER = j.usuario;
+    gateAbrir(false);
+    pintarSesion();
+    await arrancarSitio();
+  } catch (e) { gateMsg(esc(e.message), 'err'); }
+}
+
+async function gateRegistro() {
+  const datos = {
+    nombre: (document.getElementById('gate-r-nombre').value || '').trim(),
+    empresa: (document.getElementById('gate-r-empresa').value || '').trim(),
+    email: (document.getElementById('gate-r-email').value || '').trim(),
+    password: document.getElementById('gate-r-pwd').value || '',
+  };
+  if (!datos.email || !datos.password) return gateMsg('Completá el email y la contraseña.', 'err');
+  gateMsg('Creando la cuenta…');
+  try {
+    await authPost('registro', datos);
+    gateTab('login');
+    gateMsg('Listo. La cuenta quedó <strong>pendiente de autorización</strong>: el equipo del grupo la habilita y ahí vas a poder entrar.', 'ok');
+  } catch (e) { gateMsg(esc(e.message), 'err'); }
+}
+
+async function gatePedirReset() {
+  const email = (document.getElementById('gate-email').value || '').trim();
+  if (!email) return gateMsg('Escribí tu email arriba y volvé a tocar «Olvidé mi contraseña».', 'err');
+  try {
+    await authPost('pedirReset', { email });
+    gateMsg('Le avisamos a la coordinación del grupo para que te reestablezca la contraseña.', 'ok');
+  } catch (e) { gateMsg(esc(e.message), 'err'); }
+}
+
+async function gateLogout() {
+  try { await authPost('logout', {}); } catch (e) {}
+  AUTH_TOKEN = ''; guardarToken(''); AUTH_USER = null;
+  pintarSesion();
+  if (AUTH_REQUIRED) { gateAbrir(true); gateTab('login'); }
+}
+
+// ── Administración de accesos (Configuración, en modo edición) ──
+async function renderAccesos() {
+  const el = document.getElementById('config-accesos');
+  if (!el) return;
+  el.innerHTML = `<div class="card"><div class="card-title">4) Quién puede entrar</div><div class="act-empty">Cargando cuentas…</div></div>`;
+  try {
+    const [u, a] = await Promise.all([
+      authPost('usuarios', { password: EDIT_PASSWORD }),
+      authPost('accesos', { password: EDIT_PASSWORD, limit: 30 }),
+    ]);
+    const usuarios = u.usuarios || [];
+    const pendientes = usuarios.filter(x => x.estado === 'pendiente');
+    const filas = usuarios.map(x => {
+      const badge = x.estado === 'autorizado' ? 'badge-green' : x.estado === 'bloqueado' ? 'badge-gray' : 'badge-yellow';
+      const reset = x.reset
+        ? `<div class="acc-meta">Pidió reestablecer la contraseña · <a class="src-link" onclick="copiarTexto('${jsq(location.origin + location.pathname + '#reset=' + x.resetToken)}')">Copiar link de reset</a></div>`
+        : '';
+      return `<div class="acc-row">
+        <div>
+          <div class="acc-mail">${esc(x.email)}</div>
+          <div class="acc-meta">${esc(x.empresa || '—')}${x.nombre ? ' · ' + esc(x.nombre) : ''}${x.created_at ? ' · alta ' + esc(fechaCorta(x.created_at.slice(0, 10))) : ''}</div>
+          ${reset}
+        </div>
+        <span class="badge ${badge}">${esc(x.estado)}</span>
+        <div class="acc-actions">
+          ${x.estado !== 'autorizado' ? `<button class="btn-cal-primary" onclick="cambiarEstadoUsuario('${jsq(x.email)}','autorizado')">Autorizar</button>` : ''}
+          ${x.estado !== 'bloqueado' ? `<button class="btn-cal-add" onclick="cambiarEstadoUsuario('${jsq(x.email)}','bloqueado')">Bloquear</button>` : ''}
+          <button class="btn-cal-danger" onclick="borrarUsuario('${jsq(x.email)}')">Borrar</button>
+        </div>
+      </div>`;
+    }).join('') || '<div class="act-empty">Todavía no se registró nadie.</div>';
+
+    const log = (a.accesos || []).map(x =>
+      `<div class="acc-log"><span class="acc-log-ts">${esc(new Date(x.ts).toLocaleString('es-AR'))}</span><span>${esc(x.email)}</span><span class="acc-meta">${esc(x.evento)}</span></div>`
+    ).join('') || '<div class="act-empty">Sin movimientos todavía.</div>';
+
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-title" style="margin-bottom:10px">4) Quién puede entrar</div>
+        <label class="vis-row" style="margin-bottom:8px">
+          <input type="checkbox" ${AUTH_REQUIRED ? 'checked' : ''} onchange="cambiarRequerirLogin(this.checked)">
+          <span><strong>Pedir cuenta para entrar al sitio</strong></span>
+        </label>
+        <div class="src-estructura">Con esto apagado el sitio se ve sin cuenta (útil mientras se arma). Prendelo cuando las empresas ya tengan su cuenta autorizada: ahí el contenido y los datos de Drive dejan de responder sin sesión.${pendientes.length ? ` <strong>Hay ${pendientes.length} cuenta${pendientes.length === 1 ? '' : 's'} esperando autorización.</strong>` : ''}</div>
+        <div style="margin-top:14px">${filas}</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Últimos movimientos</div>
+        ${log}
+      </div>`;
+  } catch (e) {
+    el.innerHTML = `<div class="card"><div class="card-title">4) Quién puede entrar</div><div class="act-empty">No se pudo leer la lista de cuentas.<br><small>${esc(e.message)}</small></div></div>`;
+  }
+}
+
+function copiarTexto(t) { try { navigator.clipboard.writeText(t); } catch (e) {} }
+
+async function cambiarEstadoUsuario(email, estado) {
+  try { await authPost('estado', { password: EDIT_PASSWORD, email, estado }); await renderAccesos(); }
+  catch (e) { alert('No se pudo cambiar el estado: ' + e.message); }
+}
+
+async function borrarUsuario(email) {
+  if (!confirm(`¿Borrar la cuenta de ${email}?`)) return;
+  try { await authPost('borrar', { password: EDIT_PASSWORD, email }); await renderAccesos(); }
+  catch (e) { alert('No se pudo borrar: ' + e.message); }
+}
+
+async function cambiarRequerirLogin(valor) {
+  try {
+    await authPost('requerirLogin', { password: EDIT_PASSWORD, valor });
+    AUTH_REQUIRED = !!valor;
+    await renderAccesos();
+  } catch (e) { alert('No se pudo cambiar: ' + e.message); }
+}
+
+// Link de reset: index.html#reset=<token>
+function tokenDeResetEnUrl() {
+  const m = String(location.hash || '').match(/reset=([a-f0-9]{16,})/i);
+  return m ? m[1] : '';
+}
+
+async function resolverResetDesdeUrl() {
+  const token = tokenDeResetEnUrl();
+  if (!token) return false;
+  gateAbrir(true);
+  gateTab('login');
+  gateMsg('Elegí tu contraseña nueva y tocá «Ingresar».', 'ok');
+  const btn = document.querySelector('#gate-panel-login .gate-btn');
+  const pwd = document.getElementById('gate-pwd');
+  if (pwd) pwd.placeholder = 'Contraseña nueva (mínimo 6 caracteres)';
+  if (btn) {
+    btn.textContent = 'Guardar la contraseña nueva';
+    btn.onclick = async () => {
+      try {
+        await authPost('resetear', { token, password: pwd.value || '' });
+        history.replaceState(null, '', location.pathname);
+        btn.textContent = 'Ingresar';
+        btn.onclick = gateLogin;
+        pwd.value = '';
+        pwd.placeholder = 'Contraseña';
+        gateMsg('Contraseña cambiada. Ya podés ingresar.', 'ok');
+      } catch (e) { gateMsg(esc(e.message), 'err'); }
+    };
+  }
+  return true;
+}
+
+async function arrancarSitio() {
   await loadContentFromDB();            // calendario + fuentes de Drive + visibilidad
   await loadBaseFromDrive();            // El Grupo, Empresas, hitos y agenda
   loadMarcoFromDrive();                 // marco conceptual (no bloquea la portada)
   initDashboard();                      // actividad reciente y reuniones: Drive
   aplicarVisibilidad();
 }
+
+async function boot() {
+  await initAuth();
+  if (await resolverResetDesdeUrl()) return;
+  if (AUTH_REQUIRED && !AUTH_USER) { gateAbrir(true); return; }
+  await arrancarSitio();
+}
+
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
 else boot();
 </script>
