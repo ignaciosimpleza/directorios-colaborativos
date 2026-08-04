@@ -25,16 +25,28 @@ const barras = await p.evaluate(() =>
     ancho: (r.querySelector('.rp-bar-fill') || {}).style?.width || '0',
   })));
 console.log('barras:', JSON.stringify(barras));
-ok('hay una barra por empresa', barras.length === 3);
+ok('hay una barra por cada empresa de la planilla', barras.length === 9);
 ok('MACSA cuenta 7 reuniones de su bitácora', barras.find(x => /MACSA/.test(x.empresa))?.n === 7);
 ok('El Sueño cuenta 3', barras.find(x => /Sueño/.test(x.empresa))?.n === 3);
 ok('la empresa sin bitácora queda en 0', barras.find(x => /Tricampo/.test(x.empresa))?.n === 0);
+
+// ── Vínculo automático empresa ↔ carpeta de Drive (CONFIG_DRIVE vacía) ──
+const vinculos = await p.evaluate(() => EMPRESAS.map(e => ({
+  empresa: e.nombre,
+  carpeta: (VINCULOS.find(x => x.empresa === e.nombre) || {}).carpeta || '',
+})));
+console.log('vínculos:', JSON.stringify(vinculos.map(v => v.empresa.slice(0, 18) + ' → ' + v.carpeta)));
+ok('las 9 empresas se vinculan solas con su carpeta, sin pegar ids', vinculos.every(v => v.carpeta));
+ok('resuelve «El Porvenir / Beheran Sarciat S.A.» → «Beheran Sarciat SA»',
+  vinculos.find(v => /Porvenir/.test(v.empresa))?.carpeta === 'Beheran Sarciat SA');
+ok('resuelve «Estudio Tomás Becker» → «Estudio Becker»',
+  vinculos.find(v => /Becker/.test(v.empresa))?.carpeta === 'Estudio Becker');
 ok('el gráfico dibuja la barra más larga al 100%', barras.some(x => x.ancho === '100%'));
 
 const stats = await p.evaluate(() => [...document.querySelectorAll('.rp-stat')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
 console.log('totales:', JSON.stringify(stats));
 ok('el total de reuniones de empresa es 10', /^10\D/.test(stats[0]));
-ok('muestra cuántas empresas presentaron', /2\/3/.test(stats[2].replace(/\s/g, '')));
+ok('muestra cuántas empresas presentaron', /2\/9/.test(stats[2].replace(/\s/g, '')));
 
 // ── Filtro por año ──
 const anios = await p.evaluate(() => [...document.querySelectorAll('.rp-anio option')].map(o => o.value));

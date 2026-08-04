@@ -38,7 +38,7 @@ completar.
 | El Grupo (identidad, objetivos, principios) | Planilla base: pestaña `GRUPO` |
 | Hitos · Ejes | Planilla base: pestañas `HITOS` y `EJES_2026` |
 | Empresas | Planilla base: pestaña `EMPRESAS` |
-| Carpeta de Drive de cada empresa | Planilla base: pestaña `CONFIG_DRIVE`, columna `id_carpeta_empresa` |
+| Carpeta de Drive de cada empresa | Se vincula sola por nombre dentro de la «Carpeta de las empresas». `CONFIG_DRIVE` manda si está cargada |
 | Procesos y documentos de cada ficha | Carpeta de la empresa (subcarpetas `Presentaciones` y `Proceso`) |
 | Dashboard · Reuniones realizadas | **Bitácora** de cada empresa: cada encabezado con fecha es una reunión |
 | Dashboard · Actividad reciente | Las últimas reuniones de las bitácoras, con su fecha y su tema |
@@ -149,8 +149,13 @@ A mano, paso por paso:
    cuenta de servicio: compartí con ese email (rol **Lector**) la planilla y las
    carpetas del grupo.
 3. Pegá el id de la planilla y usá **Probar conexión**.
-4. En la pestaña `CONFIG_DRIVE`, cargá el id de la carpeta de cada empresa. Cada
-   carpeta debería tener las subcarpetas `Presentaciones` y `Proceso`.
+4. Conectá la **carpeta de las empresas** (la que tiene una subcarpeta por
+   empresa). El sitio las vincula solas comparando el nombre de la carpeta con
+   el de la empresa en la planilla, así que **no hace falta pegar un id por
+   empresa**. En *Configuración → Qué se ve y de dónde sale* se ve qué empresa
+   quedó con qué carpeta. Si alguna no matchea, cargá su id en `CONFIG_DRIVE`:
+   eso siempre tiene prioridad. Cada carpeta de empresa debería tener adentro
+   `Presentaciones` y `Proceso`.
 5. Conectá las carpetas opcionales (técnicas, novedades, herramientas) y el
    archivo del Marco Conceptual.
 6. En el Calendario, usá **Generar futuras** para armar la agenda.

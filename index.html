@@ -1439,12 +1439,63 @@ function renderEmpresas() {
 // con las carpetas que declare la planilla del grupo.
 const API_BASE_DRIVE = '/api/drive';
 
-// La carpeta de cada empresa sale ÚNICAMENTE de la pestaña CONFIG_DRIVE de la
-// planilla base (columna id_carpeta_empresa). No hay ninguna lista en el código:
-// si una empresa no tiene carpeta cargada ahí, el sitio lo dice y explica dónde
-// completarla.
+// La carpeta de cada empresa: primero la que diga la pestaña CONFIG_DRIVE de la
+// planilla; si está vacía, la que el sitio vinculó solo comparando nombres
+// dentro de la «Carpeta de las empresas». En el código no hay ninguna lista.
 function empresaDriveFolder(e) {
-  return (e && e.driveFolderId) || '';
+  return (e && (e.driveFolderId || e.carpetaAuto)) || '';
+}
+
+// Palabras que no distinguen a una empresa de otra
+const RUIDO = /^(sa|s|a|srl|sr|l|sas|sca|de|del|la|el|los|las|y|e|agropecuaria|agropecuario|fideicomiso|estudio)$/;
+const tokens = s => String(s || '')
+  .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .split(/[^a-z0-9]+/).filter(t => t && !RUIDO.test(t));
+
+// Puntaje de parecido entre el nombre de una empresa y el de una carpeta
+function parecido(empresa, carpeta) {
+  const a = new Set(tokens(empresa.slug).concat(tokens(empresa.nombre)));
+  const b = tokens(carpeta);
+  if (!a.size || !b.length) return 0;
+  return b.filter(t => a.has(t)).length;
+}
+
+// Vincula cada empresa con su carpeta de Drive comparando nombres. Así no hay
+// que pegar nueve ids a mano en la planilla.
+let VINCULOS = [];
+async function vincularCarpetasDeEmpresas() {
+  VINCULOS = [];
+  EMPRESAS.forEach(e => { e.carpetaAuto = ''; });
+  const fid = DRIVE_CONFIG.empresasFolderId;
+  if (!fid || !EMPRESAS.length) return;
+  let carpetas = [];
+  try {
+    const r = await fetch(`${API_BASE_DRIVE}?op=list&folderId=${encodeURIComponent(fid)}`);
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
+    carpetas = (j.files || []).filter(f => f.tipo === 'Carpeta');
+  } catch (err) {
+    marcarFuente('empresasFolderId', 'error', err.message);
+    return;
+  }
+  const usadas = new Set();
+  // Se resuelven primero los parecidos más fuertes, para que dos empresas
+  // parecidas no se peleen la misma carpeta.
+  const pares = [];
+  EMPRESAS.forEach(e => carpetas.forEach(c => {
+    const p = parecido(e, c.nombre);
+    if (p > 0) pares.push({ e, c, p });
+  }));
+  pares.sort((x, y) => y.p - x.p);
+  for (const { e, c } of pares) {
+    if (e.carpetaAuto || usadas.has(c.id)) continue;
+    e.carpetaAuto = c.id;
+    usadas.add(c.id);
+    VINCULOS.push({ empresa: e.nombre, carpeta: c.nombre });
+  }
+  const sinCarpeta = EMPRESAS.filter(e => !empresaDriveFolder(e));
+  marcarFuente('empresasFolderId', 'ok',
+    `${VINCULOS.length} de ${EMPRESAS.length} empresas vinculadas` + (sinCarpeta.length ? ` · ⚠ ${sinCarpeta.length} sin carpeta` : ''));
 }
 
 function iconTipo(t) {
@@ -2096,6 +2147,7 @@ const EMP_PALETTE = ['#6C868C','#E67E22','#2980B9','#16A085','#5D8A97','#8E44AD'
 // Arranca vacío: no hay ningún archivo escrito en el código.
 let DRIVE_CONFIG = {
   raizFolderId: '',
+  empresasFolderId: '',
   logoFileId: '',
   baseFileId: '',
   marcoFileId: '',
@@ -2149,6 +2201,7 @@ async function loadBaseFromDrive() {
     if (Array.isArray(j.eventos) && j.eventos.length) PROXIMOS_EVENTOS = j.eventos;
     // Los hitos de "Eventos e Hitos" son los mismos de la planilla
     HITOS = (j.hitos || []).map(h => ({ fecha: h.anio || h.fecha || '', titulo: h.titulo, desc: h.desc, tipo: 'pasada' }));
+    await vincularCarpetasDeEmpresas();
     aplicarIdentidad();
   } catch (err) {
     console.warn('No se pudo cargar el archivo base de Drive (se usan los datos por defecto):', err);
@@ -2186,6 +2239,10 @@ const DRIVE_SOURCES = [
     desc:'La carpeta madre del grupo, la que contiene todo lo demás. Pegala una vez y tocá «Detectar contenido»: el sitio busca adentro la planilla, las carpetas de empresas, el material técnico, las novedades y el logo, y completa los campos de abajo solo.',
     donde:'No se ve en el sitio: sirve para completar el resto de una sola vez.',
     estructura:'Una carpeta de Drive compartida con la cuenta de servicio. Adentro, subcarpetas con nombres reconocibles («Empresas y procesos», «Material teórico», «Información institucional», «Novedades», «Logos»).' },
+  { key:'empresasFolderId', tipo:'carpeta', label:'Carpeta de las empresas',
+    desc:'La carpeta que tiene adentro una subcarpeta por empresa. El sitio las vincula solo, comparando el nombre de la carpeta con el de la empresa en la planilla: no hace falta pegar el id de cada una. Si igual cargás un id en la pestaña CONFIG_DRIVE, ese manda.',
+    donde:'Procesos · Dashboard (reuniones y actividad) · documentos de cada ficha',
+    estructura:'Una carpeta de Drive con una subcarpeta por empresa. Adentro de cada una: «Presentaciones» y «Proceso» (donde va la bitácora).' },
   { key:'logoFileId', tipo:'archivo', label:'Logo del grupo',
     desc:'La imagen del logo, subida a Drive. Se muestra en el menú y en el encabezado. No hace falta que sea pública: el sitio la sirve con la cuenta de servicio.',
     donde:'Menú lateral y barra superior',
@@ -2241,7 +2298,8 @@ const MAPA_SITIO = [
     { que:'Documentos de la ficha',   fuente:'Subcarpeta Presentaciones de la carpeta de la empresa', key:'baseFileId' },
   ]},
   { sec:'procesos', titulo:'Procesos', filas:[
-    { que:'Archivos por empresa',     fuente:'Carpeta de Drive de la empresa (CONFIG_DRIVE · id_carpeta_empresa)', key:'baseFileId' },
+    { que:'Carpeta de cada empresa',  fuente:'Se vincula sola por nombre dentro de la carpeta de empresas (o a mano en CONFIG_DRIVE)', key:'empresasFolderId' },
+    { que:'Archivos por empresa',     fuente:'Subcarpeta Presentaciones de la carpeta de la empresa', key:'empresasFolderId' },
     { que:'Botón Bitácora',           fuente:'El documento de la subcarpeta Proceso de cada empresa', key:'@bitacora' },
   ]},
   { sec:'calendario', titulo:'Calendario', filas:[
@@ -2286,6 +2344,25 @@ function estadoFuente(key) {
   return { txt: 'Falta conectar', cls: 'badge-yellow' };
 }
 
+// Lista de qué empresa quedó con qué carpeta, para poder revisarlo de un vistazo
+function configVinculosHtml() {
+  if (!EMPRESAS.length) return '';
+  const filas = EMPRESAS.map(e => {
+    const manual = !!e.driveFolderId;
+    const v = VINCULOS.find(x => x.empresa === e.nombre);
+    const estado = manual
+      ? { txt: 'CONFIG_DRIVE', cls: 'badge-blue', det: 'Cargada a mano en la planilla' }
+      : v ? { txt: v.carpeta, cls: 'badge-green', det: 'Vinculada por nombre' }
+          : { txt: 'sin carpeta', cls: 'badge-yellow', det: 'No se encontró ninguna carpeta parecida' };
+    return `<div class="mapa-fila">
+      <div class="mapa-que">${esc(e.nombre)}</div>
+      <div class="mapa-fuente">${esc(estado.det)}</div>
+      <span class="badge ${estado.cls} mapa-badge">${esc(estado.txt)}</span>
+    </div>`;
+  }).join('');
+  return `<div class="mapa-bloque"><div class="mapa-sec">Carpeta de cada empresa</div>${filas}</div>`;
+}
+
 function configMapaHtml() {
   const bloques = MAPA_SITIO.map(b => {
     const filas = b.filas.map(f => {
@@ -2307,7 +2384,7 @@ function configMapaHtml() {
   return `<div class="card">
     <div class="card-title" style="margin-bottom:10px">2) Qué se ve y de dónde sale</div>
     <div class="src-estructura">Todo el contenido del sitio sale de Google Drive. Acá está, sección por sección, qué alimenta cada cosa y cómo está hoy. Lo único que se edita adentro del sitio es el Calendario.</div>
-    <div class="mapa">${bloques}</div>
+    <div class="mapa">${bloques}${configVinculosHtml()}</div>
   </div>`;
 }
 
@@ -2377,7 +2454,8 @@ function copySA(email) { try { navigator.clipboard.writeText(email); } catch (e)
 
 // Mira la carpeta del grupo y completa solo los campos que puede deducir.
 const NOMBRE_CAMPO = {
-  baseFileId: 'planilla base', tecnicasFolderId: 'reuniones técnicas',
+  baseFileId: 'planilla base', empresasFolderId: 'carpeta de las empresas',
+  tecnicasFolderId: 'reuniones técnicas',
   novedadesFolderId: 'ronda de novedades', herramientasFolderId: 'herramientas del grupo',
   logoFileId: 'logo del grupo',
 };
@@ -2408,6 +2486,7 @@ async function detectarContenido() {
     await loadBaseFromDrive();
     loadMarcoFromDrive();
     TECNICAS_ACTIVITY = null; REUNIONES_DATA = null; DRIVE_ACTIVITY = null; Object.keys(BITACORAS).forEach(k => delete BITACORAS[k]);
+    await vincularCarpetasDeEmpresas();
     aplicarLogo();
     await renderConfig();
     // El mensaje se escribe DESPUÉS de redibujar el panel, si no se pierde
@@ -2442,6 +2521,12 @@ async function saveDriveSource(key) {
       if (currentSection === 'empresas') renderEmpresas();
     }
     if (key === 'logoFileId') aplicarLogo();
+    if (key === 'empresasFolderId') {
+      await vincularCarpetasDeEmpresas();
+      DRIVE_ACTIVITY = null; REUNIONES_DATA = null;
+      Object.keys(BITACORAS).forEach(k => delete BITACORAS[k]);
+      if (currentSection === 'dashboard') initDashboard();
+    }
     if (key === 'marcoFileId') await loadMarcoFromDrive();
     if (key === 'tecnicasFolderId') { TECNICAS_ACTIVITY = null; REUNIONES_DATA = null; renderReuniones(); }
     if (key === 'novedadesFolderId') renderNovedades();

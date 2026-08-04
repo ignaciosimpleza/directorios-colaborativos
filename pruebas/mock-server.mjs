@@ -5,10 +5,31 @@ import path from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 
+// Nombres tal cual están en la planilla real del grupo. Ojo: CONFIG_DRIVE está
+// VACÍA (ninguna trae driveFolderId), como en la planilla de verdad.
 const EMPRESAS = [
-  { orden: 1, slug: 'macsa', nombre: 'MACSA Agro', zona: 'Córdoba', participantes: 'Juanchi', resumen: 'Agrícola', driveFolderId: 'f-macsa' },
-  { orden: 2, slug: 'el-sueno', nombre: 'El Sueño SA', zona: 'Santa Fe', participantes: 'Ana', resumen: 'Mixta', driveFolderId: 'f-sueno' },
-  { orden: 3, slug: 'tricampo', nombre: 'Tricampo', zona: 'Buenos Aires', participantes: 'Luis', resumen: 'Ganadera', driveFolderId: 'f-tricampo' },
+  { orden: 1, slug: 'el-motivo', nombre: 'El Motivo S.A.', zona: 'Río Cuarto', participantes: 'Adriana Ponzio', resumen: 'Agrícola' },
+  { orden: 2, slug: 'tricampo', nombre: 'Tricampo S.A.', zona: 'Frías', participantes: 'Alejandro Stoppa', resumen: 'Mixta' },
+  { orden: 3, slug: 'macsa', nombre: 'MACSA Agro', zona: 'General Levalle', participantes: 'Carlos Vidal', resumen: 'Agrícola-ganadera' },
+  { orden: 4, slug: 'el-sueno', nombre: 'Agropecuaria El Sueño', zona: 'Tucumán', participantes: 'Sebastián Valdez', resumen: 'Diversificada' },
+  { orden: 5, slug: 'el-porvenir', nombre: 'El Porvenir / Beheran Sarciat S.A.', zona: 'Ayacucho', participantes: 'Alfredo Beheran y Juanchi', resumen: 'Ganadera' },
+  { orden: 6, slug: 'donato-alvarez', nombre: 'Donato Álvarez S.R.L.', zona: 'Alberdi', participantes: 'José Luis Cebe', resumen: 'Citrícola' },
+  { orden: 7, slug: 'rubro-agropecuario', nombre: 'Rubro Agropecuario S.R.L. / Fideicomiso Rubro Producción', zona: 'Quimilí', participantes: 'Manuel Monedero', resumen: 'Servicios' },
+  { orden: 8, slug: 'altos-de-bermudez', nombre: 'Altos de Bermúdez S.A.', zona: 'Lincoln', participantes: 'Alfredo Moreno', resumen: 'Agroindustrial' },
+  { orden: 9, slug: 'estudio-becker', nombre: 'Estudio Tomás Becker', zona: 'Azul', participantes: 'Tomás Becker', resumen: 'Gerenciamiento' },
+];
+
+// Carpetas tal cual se llaman en el Drive real del grupo
+const CARPETAS_EMPRESAS = [
+  { id: 'f-donato', nombre: 'Donato Alvarez SRL', tipo: 'Carpeta', fecha: '', url: '#' },
+  { id: 'f-beheran', nombre: 'Beheran Sarciat SA', tipo: 'Carpeta', fecha: '', url: '#' },
+  { id: 'f-sueno', nombre: 'El Sueño', tipo: 'Carpeta', fecha: '', url: '#' },
+  { id: 'f-altos', nombre: 'Altos de Bermúdez SA', tipo: 'Carpeta', fecha: '', url: '#' },
+  { id: 'f-rubro', nombre: 'Rubro Agropecuario', tipo: 'Carpeta', fecha: '', url: '#' },
+  { id: 'f-becker', nombre: 'Estudio Becker', tipo: 'Carpeta', fecha: '', url: '#' },
+  { id: 'f-tricampo', nombre: 'Tricampo', tipo: 'Carpeta', fecha: '', url: '#' },
+  { id: 'f-motivo', nombre: 'El Motivo', tipo: 'Carpeta', fecha: '', url: '#' },
+  { id: 'f-macsa', nombre: 'Macsa Agro', tipo: 'Carpeta', fecha: '', url: '#' },
 ];
 
 const BASE = {
@@ -90,7 +111,7 @@ const DB = {
   ],
   env: { baseFileId: '' },
   content: {
-    drive_config: { baseFileId: 'base', tecnicasFolderId: 'tec', novedadesFolderId: 'nov', herramientasUrl: 'https://www.simpleza.com.ar/' },
+    drive_config: { baseFileId: 'base', empresasFolderId: 'emp', tecnicasFolderId: 'tec', novedadesFolderId: 'nov', herramientasUrl: 'https://www.simpleza.com.ar/' },
   },
 };
 
@@ -147,7 +168,7 @@ function authHandler(req, res, body, token) {
     // solo para las pruebas: deja el mock como recién arrancado
     case '_reset': {
       AUTH.requireLogin = false; AUTH.users = []; AUTH.sessions = {}; AUTH.log = [];
-      DB.content = { drive_config: { baseFileId: 'base', tecnicasFolderId: 'tec', novedadesFolderId: 'nov', herramientasUrl: 'https://www.simpleza.com.ar/' } };
+      DB.content = { drive_config: { baseFileId: 'base', empresasFolderId: 'emp', tecnicasFolderId: 'tec', novedadesFolderId: 'nov', herramientasUrl: 'https://www.simpleza.com.ar/' } };
       return json(res, { ok: true });
     }
     default: return json(res, { error: 'Acción desconocida' }, 400);
@@ -215,6 +236,7 @@ http.createServer((req, res) => {
     if (op === 'list') {
       const fid = u.searchParams.get('folderId');
       if (fid === 'nov') return json(res, { files: NOVEDADES });
+      if (fid === 'emp') return json(res, { files: CARPETAS_EMPRESAS });
       return json(res, { files: [] });
     }
     return json(res, { error: 'op desconocida' });
