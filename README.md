@@ -78,50 +78,64 @@ sitio lo toma solo. Para cambiar un texto o una regla, se entra a Configuración
 
 ### Reuniones realizadas
 
-Salen de la **bitácora**: un único documento por empresa donde cada reunión
-arranca con un encabezado. Lo que se cuenta no es el documento ni el archivo: es
-**cada fecha de reunión** que aparece en él.
+Salen de la **bitácora**: un documento por empresa. Lo que se cuenta no es el
+documento ni los archivos, es **cada fecha de reunión que aparece adentro**.
 
-Las bitácoras del grupo no están escritas todas igual, y las tres formas cuentan:
+Las bitácoras del grupo no están escritas todas igual, y casi ninguna usa
+encabezados de Word: pedirlos era el modelo equivocado. En `Proceso | El Motivo`
+hay once reuniones y un solo encabezado. Cuenta como reunión un **renglón corto
+con una fecha** que además:
 
 ```
-# Lunes 3 Agosto de 2026 Reunión MACSA — Crecimiento empresarial   ← fecha completa
-# 13 DE ABRIL DE 2026 – Avance Líneas Estratégicas
-# Brechas, causas y línea estratégica | 29 de Septiembre 2022
+4 de agosto de 2022                                          ← arranca con la fecha
+15 de septiembre de 2025 — Avances: nueva visión
+🗓️ 09 de Febrero - Primera presentación de la empresa
 
-# FECHA Y TÍTULO: 1 DE JUNIO – Reunión de Accionistas junio 2026   ← el año, suelto
-# 🗓️ 09 de Febrero - Primera presentación de la empresa            ← sin año
+Reunión El Motivo – Lunes 29 de Junio de 2026                ← nombra el encuentro
+🗂 Avance en LE: Minuta de Reunión – 22 de diciembre de 2025
+Presentación de la empresa | 26 de agosto de 2021
+Fecha: 29 de junio de 2026
 
-# Grupo Estratégico: EL MOTIVO                                     ← encabezado repetido
-Presentación de la empresa | 26 de agosto de 2021                  ← la fecha, abajo
+# Lunes 3 Agosto de 2026 Reunión MACSA — Crecimiento          ← o es un encabezado
+# FECHA Y TÍTULO: 1 DE JUNIO – Reunión de Accionistas junio 2026
 ```
 
 Reglas del parser (`api/_bitacora.js`):
 
-- La fecha se busca primero en el encabezado y después en los **primeros renglones
-  cortos** de abajo. La prosa larga de la reunión no se mira: ahí hay años sueltos
-  («la empresa creció desde 2010») que no son la fecha del encuentro.
+- Un renglón de más de 160 caracteres es prosa, no una fecha de reunión: los años
+  que aparecen ahí («la empresa creció desde 2010») no cuentan.
+- «Fecha» solo cuenta como etiqueta (`Fecha:`), no suelta en una oración («se
+  acordó con fecha 5 de mayo»).
+- Un encabezado de Word alcanza con que tenga la fecha, en cualquier parte.
 - Si la fecha no trae año, se toma el de la reunión fechada más cercana del mismo
-  documento, eligiendo el año que deja las dos fechas más juntas. Sirve igual si el
-  documento va de la más nueva a la más vieja o al revés.
-- Dos encabezados con la misma fecha cuentan una sola reunión.
-- Los encabezados de primer nivel a los que no se les encontró ninguna fecha **no se
-  cuentan y se listan** en el Dashboard, para poder corregir el documento.
+  documento, eligiendo el año que deja las dos fechas más juntas. Sirve igual si
+  el documento va de la más nueva a la más vieja o al revés.
+- **Dos renglones con la misma fecha son una sola reunión**, así que el índice del
+  documento no duplica lo que ya está en el cuerpo.
+- Una sección de primer nivel sin ninguna fecha adentro **no se cuenta y se lista**
+  en el tablero, con su texto, para poder corregir el documento.
 
 `api/bitacora.js` abre el documento (Google Doc o `.docx`, también si es un acceso
-directo) y devuelve `{ reuniones, sinFecha }`. De ahí salen los números del
-Dashboard, el gráfico de ritmo, la tabla por empresa, el filtro por año y la
-actividad reciente.
+directo) y devuelve `{ reuniones, sinFecha }`.
 
-#### Qué muestra el Dashboard
+#### Qué muestra el tablero
 
-Cuatro números (reuniones registradas, presentaciones de empresa, reuniones
-técnicas, empresas que presentaron), un gráfico de columnas apiladas con el
-**ritmo del grupo** —por año, o por mes si se filtra un año— y una **tabla por
-empresa** ordenada por quién hace más tiempo que no presenta, con la fecha de su
-última presentación. No es un gráfico de nueve colores: nueve empresas son
-demasiadas categorías para distinguirlas por color, así que van en tabla y el
-color queda para las dos series del gráfico.
+El bloque cruza las bitácoras (lo que pasó) con el Calendario (lo que viene), y
+está pensado para **gestionar la rotación**, no para lucir números:
+
+| Indicador | Para qué sirve |
+|---|---|
+| Reuniones registradas | El volumen del período, con su composición |
+| Semanas entre presentaciones de una misma empresa | El ritmo real, contra la regla del calendario |
+| **Necesitan fecha** | Empresas que superaron el intervalo y no tienen fecha asignada |
+| Próxima presentación | Qué viene y de quién |
+
+Debajo, el **ritmo del grupo** (columnas apiladas por año, o por mes si se filtra
+un año, con el eje corrido: un período sin reuniones se muestra vacío) y la
+**tabla de rotación**: última presentación, semanas sin presentar, próxima fecha
+del calendario y estado (*Al día*, *Agendada*, *Necesita fecha*, *Sin bitácora*),
+ordenada por urgencia. El número de veces es clickeable y despliega las fechas que
+el sitio leyó, para poder auditarlas contra el documento.
 
 #### Dónde se le indica al sitio cuál es
 

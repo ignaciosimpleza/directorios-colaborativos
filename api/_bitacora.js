@@ -1,22 +1,32 @@
 // Lectura de la BITÁCORA de una empresa.
 //
-// La bitácora es UN documento por empresa (Google Doc o .docx) donde cada
-// reunión arranca con un encabezado. Los documentos reales del grupo usan
-// convenciones distintas, y las tres tienen que contar igual:
+// Lo que se cuenta es CADA FECHA DE REUNIÓN que aparece en el documento, no el
+// documento ni los archivos. Las bitácoras reales del grupo no están escritas
+// todas igual, y casi ninguna usa encabezados de Word: pedirlos era el modelo
+// equivocado. En «Proceso | El Motivo» hay once reuniones y un solo encabezado.
 //
-//   a) La fecha completa en el encabezado
-//      # Lunes 3 Agosto de 2026 Reunión MACSA — Crecimiento empresarial
-//      # 13 DE ABRIL DE 2026 – Avance Líneas Estratégicas
+// Cuenta como reunión un renglón corto que lleva una fecha y que además:
 //
-//   b) El día y el mes en el encabezado, y el año suelto (o en ningún lado)
-//      # FECHA Y TÍTULO: 1 DE JUNIO – Reunión de Accionistas junio 2026
-//      # 🗓️ 09 de Febrero - Primera presentación de la empresa
+//   a) arranca con la fecha (salteando emojis, símbolos y el día de la semana)
+//      4 de agosto de 2022
+//      15 de septiembre de 2025 — Avances: nueva visión y proyecto inmobiliario
+//      🗓️ 09 de Febrero - Primera presentación de la empresa
 //
-//   c) El encabezado sin fecha y la fecha en la línea de abajo
-//      # Grupo Estratégico: EL MOTIVO
+//   b) o menciona el encuentro: reunión, minuta, encontro, sesión, presentación
+//      Reunión El Motivo – Lunes 29 de Junio de 2026
+//      🗂 Avance en LE: Minuta de Reunión – 22 de diciembre de 2025
 //      Presentación de la empresa | 26 de agosto de 2021
+//      Fecha: 29 de junio de 2026
 //
-// De ahí salen las reuniones de cada empresa: cuántas, cuándo y sobre qué.
+//   c) o es un encabezado de Word (ahí alcanza con que tenga la fecha)
+//      # Lunes 3 Agosto de 2026 Reunión MACSA — Crecimiento empresarial
+//      # FECHA Y TÍTULO: 1 DE JUNIO – Reunión de Accionistas junio 2026
+//
+// La prosa de la reunión no cuenta: son renglones largos, y los años que
+// aparecen ahí («la empresa creció desde 2010») no son fechas de encuentro.
+// Dos renglones con la misma fecha son una sola reunión, así que el índice del
+// documento no duplica lo que ya está en el cuerpo.
+//
 // Este archivo solo parsea; la lectura de Drive vive en api/bitacora.js.
 
 const MESES = {
@@ -102,43 +112,55 @@ export function tituloLimpio(texto) {
     .replace(/\b[a-záéíóúñ]+\s+(?:de\s+|del\s+)?20\d{2}\b/gi, m => (MESES[sinTildes(m).split(/\s+/)[0]] ? '' : m))
     .replace(/\b\d{1,2}[/.-]\d{1,2}[/.-](?:20)?\d{2}\b/g, '')
     .replace(/\b20\d{2}-\d{1,2}-\d{1,2}\b/g, '')
+    .replace(/^\d{1,2}[.)]\s+/, '')                     // numeración de lista: «1. »
+    .replace(/\s+\d{1,3}$/, '')                          // número de página del índice
     .replace(/^[\s|·:.,–—-]+|[\s|·:.,–—-]+$/g, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
   return t;
 }
 
-// ── Google Docs exportado a HTML ──
-// Cada reunión arranca en un <h1>/<h2>. Se guarda también el principio del
-// texto que sigue, porque hay bitácoras que ponen la fecha ahí y no en el
-// título.
-export function reunionesDesdeHtml(html) {
-  const bloques = [];
-  const rx = /<h([1-3])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
-  let m, prev = null, prevFin = 0;
-  while ((m = rx.exec(html)) !== null) {
-    if (prev) prev.contexto = contextoDeHtml(html.slice(prevFin, m.index));
-    const texto = limpiarHtml(m[2]);
-    prev = texto ? { nivel: +m[1], texto, contexto: [] } : null;
-    if (prev) bloques.push(prev);
-    prevFin = m.index + m[0].length;
-  }
-  if (prev) prev.contexto = contextoDeHtml(html.slice(prevFin));
-  return desdeBloques(bloques);
+// «Fecha», «Minuta», un número suelto: no son título de nada.
+const TITULO_VACIO = /^(fecha|minuta|acta|reunion|reunión|nº\s*\d+|\d+)$/i;
+
+// ── Detección del renglón que marca una reunión ──
+
+const LARGO_MAX = 160;          // más largo que esto ya es prosa, no una fecha
+const LARGO_CON_PALABRA = 120;  // si la fecha no arranca el renglón, más corto todavía
+// «Fecha» solo cuenta como etiqueta («Fecha: 29 de junio»), no suelta en una
+// oración («se acordó con fecha 5 de mayo»), que es prosa y no una reunión.
+const PALABRAS = /\b(reunion|minuta|encuentro|sesion|presentacion)\b|\bfecha\s*:/;
+// El arranque del renglón, salteando emojis, símbolos, viñetas y el día de la semana
+const ARRANQUE = /^[^a-z0-9]*(?:(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo)\s*,?\s*)?/;
+
+// ¿Este renglón (que no es un encabezado de Word) marca una reunión?
+export function esRenglonDeFecha(texto) {
+  const bruto = String(texto || '').trim();
+  if (!bruto || bruto.length > LARGO_MAX) return false;
+  const t = sinTildes(bruto).replace(/\s+/g, ' ');
+  // Solo día+mes o fecha numérica: «agosto 2025» suelto no alcanza para contar
+  // una reunión, aparece en cualquier párrafo.
+  const dm = diaYMes(t);
+  const num = t.match(/\b\d{1,2}[/.-]\d{1,2}[/.-](?:20)?\d{2}\b|\b20\d{2}-\d{1,2}-\d{1,2}\b/);
+  if (!dm && !num) return false;
+  const marca = num ? num[0] : `${dm.dia}`;
+  const resto = t.replace(ARRANQUE, '');
+  if (resto.startsWith(marca) || resto.startsWith(`0${marca}`)) return true;
+  return bruto.length <= LARGO_CON_PALABRA && PALABRAS.test(t);
 }
 
-// Solo las primeras líneas cortas: una línea de fecha, no la prosa de la
-// reunión (donde puede haber años sueltos que no son la fecha del encuentro).
-const LARGO_CONTEXTO = 160;
-const LINEAS_CONTEXTO = 2;
-
-function contextoDeHtml(frag) {
-  return String(frag)
-    .split(/<\/p>|<br\s*\/?>|<\/li>/i)
-    .map(limpiarHtml)
-    .filter(Boolean)
-    .slice(0, LINEAS_CONTEXTO)
-    .filter(l => l.length <= LARGO_CONTEXTO);
+// ── Google Docs exportado a HTML ──
+// Se leen TODOS los párrafos en orden, no solo los encabezados: casi ninguna
+// bitácora del grupo usa estilos de Word para separar las reuniones.
+export function reunionesDesdeHtml(html) {
+  const lineas = [];
+  const rx = /<(h([1-6])|p|li)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+  let m;
+  while ((m = rx.exec(html)) !== null) {
+    const texto = limpiarHtml(m[3]);
+    if (texto) lineas.push({ nivel: m[2] ? Math.min(3, +m[2]) : 0, texto });
+  }
+  return desdeLineas(lineas);
 }
 
 // Google Docs exporta los acentos como entidades (&oacute;), así que hay que
@@ -164,54 +186,74 @@ function limpiarHtml(s) {
     .trim();
 }
 
-// ── Bloques → reuniones ──
-// Devuelve { reuniones, sinFecha }: las que se pudieron fechar y los títulos de
-// primer nivel que parecen una reunión pero no tienen ninguna fecha legible.
-export function desdeBloques(bloques) {
-  const norm = (bloques || []).map(b =>
-    typeof b === 'string' ? { nivel: 1, texto: b, contexto: [] } : b);
+// ── Renglones → reuniones ──
+// Devuelve { reuniones, sinFecha }: las fechas que se reconocieron y los
+// encabezados de primer nivel que parecen una reunión pero no tienen fecha.
+export function desdeLineas(lineas) {
+  const norm = (lineas || []).map(l =>
+    typeof l === 'string' ? { nivel: 1, texto: l } : { nivel: l.nivel || 0, texto: l.texto || '' });
 
-  const marcas = norm.map(b => {
-    // El encabezado primero; después, solo los renglones cortos de abajo (una
-    // línea de fecha), nunca la prosa de la reunión: ahí hay años sueltos que
-    // no son la fecha del encuentro.
-    const lineas = [b.texto].concat((b.contexto || []).filter(l => l.length <= LARGO_CONTEXTO));
-    for (const t of lineas) {
-      const f = fechaDeTexto(t);
-      if (f) return { estado: 'completa', fecha: f.fecha, aproximada: f.aproximada, desde: t, b };
-    }
-    for (const t of lineas) {
-      const p = fechaSinAnioDeTexto(t);
-      if (p) return { estado: 'parcial', mes: p.mes, dia: p.dia, desde: t, b };
-    }
-    return { estado: 'ninguna', b };
+  const marcas = [];
+  norm.forEach((l, i) => {
+    if (!l.texto) return;
+    const esEncabezado = l.nivel >= 1;
+    if (!esEncabezado && !esRenglonDeFecha(l.texto)) return;
+    const f = fechaDeTexto(l.texto);
+    if (f) { marcas.push({ estado: 'completa', fecha: f.fecha, aproximada: f.aproximada, i, texto: l.texto, nivel: l.nivel }); return; }
+    const p = fechaSinAnioDeTexto(l.texto);
+    if (p) { marcas.push({ estado: 'parcial', mes: p.mes, dia: p.dia, i, texto: l.texto, nivel: l.nivel }); return; }
+    if (l.nivel === 1) marcas.push({ estado: 'ninguna', i, texto: l.texto, nivel: l.nivel });
   });
 
   deducirAnios(marcas);
 
-  const vistas = new Set();
-  const reuniones = [];
+  // Una fecha puede aparecer varias veces: en el índice del documento y en el
+  // cuerpo. Es UNA reunión, y el título sale del renglón que mejor la describe:
+  // el último que diga algo (el índice va arriba, la reunión abajo).
+  const porFecha = new Map();
   for (const m of marcas) {
-    if (!m.fecha || vistas.has(m.fecha)) continue;
-    vistas.add(m.fecha);
-    // Si el encabezado es un separador repetido y lo que identifica la reunión
-    // está en el renglón de la fecha, el título sale de ahí.
-    const delTitulo = tituloLimpio(m.b.texto);
-    const delRenglon = m.desde === m.b.texto ? '' : tituloLimpio(m.desde);
-    reuniones.push({
-      fecha: m.fecha,
-      fechaAproximada: !!m.aproximada,
-      anioDeducido: !!m.anioDeducido,
-      titulo: delRenglon || delTitulo,
-      encabezado: m.b.texto,
-    });
+    if (!m.fecha) continue;
+    if (!porFecha.has(m.fecha)) porFecha.set(m.fecha, []);
+    porFecha.get(m.fecha).push(m);
   }
+
+  const tituloDe = grupo => {
+    const utiles = grupo
+      .map(m => ({ m, t: tituloLimpio(m.texto) }))
+      .filter(x => x.t.length > 3 && !TITULO_VACIO.test(x.t));
+    if (utiles.length) return utiles.at(-1).t;
+    // El renglón era solo la fecha: se toma el primer renglón corto de abajo.
+    const m = grupo[0];
+    for (let j = m.i + 1; j < norm.length && j <= m.i + 3; j++) {
+      const t = norm[j].texto;
+      if (!t || t.length > LARGO_CON_PALABRA) break;
+      const limpio = tituloLimpio(t);
+      if (limpio && !TITULO_VACIO.test(limpio)) return limpio;
+      break;
+    }
+    return '';
+  };
+
+  const reuniones = [...porFecha.entries()].map(([fecha, grupo]) => ({
+    fecha,
+    fechaAproximada: grupo.some(m => m.aproximada),
+    anioDeducido: grupo.every(m => m.anioDeducido),
+    titulo: tituloDe(grupo),
+    encabezado: grupo[0].texto,
+  }));
   reuniones.sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
 
+  // Una sección se reporta «sin fecha» solo si NO hay ninguna reunión adentro,
+  // entre ese encabezado y el siguiente del mismo nivel. Un encabezado repetido
+  // que hace de separador, con la fecha en el renglón de abajo, está bien.
   const sinFecha = marcas
-    .filter(m => !m.fecha && (m.b.nivel || 1) === 1 && m.b.texto)
-    .map(m => m.b.texto);
-
+    .filter(m => !m.fecha && m.nivel === 1)
+    .filter(m => {
+      const sig = marcas.find(o => o.i > m.i && o.nivel === 1);
+      const hasta = sig ? sig.i : Infinity;
+      return !marcas.some(o => o.fecha && o.i > m.i && o.i < hasta);
+    })
+    .map(m => m.texto);
   return { reuniones, sinFecha };
 }
 
@@ -220,11 +262,8 @@ export function desdeBloques(bloques) {
 // dos fechas lo más juntas posible. Sirve tanto si el documento va de la más
 // nueva a la más vieja como al revés, sin tener que adivinar el orden.
 function deducirAnios(marcas) {
-  const anclas = marcas
-    .map((m, i) => ({ m, i }))
-    .filter(x => x.m.estado === 'completa');
+  const anclas = marcas.map((m, i) => ({ m, i })).filter(x => x.m.estado === 'completa');
   if (!anclas.length) return;
-
   const enDias = f => Date.UTC(+f.slice(0, 4), +f.slice(5, 7) - 1, +f.slice(8, 10)) / 86400000;
 
   marcas.forEach((m, i) => {
@@ -244,30 +283,23 @@ function deducirAnios(marcas) {
   });
 }
 
-// Compatibilidad: una lista de títulos sueltos, sin el texto que los sigue.
+// Compatibilidad con las pruebas: una lista de encabezados sueltos
 export function desdeEncabezados(encabezados) {
-  return desdeBloques(encabezados);
+  return desdeLineas(encabezados);
 }
 
 // ── .docx ──
-// Los encabezados son párrafos con estilo Heading/Título. Se leen en orden y se
-// guardan, como en el HTML, las primeras líneas que vienen abajo de cada uno.
+// Igual que el HTML: se leen todos los párrafos en orden, marcando cuáles
+// llevan estilo de encabezado.
 export function reunionesDesdeDocxXml(xml) {
-  const bloques = [];
+  const lineas = [];
   const rxP = /<w:p\b[\s\S]*?<\/w:p>/g;
-  let m, prev = null;
+  let m;
   while ((m = rxP.exec(xml)) !== null) {
-    const p = m[0];
-    const texto = textoDeParrafo(p);
-    const nivel = nivelDeParrafo(p);
-    if (nivel) {
-      prev = texto ? { nivel, texto, contexto: [] } : null;
-      if (prev) bloques.push(prev);
-    } else if (prev && texto && texto.length <= LARGO_CONTEXTO && prev.contexto.length < LINEAS_CONTEXTO) {
-      prev.contexto.push(texto);
-    }
+    const texto = textoDeParrafo(m[0]);
+    if (texto) lineas.push({ nivel: nivelDeParrafo(m[0]), texto });
   }
-  return desdeBloques(bloques);
+  return desdeLineas(lineas);
 }
 
 function nivelDeParrafo(p) {

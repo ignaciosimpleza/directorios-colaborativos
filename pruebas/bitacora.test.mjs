@@ -3,7 +3,7 @@
 // otra forma, esta prueba es el lugar donde sumarla.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { desdeEncabezados, desdeBloques, fechaDeTexto, reunionesDesdeHtml, reunionesDesdeDocxXml } from '../api/_bitacora.js';
+import { desdeEncabezados, desdeLineas, esRenglonDeFecha, fechaDeTexto, reunionesDesdeHtml, reunionesDesdeDocxXml } from '../api/_bitacora.js';
 
 const MACSA = [
   'Grupo Estratégico: MACSA AGRO',                                   // título del doc: no es reunión
@@ -63,10 +63,34 @@ test('no inventa reuniones con texto del cuerpo', () => {
   assert.equal(fechaDeTexto('Duración: 65 minutos'), null);
 });
 
+// Casi ninguna bitácora del grupo usa encabezados: lo que marca la reunión es
+// el renglón. Estos casos salen de los documentos reales.
+test('reconoce el renglón que marca una reunión, aunque no sea encabezado', () => {
+  for (const t of [
+    '4 de agosto de 2022',
+    '15 de septiembre de 2025 — Avances Proceso: Nueva Visión',
+    'Reunión El Motivo – Lunes 29 de Junio de 2026',
+    '🗂 Avance en LE: Minuta de Reunión – 22 de diciembre de 2025',
+    'Reunión 14/04/25 Revisión misión y construcción visión 2030',
+    'Fecha: 29 de junio de 2026',
+    'Presentación de la empresa | 26 de agosto de 2021',
+  ]) assert.equal(esRenglonDeFecha(t), true, t);
+});
+
+test('y no confunde la prosa de la reunión con una reunión', () => {
+  for (const t of [
+    'En 2010 se fue comprando a los distintos condóminos, de a poco.',
+    'Se acordó con fecha 5 de mayo de 2020 revisar el acuerdo societario.',
+    'Rta: 1) Nos va a ayudar la contadora. 2) Rojo Soft.',
+    'Duración: 60 minutos.',
+    'El presupuesto de agosto 2025 quedó aprobado.',
+  ]) assert.equal(esRenglonDeFecha(t), false, t);
+});
+
 test('lee un Google Doc exportado a HTML, con acentos y todo', () => {
   const html = `<h1><span>Grupo Estrat&eacute;gico</span></h1>
     <h1><span>13 DE ABRIL DE 2026 &ndash; Avance L&iacute;neas Estrat&eacute;gicas</span></h1>
-    <p>Fecha: 13 de julio de 2026 — esto es cuerpo, no cuenta</p>
+    <p>La empresa viene creciendo desde 2010 y el 13 de julio de 2026 cerró la campaña con 2246 hect&aacute;reas productivas, casi el doble que en 2019.</p>
     <h2><span>An&aacute;lisis interno | 22 de septiembre de 2021</span></h2>`;
   const { reuniones: r } = reunionesDesdeHtml(html);
   assert.equal(r.length, 2);
@@ -89,14 +113,17 @@ test('lee un .docx, con los encabezados en español o en inglés', () => {
 // El Motivo: el encabezado es siempre el mismo y no tiene fecha; la fecha está
 // en el renglón de abajo. Además hay secciones que directamente no la tienen.
 const EL_MOTIVO = [
-  { nivel: 1, texto: 'Grupo Estratégico: EL MOTIVO', contexto: [] },
-  { nivel: 1, texto: 'Consigna 3: Análisis interno. Brechas y Causas. Continuación.', contexto: ['Repaso de la empresa'] },
-  { nivel: 1, texto: 'Grupo Estratégico: EL MOTIVO', contexto: ['Presentación de la empresa | 26 de agosto de 2021'] },
-  { nivel: 1, texto: 'Grupo Estratégico: EL MOTIVO', contexto: ['Presentación de la empresa | 13 de julio de 2021'] },
+  { nivel: 1, texto: 'Grupo Estratégico: EL MOTIVO' },
+  { nivel: 1, texto: 'Consigna 3: Análisis interno. Brechas y Causas. Continuación.' },
+  { nivel: 2, texto: 'Repaso de la empresa' },
+  { nivel: 1, texto: 'Grupo Estratégico: EL MOTIVO' },
+  { nivel: 0, texto: 'Presentación de la empresa | 26 de agosto de 2021' },
+  { nivel: 1, texto: 'Grupo Estratégico: EL MOTIVO' },
+  { nivel: 0, texto: 'Presentación de la empresa | 13 de julio de 2021' },
 ];
 
 test('cuenta la reunión cuando la fecha está en la línea de abajo, no en el título', () => {
-  const { reuniones, sinFecha } = desdeBloques(EL_MOTIVO);
+  const { reuniones, sinFecha } = desdeLineas(EL_MOTIVO);
   assert.deepEqual(reuniones.map(r => r.fecha), ['2021-08-26', '2021-07-13']);
   assert.equal(reuniones[0].titulo, 'Presentación de la empresa',
     'si el encabezado no aporta nada, el título sale de la línea con la fecha');
@@ -105,12 +132,14 @@ test('cuenta la reunión cuando la fecha está en la línea de abajo, no en el t
 
 // Beheran Sarciat: «1 DE JUNIO» y «09 de Febrero», sin año en el encabezado.
 const BEHERAN = [
-  { nivel: 1, texto: 'FECHA Y TÍTULO: 1 DE JUNIO – Reunión de Accionistas junio 2026', contexto: ['EMPRESA: El Porvenir (presentación Alfredo Beheran)'] },
-  { nivel: 1, texto: '🗓️09 de Febrero - Primera presentación de la empresa', contexto: ['Duración: 60 minutos.'] },
+  { nivel: 1, texto: 'FECHA Y TÍTULO: 1 DE JUNIO – Reunión de Accionistas junio 2026' },
+  { nivel: 0, texto: 'EMPRESA: El Porvenir (presentación Alfredo Beheran)' },
+  { nivel: 1, texto: '🗓️09 de Febrero - Primera presentación de la empresa' },
+  { nivel: 0, texto: 'Duración: 60 minutos.' },
 ];
 
 test('lee las fechas sin año, deduciéndolo de la reunión vecina', () => {
-  const { reuniones } = desdeBloques(BEHERAN);
+  const { reuniones } = desdeLineas(BEHERAN);
   assert.deepEqual(reuniones.map(r => r.fecha), ['2026-06-01', '2026-02-09']);
   assert.equal(reuniones[1].anioDeducido, true, 'queda marcado que el año se dedujo');
   assert.equal(reuniones[0].titulo, 'Reunión de Accionistas');
@@ -118,21 +147,21 @@ test('lee las fechas sin año, deduciéndolo de la reunión vecina', () => {
 });
 
 test('si el documento va de la más vieja a la más nueva, el año también sale bien', () => {
-  const { reuniones } = desdeBloques([
-    { nivel: 1, texto: 'Reunión | 10 de noviembre de 2025', contexto: [] },
-    { nivel: 1, texto: '15 de marzo - Segunda reunión', contexto: [] },
+  const { reuniones } = desdeLineas([
+    { nivel: 1, texto: 'Reunión | 10 de noviembre de 2025' },
+    { nivel: 1, texto: '15 de marzo - Segunda reunión' },
   ]);
   assert.deepEqual(reuniones.map(r => r.fecha), ['2026-03-15', '2025-11-10']);
 });
 
 test('sin ninguna fecha completa, no se inventa un año', () => {
-  const { reuniones, sinFecha } = desdeBloques([{ nivel: 1, texto: '15 de marzo - Reunión', contexto: [] }]);
+  const { reuniones, sinFecha } = desdeLineas([{ nivel: 1, texto: '15 de marzo - Reunión' }]);
   assert.equal(reuniones.length, 0);
   assert.equal(sinFecha.length, 1);
 });
 
-test('la prosa larga de abajo del encabezado no aporta fechas', () => {
+test('la prosa de la reunión no aporta fechas', () => {
   const largo = 'En 2010 se fue comprando a los distintos condóminos y desde el 3 de mayo de 2012 la empresa creció sin pausa hasta llegar a las 2246 hectáreas productivas que tiene hoy.';
-  const { reuniones } = desdeBloques([{ nivel: 1, texto: 'Análisis interno', contexto: [largo] }]);
-  assert.equal(reuniones.length, 0, 'el contexto solo mira renglones cortos, tipo línea de fecha');
+  const { reuniones } = desdeLineas([{ nivel: 1, texto: 'Análisis interno' }, { nivel: 0, texto: largo }]);
+  assert.equal(reuniones.length, 0, 'un renglón largo es prosa, no una línea de fecha');
 });

@@ -453,17 +453,22 @@ textarea.cfg-input { resize:vertical; line-height:1.5; }
 .rp-tabla { width:100%; border-collapse:collapse; margin-top:4px; }
 .rp-tabla thead tr { background:transparent; color:inherit; }
 .rp-tabla th { font-size:10.5px; font-weight:700; color:var(--gris-medio); text-transform:uppercase; letter-spacing:0.6px; text-align:left; padding:0 8px 7px 0; border-bottom:1px solid #efeae3; }
-.rp-tabla th.num, .rp-tabla td.num { text-align:right; }
+.rp-tabla th.num, .rp-tabla td.num { text-align:right; padding-right:22px; }
 .rp-tabla td { font-size:12.5px; color:#3a4a4b; padding:8px 8px 8px 0; border-bottom:1px solid #f4f0ea; vertical-align:middle; }
 .rp-tabla tr:last-child td { border-bottom:none; }
 .rp-emp { font-weight:600; color:var(--navy); cursor:pointer; }
 .rp-emp:hover { text-decoration:underline; }
-.rp-mini { display:flex; align-items:center; gap:8px; }
-.rp-mini-track { flex:1; min-width:40px; max-width:160px; height:10px; background:#f2eee9; border-radius:5px; overflow:hidden; }
-.rp-mini-fill { height:100%; background:var(--dato-empresa); border-radius:0 5px 5px 0; min-width:2px; }
-.rp-mini-num { font-size:12.5px; font-weight:700; color:var(--gris-oscuro); min-width:16px; text-align:right; }
+.rp-tabla td.num { font-weight:700; color:var(--gris-oscuro); }
+.rp-veces { cursor:pointer; border-bottom:1px dotted var(--beige-suave); }
+.rp-fechas { font-size:11.5px; color:var(--gris-medio); line-height:1.7; padding:2px 0 8px; }
 .rp-nunca { color:var(--gris-medio); }
-.rp-atraso { color:var(--dato-alerta); font-weight:600; }
+.rp-sub { font-size:11px; color:var(--gris-medio); }
+/* Estado de rotación: siempre con su palabra, el color solo refuerza */
+.rp-estado { font-size:11.5px; font-weight:600; white-space:nowrap; }
+.rp-estado.urgente { color:var(--dato-alerta); }
+.rp-estado.tranquila { color:var(--gris-medio); font-weight:500; }
+.rp-stat-sub { font-size:11px; color:var(--gris-medio); margin-top:4px; line-height:1.35; }
+.rp-stat-txt { font-size:17px; font-weight:700; color:var(--navy); line-height:1.2; }
 .rp-note { font-size:11px; color:var(--gris-medio); margin-top:14px; line-height:1.5; }
 .rp-pendientes { margin-top:12px; font-size:11.5px; color:var(--gris-oscuro); }
 .rp-pendientes summary { cursor:pointer; color:var(--gris-medio); }
@@ -650,7 +655,7 @@ canvas { display:block; }
 
     <!-- Lo primero: cuántas reuniones lleva cada empresa, con su gráfico -->
     <div class="card" id="card-reuniones">
-      <div class="card-title">Reuniones realizadas <span>Desde la bitácora de cada empresa</span></div>
+      <div class="card-title">Reuniones y rotación <span>Bitácoras de las empresas + Calendario</span></div>
       <div id="reuniones-metricas"></div>
     </div>
 
@@ -1417,25 +1422,36 @@ function pintarReuniones() {
   if (REUNIONES_ANIO !== 'todos' && !listaAnios.includes(REUNIONES_ANIO)) REUNIONES_ANIO = 'todos';
   const delAnio = f => REUNIONES_ANIO === 'todos' || f.slice(0, 4) === REUNIONES_ANIO;
 
+  const hoy = calLocalStr(new Date());
   const filas = porEmpresa.map(x => {
     const fechas = x.reuniones.map(r => r.fecha).filter(delAnio).sort();
-    return { empresa: x.empresa, fechas, n: fechas.length, ultima: fechas.at(-1) || '',
-             aviso: x.aviso, error: x.error, sinFecha: x.sinFecha || [] };
+    const todas = x.reuniones.map(r => r.fecha).sort();   // sin filtrar: la rotación es continua
+    return {
+      empresa: x.empresa, fechas, n: fechas.length,
+      ultima: todas.at(-1) || '',
+      proxima: proximaFechaDe(x.empresa.nombre, hoy),
+      aviso: x.aviso, error: x.error, sinFecha: x.sinFecha || [],
+    };
   });
   const totalEmpresas = filas.reduce((s, f) => s + f.n, 0);
   const fechasTecnicas = tecnicas.filter(delAnio);
-  const totalTecnicas = fechasTecnicas.length;
-  const presentaron = filas.filter(f => f.n > 0).length;
-  const pendientes = filas.filter(f => !f.n && f.aviso);
+  const pendientes = filas.filter(f => !f.ultima && f.aviso);
   const sinFechar = filas.filter(f => f.sinFecha.length);
 
-  if (!totalEmpresas && !totalTecnicas) {
+  if (!totalEmpresas && !fechasTecnicas.length) {
     el.innerHTML = `<div class="act-empty">Todavía no se leyó ninguna reunión.<br>
-      <small>Cada reunión debe figurar en la bitácora de la empresa como un encabezado con su fecha; por ejemplo, «13 de abril de 2026 – Avance de líneas estratégicas».</small></div>` +
+      <small>En la bitácora, cada reunión tiene que arrancar en un renglón con su fecha; por ejemplo «13 de abril de 2026 – Avance de líneas estratégicas» o «Reunión 14/04/26».</small></div>` +
       (pendientes.length ? avisosPendientesHtml(pendientes) : '');
     aplicarVisibilidad();
     return;
   }
+
+  // ── Indicadores de gestión ──
+  const semanasRegla = Math.max(1, Number(CALCFG.semanasEntrePresentaciones) || 26);
+  const ritmo = ritmoRealSemanas(filas);
+  const enRotacion = filas.filter(f => f.empresa.activa !== false);
+  const necesitanFecha = enRotacion.filter(f => estadoDe(f, hoy, semanasRegla).clave === 'necesita');
+  const prox = proximaPresentacion(hoy);
 
   const opciones = ['todos'].concat(listaAnios)
     .map(a => `<option value="${esc(a)}"${a === REUNIONES_ANIO ? ' selected' : ''}>${a === 'todos' ? 'Todos los años' : esc(a)}</option>`)
@@ -1447,19 +1463,128 @@ function pintarReuniones() {
       <select class="rp-anio" onchange="setReunionesAnio(this.value)">${opciones}</select>
     </div>
     <div class="rp-stats">
-      <div class="rp-stat"><div class="rp-stat-num">${totalEmpresas + totalTecnicas}</div><div class="rp-stat-lbl">Reuniones registradas</div></div>
-      <div class="rp-stat"><div class="rp-stat-num">${totalEmpresas}</div><div class="rp-stat-lbl">Presentaciones de empresa</div></div>
-      <div class="rp-stat"><div class="rp-stat-num">${totalTecnicas}</div><div class="rp-stat-lbl">Reuniones técnicas</div></div>
-      <div class="rp-stat"><div class="rp-stat-num">${presentaron}<span class="rp-stat-de">/${filas.length}</span></div><div class="rp-stat-lbl">Empresas que presentaron</div></div>
+      <div class="rp-stat">
+        <div class="rp-stat-num">${totalEmpresas + fechasTecnicas.length}</div>
+        <div class="rp-stat-lbl">Reuniones registradas</div>
+        <div class="rp-stat-sub">${totalEmpresas} de empresa · ${fechasTecnicas.length} ${fechasTecnicas.length === 1 ? 'técnica' : 'técnicas'}</div>
+      </div>
+      <div class="rp-stat">
+        <div class="rp-stat-num">${ritmo ? ritmo : '—'}<span class="rp-stat-de">${ritmo ? ' sem' : ''}</span></div>
+        <div class="rp-stat-lbl">Entre presentaciones de una misma empresa</div>
+        <div class="rp-stat-sub">La regla del calendario dice cada ${semanasRegla}</div>
+      </div>
+      <div class="rp-stat">
+        <div class="rp-stat-num">${necesitanFecha.length}</div>
+        <div class="rp-stat-lbl">Necesitan fecha</div>
+        <div class="rp-stat-sub">${necesitanFecha.length
+          ? esc(necesitanFecha.map(f => f.empresa.nombre).slice(0, 3).join(', ')) + (necesitanFecha.length > 3 ? '…' : '')
+          : `Las ${enRotacion.length} en rotación están al día o agendadas`}</div>
+      </div>
+      <div class="rp-stat">
+        <div class="rp-stat-txt">${prox ? esc(fechaCorta(prox.date)) : '—'}</div>
+        <div class="rp-stat-lbl">Próxima presentación</div>
+        <div class="rp-stat-sub">${prox ? esc(prox.assignment) : 'Sin presentaciones agendadas'}</div>
+      </div>
     </div>
     ${ritmoHtml(filas, fechasTecnicas)}
-    ${tablaEmpresasHtml(filas)}
-    <div class="rp-note">Cada reunión sale de la bitácora de la empresa: un encabezado con su fecha. Hacé click en el nombre para abrir el documento.</div>
+    ${tablaRotacionHtml(filas, hoy, semanasRegla)}
+    <div class="rp-note">Las presentaciones salen de la bitácora de cada empresa; las fechas próximas, del Calendario. Hacé click en el número para ver las fechas leídas, o en el nombre para abrir el documento.</div>
     ${pendientes.length ? avisosPendientesHtml(pendientes) : ''}
     ${sinFechar.length ? seccionesSinFechaHtml(sinFechar) : ''}`;
   aplicarVisibilidad();
 }
 
+// Cada cuántas semanas presenta, en los hechos, una misma empresa: el promedio
+// de lo que pasa entre dos presentaciones suyas. Es lo que se compara contra la
+// regla del calendario para saber si el ritmo se está cumpliendo.
+function ritmoRealSemanas(filas) {
+  const dias = [];
+  filas.forEach(f => {
+    const fs = f.empresa.activa === false ? [] : (f.fechas.length > 1 ? f.fechas : []);
+    for (let i = 1; i < fs.length; i++) dias.push((new Date(fs[i]) - new Date(fs[i - 1])) / 86400000);
+  });
+  if (!dias.length) return 0;
+  return Math.round(dias.reduce((a, b) => a + b, 0) / dias.length / 7);
+}
+
+// La próxima fecha del calendario asignada a esta empresa
+function proximaFechaDe(nombre, hoy) {
+  const m = MEETINGS.filter(x => x.date >= hoy && x.assignment === nombre).sort((a, b) => a.date < b.date ? -1 : 1);
+  return m.length ? m[0].date : '';
+}
+
+// La próxima reunión del calendario en la que presenta alguna empresa
+function proximaPresentacion(hoy) {
+  const nombres = new Set(EMPRESAS.map(e => e.nombre));
+  return MEETINGS.filter(x => x.date >= hoy && nombres.has(x.assignment))
+    .sort((a, b) => a.date < b.date ? -1 : 1)[0] || null;
+}
+
+const semanasEntre = (a, b) => Math.floor((new Date(b) - new Date(a)) / 86400000 / 7);
+
+// El estado de rotación de una empresa. Es la columna que dice qué hacer.
+function estadoDe(f, hoy, semanasRegla) {
+  if (f.empresa.activa === false) return { clave: 'fuera', texto: 'Fuera de rotación', cls: 'tranquila' };
+  if (!f.ultima) {
+    if (f.aviso) return { clave: 'sinDato', texto: 'Sin bitácora', cls: 'tranquila' };
+    if (f.proxima) return { clave: 'agendada', texto: 'Agendada', cls: '' };
+    return { clave: 'necesita', texto: 'Necesita fecha', cls: 'urgente' };
+  }
+  const sem = semanasEntre(f.ultima, hoy);
+  if (sem < semanasRegla) return { clave: 'aldia', texto: 'Al día', cls: 'tranquila' };
+  if (f.proxima) return { clave: 'agendada', texto: 'Agendada', cls: '' };
+  return { clave: 'necesita', texto: 'Necesita fecha', cls: 'urgente' };
+}
+
+// ── La tabla de rotación ──
+// Quién presentó por última vez, hace cuánto, cuándo le toca y qué hay que
+// hacer. Sin barras: el número de presentaciones no es la decisión, el orden
+// de la rotación sí.
+const ORDEN_ESTADO = { necesita: 0, agendada: 1, aldia: 2, sinDato: 3, fuera: 4 };
+
+function tablaRotacionHtml(filas, hoy, semanasRegla) {
+  const orden = filas.slice().sort((a, b) => {
+    const ea = estadoDe(a, hoy, semanasRegla), eb = estadoDe(b, hoy, semanasRegla);
+    if (ORDEN_ESTADO[ea.clave] !== ORDEN_ESTADO[eb.clave]) return ORDEN_ESTADO[ea.clave] - ORDEN_ESTADO[eb.clave];
+    if (!a.ultima) return -1;
+    if (!b.ultima) return 1;
+    return a.ultima < b.ultima ? -1 : 1;
+  });
+
+  const cuerpo = orden.map((f, i) => {
+    const e = estadoDe(f, hoy, semanasRegla);
+    const sem = f.ultima ? semanasEntre(f.ultima, hoy) : null;
+    return `<tr>
+      <td><span class="rp-emp" onclick="abrirBitacora(${f.empresa.id})" title="Abrir la bitácora de ${esc(f.empresa.nombre)}">${esc(f.empresa.nombre)}</span></td>
+      <td>${f.ultima ? esc(fechaCorta(f.ultima)) : `<span class="rp-nunca">${f.aviso ? '—' : 'todavía no presentó'}</span>`}</td>
+      <td class="num">${sem === null ? '' : sem}</td>
+      <td>${f.proxima ? esc(fechaCorta(f.proxima)) : '<span class="rp-nunca">—</span>'}</td>
+      <td><span class="rp-estado ${e.cls}">${e.texto}</span></td>
+      <td class="num">${f.n ? `<span class="rp-veces" onclick="verFechas(${f.empresa.id},${i})" title="Ver las fechas leídas">${f.n}</span>` : '0'}</td>
+    </tr>
+    <tr id="rp-fechas-${i}" style="display:none"><td colspan="6" class="rp-fechas">${
+      f.fechas.slice().reverse().map(x => esc(fechaCorta(x))).join(' · ')}</td></tr>`;
+  }).join('');
+
+  return `<div class="rp-seccion" style="margin-top:22px">Rotación de presentaciones</div>
+    <table class="rp-tabla">
+      <thead><tr>
+        <th>Empresa</th><th>Última presentación</th><th class="num">Semanas sin<br>presentar</th>
+        <th>Próxima fecha</th><th>Estado</th><th class="num">Veces</th>
+      </tr></thead>
+      <tbody>${cuerpo}</tbody>
+    </table>`;
+}
+
+// Los números tienen que poder auditarse: al tocarlos se ven las fechas que el
+// sitio leyó de la bitácora, para poder comparar con el documento.
+function verFechas(empresaId, i) {
+  const fila = document.getElementById('rp-fechas-' + i);
+  if (fila) fila.style.display = fila.style.display === 'none' ? '' : 'none';
+}
+
+// Secciones de una bitácora que parecen una reunión pero no tienen una fecha
+// legible. No se cuentan, y hay que decir cuáles son para poder corregirlas.
 // Las empresas sin bitácora conectada no son un error del tablero: son algo que
 // falta configurar. Van juntas y plegadas, no como nueve líneas en rojo.
 function avisosPendientesHtml(pendientes) {
@@ -1470,8 +1595,6 @@ function avisosPendientesHtml(pendientes) {
   </details>`;
 }
 
-// Secciones de una bitácora que parecen una reunión pero no tienen una fecha
-// legible. No se cuentan, y hay que decir cuáles son para poder corregirlas.
 function seccionesSinFechaHtml(filas) {
   const total = filas.reduce((s, f) => s + f.sinFecha.length, 0);
   return `<details class="rp-pendientes">
@@ -1553,49 +1676,6 @@ function barra(cx, y, w, h, r) {
   return `M${x.toFixed(1)},${(y + h).toFixed(1)} L${x.toFixed(1)},${(y + rr).toFixed(1)} Q${x.toFixed(1)},${y.toFixed(1)} ${(x + rr).toFixed(1)},${y.toFixed(1)}` +
     ` L${(x + w - rr).toFixed(1)},${y.toFixed(1)} Q${(x + w).toFixed(1)},${y.toFixed(1)} ${(x + w).toFixed(1)},${(y + rr).toFixed(1)}` +
     ` L${(x + w).toFixed(1)},${(y + h).toFixed(1)} Z`;
-}
-
-// ── Una fila por empresa ──
-// Nueve empresas son demasiadas para nueve colores: van en tabla, con el dato
-// que sirve para decidir (hace cuánto que no presenta) y no solo el total.
-function tablaEmpresasHtml(filas) {
-  const hoy = new Date().toISOString().slice(0, 10);
-  const meses = f => {
-    if (!f) return null;
-    const a = new Date(f + 'T12:00:00'), b = new Date(hoy + 'T12:00:00');
-    return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
-  };
-  const limiteMeses = Math.round((Number(CALCFG.semanasEntrePresentaciones) || 26) / 4.35);
-  const max = Math.max(1, ...filas.map(f => f.n));
-  // Primero las que hace más que no presentan: es lo que hay que decidir.
-  const orden = filas.slice().sort((a, b) => {
-    if (!a.ultima && !b.ultima) return a.empresa.nombre.localeCompare(b.empresa.nombre);
-    if (!a.ultima) return -1;
-    if (!b.ultima) return 1;
-    return a.ultima < b.ultima ? -1 : 1;
-  });
-
-  const cuerpo = orden.map(f => {
-    const m = meses(f.ultima);
-    const atrasada = f.ultima ? m >= limiteMeses : true;
-    const cuando = f.ultima
-      ? `${fechaCorta(f.ultima)}<br><span class="${atrasada ? 'rp-atraso' : 'rp-nunca'}">${m === 0 ? 'este mes' : m === 1 ? 'hace 1 mes' : `hace ${m} meses`}</span>`
-      : `<span class="rp-nunca">${f.aviso ? 'sin bitácora conectada' : 'todavía no presentó'}</span>`;
-    return `<tr>
-      <td><span class="rp-emp" onclick="abrirBitacora(${f.empresa.id})" title="Abrir la bitácora de ${esc(f.empresa.nombre)}">${esc(f.empresa.nombre)}</span></td>
-      <td><div class="rp-mini">
-        <div class="rp-mini-track">${f.n ? `<div class="rp-mini-fill" style="width:${Math.round(f.n / max * 100)}%"></div>` : ''}</div>
-        <span class="rp-mini-num">${f.n}</span>
-      </div></td>
-      <td>${cuando}</td>
-    </tr>`;
-  }).join('');
-
-  return `<div class="rp-seccion" style="margin-top:22px">Por empresa</div>
-    <table class="rp-tabla">
-      <thead><tr><th>Empresa</th><th>Presentaciones</th><th>Última</th></tr></thead>
-      <tbody>${cuerpo}</tbody>
-    </table>`;
 }
 
 // Etiquetas del eje del gráfico

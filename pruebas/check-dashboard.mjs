@@ -19,11 +19,13 @@ await p.waitForTimeout(400);
 
 // ── Números por empresa desde la bitácora ──
 const leerTabla = () => p.evaluate(() =>
-  [...document.querySelectorAll('.rp-tabla tbody tr')].map(r => ({
-    empresa: r.querySelector('.rp-emp').textContent.trim(),
-    n: +r.querySelector('.rp-mini-num').textContent.trim(),
-    ancho: (r.querySelector('.rp-mini-fill') || {}).style?.width || '0',
-    ultima: r.children[2].textContent.replace(/\s+/g, ' ').trim(),
+  [...document.querySelectorAll('.rp-tabla tbody tr')].filter(r => !r.id).map(r => ({
+    empresa: r.children[0].textContent.trim(),
+    ultima: r.children[1].textContent.trim(),
+    semanas: r.children[2].textContent.trim(),
+    proxima: r.children[3].textContent.trim(),
+    estado: r.children[4].textContent.trim(),
+    n: +r.children[5].textContent.trim(),
   })));
 const barras = await leerTabla();
 console.log('tabla:', JSON.stringify(barras));
@@ -35,8 +37,12 @@ ok('El Sueño cuenta 3', barras.find(x => /Sueño/.test(x.empresa))?.n === 3);
 ok('la empresa sin bitácora queda en 0', barras.find(x => /Tricampo/.test(x.empresa))?.n === 0);
 ok('dice cuándo presentó cada una por última vez',
   /3 ago 2026/.test(barras.find(x => /MACSA/.test(x.empresa))?.ultima || ''));
-ok('y las que hace más que no presentan van primero',
-  barras.findIndex(x => /Motivo/.test(x.empresa)) < barras.findIndex(x => /MACSA/.test(x.empresa)));
+ok('cruza la bitácora con el calendario: la próxima fecha de cada empresa',
+  /14 ago 2026/.test(barras.find(x => /MACSA/.test(x.empresa))?.proxima || ''));
+ok('y dice qué hacer con cada una',
+  barras.every(x => /Al día|Agendada|Necesita fecha|Sin bitácora|Fuera de rotación/.test(x.estado)));
+ok('las que necesitan una fecha van primero, y las que no tienen bitácora al final',
+  barras.findIndex(x => /Tricampo/.test(x.empresa)) > barras.findIndex(x => /MACSA/.test(x.empresa)));
 
 // ── Vínculo automático empresa ↔ carpeta de Drive (CONFIG_DRIVE vacía) ──
 const vinculos = await p.evaluate(() => EMPRESAS.map(e => ({
@@ -51,12 +57,15 @@ ok('resuelve «El Porvenir / Beheran Sarciat S.A.» → «Beheran Sarciat SA»',
   vinculos.find(v => /Porvenir/.test(v.empresa))?.carpeta === 'Beheran Sarciat SA');
 ok('resuelve «Estudio Tomás Becker» → «Estudio Becker»',
   vinculos.find(v => /Becker/.test(v.empresa))?.carpeta === 'Estudio Becker');
-ok('la empresa con más presentaciones marca el 100% de la barra', barras.some(x => x.ancho === '100%'));
 
 const stats = await p.evaluate(() => [...document.querySelectorAll('.rp-stat')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
 console.log('totales:', JSON.stringify(stats));
-ok('el total de presentaciones de empresa es 14', /^14\D/.test(stats[1]));
-ok('muestra cuántas empresas presentaron sobre las activas', /4\/8/.test(stats[3].replace(/\s/g, '')));
+ok('el primer número es el total de reuniones registradas', /^22\D/.test(stats[0]));
+ok('mide el ritmo real contra la regla del calendario',
+  /sem/.test(stats[1]) && /cada 26/.test(stats[1]));
+ok('dice cuántas empresas necesitan que se les asigne fecha', /Necesitan fecha/.test(stats[2]));
+ok('y cuál es la próxima presentación agendada',
+  /14 ago 2026/.test(stats[3]) && /MACSA/.test(stats[3]));
 
 // ── El gráfico del ritmo del grupo ──
 const ritmo = await p.evaluate(() => [...document.querySelectorAll('.rp-chart .col title')].map(e => e.textContent));
@@ -73,8 +82,10 @@ ok('el selector ofrece los años de las bitácoras', anios.includes('2026') && a
 await p.selectOption('.rp-anio', '2026');
 await p.waitForTimeout(300);
 const t2026 = await leerTabla();
-ok('filtrando 2026 bajan los números (MACSA 2, El Sueño 2)',
+ok('filtrando 2026 bajan las veces (MACSA 2, El Sueño 2)',
   t2026.find(x => /MACSA/.test(x.empresa))?.n === 2 && t2026.find(x => /Sueño/.test(x.empresa))?.n === 2);
+ok('pero la última presentación sigue siendo la real, no la del filtro',
+  /3 ago 2026/.test(t2026.find(x => /MACSA/.test(x.empresa))?.ultima || ''));
 ok('y el gráfico pasa a mostrar los meses de ese año',
   await p.evaluate(() => /por mes/.test(document.querySelector('.rp-seccion').textContent)));
 await p.selectOption('.rp-anio', 'todos');

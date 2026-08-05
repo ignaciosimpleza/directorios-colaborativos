@@ -99,9 +99,14 @@ const BITACORAS = {
     { fecha: '2026-02-09', titulo: 'Primera presentación de la empresa', anioDeducido: true },
   ] },
   'f-motivo': { archivo: { id: 'doc-motivo', nombre: 'Proceso El Motivo', url: '#' }, reuniones: [
-    { fecha: '2025-03-10', titulo: 'Brechas y causas' },
-    { fecha: '2021-08-26', titulo: 'Presentación de la empresa' },
-  ], sinFecha: ['Grupo Estratégico: EL MOTIVO', 'Consigna 3: Análisis interno. Brechas y Causas'] },
+    { fecha: '2026-06-29', titulo: 'Reunión El Motivo' },
+    { fecha: '2025-12-22', titulo: 'Avance en LE: Minuta de Reunión' },
+    { fecha: '2025-09-15', titulo: 'Avances Proceso: Nueva Visión' },
+    { fecha: '2025-04-14', titulo: 'Revisión misión y construcción visión 2030' },
+    { fecha: '2024-11-14', titulo: 'Dolores del Directorio' },
+    { fecha: '2022-08-04', titulo: 'Algunas aclaraciones para el intercambio' },
+    { fecha: '2021-08-26', titulo: 'Visión' },
+  ], sinFecha: ['Consigna 3: Análisis interno. Brechas y Causas'] },
 };
 
 const NOVEDADES = [
