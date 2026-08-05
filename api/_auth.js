@@ -11,10 +11,24 @@
 import { createClient } from '@libsql/client/web';
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 
-export const db = createClient({
-  url: process.env.TURSO_DATABASE_URL,
-  authToken: process.env.TURSO_AUTH_TOKEN,
-});
+// El cliente se crea recién cuando se usa. Si se creara al importar el archivo,
+// cualquier función que importe esto reventaría sin las variables de entorno
+// (y también las pruebas, que no tocan la base).
+let _db = null;
+function cliente() {
+  if (!_db) {
+    _db = createClient({
+      url: process.env.TURSO_DATABASE_URL,
+      authToken: process.env.TURSO_AUTH_TOKEN,
+    });
+  }
+  return _db;
+}
+
+export const db = {
+  execute: (...a) => cliente().execute(...a),
+  batch: (...a) => cliente().batch(...a),
+};
 
 let schemaReady;
 export function ensureAuthSchema() {

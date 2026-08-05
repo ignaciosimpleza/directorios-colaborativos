@@ -10,13 +10,14 @@ const ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 const EMPRESAS = [
   { orden: 1, slug: 'el-motivo', nombre: 'El Motivo S.A.', zona: 'Río Cuarto', participantes: 'Adriana Ponzio', resumen: 'Agrícola' },
   { orden: 2, slug: 'tricampo', nombre: 'Tricampo S.A.', zona: 'Frías', participantes: 'Alejandro Stoppa', resumen: 'Mixta' },
-  { orden: 3, slug: 'macsa', nombre: 'MACSA Agro', zona: 'General Levalle', participantes: 'Carlos Vidal', resumen: 'Agrícola-ganadera' },
+  { orden: 3, slug: 'macsa', nombre: 'MACSA Agro', zona: 'General Levalle', participantes: 'Carlos Vidal', resumen: 'Agrícola-ganadera',
+    noDisponible: 'diciembre a febrero', noDisponibleReglas: [{ tipo: 'meses', desde: 12, hasta: 2, anio: null }] },
   { orden: 4, slug: 'el-sueno', nombre: 'Agropecuaria El Sueño', zona: 'Tucumán', participantes: 'Sebastián Valdez', resumen: 'Diversificada' },
   { orden: 5, slug: 'el-porvenir', nombre: 'El Porvenir / Beheran Sarciat S.A.', zona: 'Ayacucho', participantes: 'Alfredo Beheran y Juanchi', resumen: 'Ganadera' },
   { orden: 6, slug: 'donato-alvarez', nombre: 'Donato Álvarez S.R.L.', zona: 'Alberdi', participantes: 'José Luis Cebe', resumen: 'Citrícola' },
   { orden: 7, slug: 'rubro-agropecuario', nombre: 'Rubro Agropecuario S.R.L. / Fideicomiso Rubro Producción', zona: 'Quimilí', participantes: 'Manuel Monedero', resumen: 'Servicios' },
   { orden: 8, slug: 'altos-de-bermudez', nombre: 'Altos de Bermúdez S.A.', zona: 'Lincoln', participantes: 'Alfredo Moreno', resumen: 'Agroindustrial' },
-  { orden: 9, slug: 'estudio-becker', nombre: 'Estudio Tomás Becker', zona: 'Azul', participantes: 'Tomás Becker', resumen: 'Gerenciamiento' },
+  { orden: 9, slug: 'estudio-becker', nombre: 'Estudio Tomás Becker', zona: 'Azul', participantes: 'Tomás Becker', resumen: 'Gerenciamiento', activa: false },
 ];
 
 // Carpetas tal cual se llaman en el Drive real del grupo
@@ -39,6 +40,9 @@ const BASE = {
   ejes: [{ titulo: 'Eje 1', desc: 'Desc eje' }],
   empresas: EMPRESAS,
   eventos: [{ fecha: '23 y 24/10', titulo: 'Encuentro', descripcion: 'Anual', lugar: 'Rosario' }],
+  calendario: { diaSemana: 1, hora: '08:00', cadenciaSemanas: 1, saltarFeriados: true, rondaNovedadesCada: 6, tecnicaCada: 8 },
+  sinReunion: [{ desde: '2027-01-04', hasta: '2027-01-25', motivo: 'Receso de enero' }],
+  avisos: ['EMPRESAS · Tricampo S.A.: no se entendió «cuando termine la cosecha» en la columna no_disponible.'],
 };
 
 // Bitácora: varios archivos, algunos del mismo día (no deben contar doble)

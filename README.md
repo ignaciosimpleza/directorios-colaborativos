@@ -3,12 +3,15 @@
 Plantilla de sitio para un grupo de directorio colaborativo, desplegada en
 Vercel. Es una sola app (`index.html`) más funciones serverless.
 
-**Regla base del proyecto: en el código no hay contenido.** Ni nombres, ni
-empresas, ni hitos, ni textos del grupo. Todo sale de Google Drive. Lo único que
-se edita adentro del sitio es el **Calendario**. No hay formularios de carga.
+**La planilla ES la configuración del grupo.** En el código no hay contenido ni
+reglas: ni nombres, ni empresas, ni hitos, ni cada cuánto se reúnen. Todo sale de
+la planilla y de las carpetas de Drive.
 
-Por eso el mismo repo sirve para cualquier grupo: se conecta otra planilla y el
-sitio es otro.
+Para armar otro grupo: se copia la plantilla, se completa, se sube a la carpeta
+del grupo y se pega su link en el sitio. Nada más.
+
+Lo único que se guarda fuera de la planilla son **las reuniones ya agendadas**
+(se editan en el sitio) y **los ids de Drive** (se pegan en Configuración).
 
 ## Estructura
 
@@ -21,7 +24,8 @@ sitio es otro.
 | `api/db.js` | Turso (libSQL): calendario y configuración |
 | `api/auth.js` | Registro, ingreso, autorización de cuentas y log de accesos |
 | `api/_auth.js` | Sesiones y portero compartido por las funciones de lectura |
-| `plantillas/` | Planillas modelo para armar un grupo nuevo |
+| `api/_calendario.js` | Las reglas de la agenda (disponibilidad, cadencia), probadas aparte |
+| `plantillas/` | Planillas modelo + `generar_plantillas.py` que las produce |
 | `pruebas/` | Pruebas en navegador (ver `pruebas/LEEME.md`) |
 
 ## De dónde sale cada cosa
@@ -49,7 +53,10 @@ completar.
 | Recursos · Reuniones técnicas | Carpeta de Drive de material técnico (con subcarpetas) |
 | Recursos · Herramientas | Carpeta de Drive embebida + URL del facilitador |
 | Quién puede crear cuenta | Planilla base: pestaña `ACCESOS` |
-| Calendario | Se edita en el sitio y se guarda en Turso |
+| Reglas de la agenda | Planilla base: pestaña `CALENDARIO` |
+| Semanas sin reunión | Planilla base: pestaña `SIN_REUNION` |
+| Qué empresas rotan y cuándo no pueden | Planilla base: columnas `activa` y `no_disponible` de `EMPRESAS` |
+| Las reuniones ya agendadas | Se editan en el Calendario del sitio y se guardan en Turso |
 
 Para agregar contenido, se sube el archivo a la carpeta de Drive que corresponda
 o se edita la fila de la planilla. El sitio lo toma solo.
@@ -77,6 +84,32 @@ no se puede leer o no se reconoce ninguna fecha, el sitio lo dice con nombre y
 apellido de la empresa en vez de mostrar un cero sin explicación.
 
 El Calendario **no** interviene acá: de él salen solo las fechas próximas.
+
+### Cómo se arma la agenda
+
+El sitio genera las reuniones con estas reglas, **en este orden**:
+
+1. Las reuniones fijadas (📌) y las marcadas **Flexible** no se tocan nunca.
+2. Si cae feriado y `CALENDARIO.saltar_feriados` = TRUE → **Feriado**.
+3. Si cae dentro de un rango de `SIN_REUNION` → **Sin reunión**.
+4. Si toca según `ronda_novedades_cada` / `tecnica_cada` → esa.
+5. Si no: presenta la empresa **activa** que hace más tiempo que no presenta y
+   que esté **disponible** esa fecha.
+6. Si ninguna está disponible, la fecha queda **Flexible** y el sitio avisa cuál.
+
+`activa` y `no_disponible` son dos cosas distintas:
+
+- **`activa` = FALSE** → la empresa dejó de participar. Sale de la rotación y de
+  los números del tablero, pero conserva su ficha, su carpeta y su historial.
+- **`no_disponible`** → la empresa participa, pero hay fechas en las que no puede
+  presentar. Se escribe en criollo, separando con comas: `enero`,
+  `diciembre a febrero`, `julio 2026`, `6/7/2026`, `1/9/2026 a 20/9/2026`. Lo que
+  no se entienda, el sitio lo lista en *Configuración → Revisión de la planilla*
+  en vez de ignorarlo en silencio.
+
+Las reglas **no se editan en el sitio**: se ven en el Calendario (modo edición) y
+se cambian en la planilla. Si se pudieran editar en los dos lados, nunca se
+sabría cuál manda.
 
 ### Qué se muestra
 
@@ -145,6 +178,9 @@ el material técnico, las novedades, las herramientas y el logo. Después revis�
 A mano, paso por paso:
 
 1. Descargá `plantillas/Plantilla_Base_Grupo.xlsx`, completala y subila a Drive.
+   La primera pestaña (`LEEME`) explica qué alimenta cada una y cuáles son las
+   reglas. Las plantillas se regeneran con
+   `python3 plantillas/generar_plantillas.py`.
 2. Entrá al sitio con **Modo edición → Configuración**. Ahí figura el email de la
    cuenta de servicio: compartí con ese email (rol **Lector**) la planilla y las
    carpetas del grupo.

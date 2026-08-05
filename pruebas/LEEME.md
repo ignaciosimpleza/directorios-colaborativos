@@ -37,11 +37,17 @@ en otro lado, cambiá `executablePath` en los tres `check-*.mjs`.
   reciente con fecha y tema, las reuniones técnicas visibles en Recursos, la
   autodetección de carpetas y el logo como imagen.
 
-Aparte, el parser de bitácoras tiene su propia prueba contra encabezados reales:
+Aparte, sin navegador:
 
 ```bash
-node --test pruebas/bitacora.test.mjs
+node --test pruebas/bitacora.test.mjs    # el parser, contra encabezados reales
+node --test pruebas/calendario.test.mjs  # las reglas de la agenda
+node --test pruebas/plantilla.test.mjs   # la plantilla que se entrega, leída por el parser del sitio
 ```
+
+`plantilla.test.mjs` es la que sostiene que la herramienta sea estandarizable:
+abre el `.xlsx` que se le da a un grupo nuevo y lo pasa por el mismo parser que
+usa el sitio. Si alguien cambia una columna de un lado y no del otro, falla.
 
 Las capturas quedan en `pruebas/capturas/`.
 

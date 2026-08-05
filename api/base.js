@@ -10,6 +10,7 @@
 import { GoogleAuth } from 'google-auth-library';
 import * as XLSX from 'xlsx';
 import { bloqueaPorLogin } from './_auth.js';
+import { leerCalendario, parseNoDisponible, aFecha, aBooleano } from './_calendario.js';
 
 // No hay archivo por defecto en el código: el id llega por query (lo que el
 // grupo pegó en Configuración) o por la variable de entorno BASE_FILE_ID.
@@ -143,17 +144,51 @@ function parseBase(wb) {
     .filter(r => r['mostrar_en_web'] === '' || truthy(r['mostrar_en_web']))
     .map(r => ({ titulo: r['titulo'], desc: r['descripcion'] })) : [];
 
-  // EMPRESAS
+  // EMPRESAS. «activa» decide si entra en la rotación del calendario y en los
+  // números del período; «no_disponible» dice cuándo no puede presentar.
+  const avisos = [];
   const empRows = findSheet(wb, ['slug', 'nombre', 'participantes'], /^empresas$/);
   const empresas = empRows ? tableObjects(empRows, ['slug', 'nombre', 'participantes'])
     .filter(r => r['mostrar_en_web'] === '' || truthy(r['mostrar_en_web']))
-    .map(r => ({
-      slug: r['slug'], orden: parseInt(r['orden']) || 0, nombre: r['nombre'], zona: r['zona'] || '',
-      participantes: r['participantes'] || '', resumen: r['resumen_corto'] || '', foco: r['foco_actual'] || '',
-      identidad: r['identidad'] || '', queHace: r['que_hace_y_como_funciona'] || '',
-      recorrido: r['recorrido_en_el_grupo'] || r['recorrido_en_el_faro'] || '',
-      urlLogo: r['url_logo'] || '',
-    })) : [];
+    .map(r => {
+      const nd = parseNoDisponible(r['no_disponible'] || '');
+      if (nd.noEntendido.length) {
+        avisos.push(`EMPRESAS · ${r['nombre'] || r['slug']}: no se entendió «${nd.noEntendido.join('», «')}» en la columna no_disponible. Se acepta por ejemplo: «enero», «diciembre a febrero», «julio 2026», «6/7/2026» o «1/9/2026 a 20/9/2026».`);
+      }
+      return {
+        slug: r['slug'], orden: parseInt(r['orden']) || 0, nombre: r['nombre'], zona: r['zona'] || '',
+        activa: aBooleano(r['activa'], true),
+        noDisponible: r['no_disponible'] || '',
+        noDisponibleReglas: nd.reglas,
+        participantes: r['participantes'] || '', resumen: r['resumen_corto'] || '', foco: r['foco_actual'] || '',
+        identidad: r['identidad'] || '', queHace: r['que_hace_y_como_funciona'] || '',
+        recorrido: r['recorrido_en_el_grupo'] || r['recorrido_en_el_faro'] || '',
+        urlLogo: r['url_logo'] || '',
+      };
+    }) : [];
+  if (!empRows) avisos.push('No se encontró la pestaña EMPRESAS (columnas slug, nombre, participantes).');
+  if (empresas.length && !empresas.some(e => e.activa)) {
+    avisos.push('EMPRESAS: ninguna empresa quedó marcada como activa, así que el calendario no tiene a quién asignarle reuniones.');
+  }
+
+  // CALENDARIO: las reglas de la agenda (clave/contenido)
+  const calRows = findSheet(wb, ['clave', 'contenido'], /^calendario$/);
+  const calKV = {};
+  if (calRows) tableObjects(calRows, ['clave', 'contenido']).forEach(r => { calKV[r['clave']] = r['contenido']; });
+  const calendario = leerCalendario(calKV);
+  if (!calRows) avisos.push('No se encontró la pestaña CALENDARIO: se usan los valores por defecto (reunión semanal, los lunes, salteando feriados).');
+
+  // SIN_REUNION: las semanas en que el grupo no se junta
+  const srRows = findSheet(wb, ['desde', 'motivo'], /^sin_reunion$/);
+  const sinReunion = srRows ? tableObjects(srRows, ['desde', 'motivo'])
+    .filter(r => r['desde'])
+    .map(r => {
+      const desde = aFecha(r['desde']);
+      const hasta = aFecha(r['hasta'] || r['desde']) || desde;
+      if (!desde) avisos.push(`SIN_REUNION: no se entendió la fecha «${r['desde']}». Escribila como 6/7/2026 o 2026-07-06.`);
+      return desde ? { desde, hasta: hasta < desde ? desde : hasta, motivo: r['motivo'] || '' } : null;
+    })
+    .filter(Boolean) : [];
 
   // EVENTOS (agenda del grupo: congresos, viajes, encuentros). Opcional.
   // La fecha es texto libre: "4-5-6/8", "23 y 24/10", "29 Jun 2026"…
@@ -197,7 +232,12 @@ function parseBase(wb) {
   config.forEach(c => { cfgBySlug[c.slug] = c; });
   empresas.forEach(e => { const c = cfgBySlug[e.slug]; if (c) { e.driveFolderId = c.driveFolderId || ''; if (!e.urlLogo) e.urlLogo = c.urlLogo || ''; } });
 
-  return { grupo, hitos, ejes, empresas, eventos, conceptos, accesos };
+  // Avisos de contenido: cosas que el sitio no puede adivinar
+  if (!grupo.nombre) avisos.push('GRUPO: falta la clave grupo_nombre. Sin eso el sitio no tiene nombre.');
+  if (!equipo.length) avisos.push('No se encontró la pestaña EQUIPO (columnas nombre, rol): el pie del menú va a quedar vacío.');
+  if (!accesos.length) avisos.push('La pestaña ACCESOS está vacía: cualquiera con el link va a poder registrarse (igual necesita autorización manual).');
+
+  return { grupo, hitos, ejes, empresas, eventos, conceptos, accesos, calendario, sinReunion, avisos };
 }
 
 // Lee y parsea la planilla base. La usa /api/base y también /api/auth (para

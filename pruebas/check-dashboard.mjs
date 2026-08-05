@@ -25,7 +25,9 @@ const barras = await p.evaluate(() =>
     ancho: (r.querySelector('.rp-bar-fill') || {}).style?.width || '0',
   })));
 console.log('barras:', JSON.stringify(barras));
-ok('hay una barra por cada empresa de la planilla', barras.length === 9);
+ok('el tablero muestra solo las empresas activas (8 de 9)', barras.length === 8);
+ok('la empresa marcada como inactiva no aparece en el tablero',
+  !barras.some(x => /Becker/.test(x.empresa)));
 ok('MACSA cuenta 7 reuniones de su bitácora', barras.find(x => /MACSA/.test(x.empresa))?.n === 7);
 ok('El Sueño cuenta 3', barras.find(x => /Sueño/.test(x.empresa))?.n === 3);
 ok('la empresa sin bitácora queda en 0', barras.find(x => /Tricampo/.test(x.empresa))?.n === 0);
@@ -37,6 +39,8 @@ const vinculos = await p.evaluate(() => EMPRESAS.map(e => ({
 })));
 console.log('vínculos:', JSON.stringify(vinculos.map(v => v.empresa.slice(0, 18) + ' → ' + v.carpeta)));
 ok('las 9 empresas se vinculan solas con su carpeta, sin pegar ids', vinculos.every(v => v.carpeta));
+ok('una empresa inactiva conserva su ficha y su carpeta',
+  vinculos.find(v => /Becker/.test(v.empresa))?.carpeta === 'Estudio Becker');
 ok('resuelve «El Porvenir / Beheran Sarciat S.A.» → «Beheran Sarciat SA»',
   vinculos.find(v => /Porvenir/.test(v.empresa))?.carpeta === 'Beheran Sarciat SA');
 ok('resuelve «Estudio Tomás Becker» → «Estudio Becker»',
@@ -46,7 +50,7 @@ ok('el gráfico dibuja la barra más larga al 100%', barras.some(x => x.ancho ==
 const stats = await p.evaluate(() => [...document.querySelectorAll('.rp-stat')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
 console.log('totales:', JSON.stringify(stats));
 ok('el total de reuniones de empresa es 10', /^10\D/.test(stats[0]));
-ok('muestra cuántas empresas presentaron', /2\/9/.test(stats[2].replace(/\s/g, '')));
+ok('muestra cuántas empresas presentaron sobre las activas', /2\/8/.test(stats[2].replace(/\s/g, '')));
 
 // ── Filtro por año ──
 const anios = await p.evaluate(() => [...document.querySelectorAll('.rp-anio option')].map(o => o.value));
@@ -112,6 +116,38 @@ const enEdicion = await p.evaluate(() =>
   ['card-marco', 'card-tecnicas', 'card-herr-web', 'card-herr-drive']
     .every(id => getComputedStyle(document.getElementById(id)).display !== 'none'));
 ok('en modo edición se ven todas las tarjetas, aunque estén vacías', enEdicion);
+
+
+// ── Las reglas del calendario salen de la planilla y se cumplen ──
+await p.evaluate(() => navigate('calendario'));
+await p.waitForTimeout(600);
+const reglas = await p.evaluate(() => [...document.querySelectorAll('.regla')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
+ok('el calendario muestra las reglas que dice la planilla', /Todas las semanas, los lunes/.test(reglas[0] || ''));
+ok('y cuántas empresas están en rotación', /8 activas · 1 fuera de rotación/.test(reglas[4] || ''));
+
+p.on('dialog', d => d.accept());
+await p.fill('#cfg-from', '2026-12-01');
+await p.fill('#cfg-to', '2027-02-28');
+await p.evaluate(() => calGenerate());
+await p.waitForTimeout(1500);
+const agenda = await p.evaluate(() =>
+  MEETINGS.filter(x => x.date >= '2026-12-01' && x.date <= '2027-02-28').map(x => x.date + ' ' + x.assignment));
+console.log('agenda:', JSON.stringify(agenda, null, 1));
+ok('respeta «no_disponible»: MACSA no presenta entre diciembre y febrero',
+  !agenda.some(a => /MACSA/.test(a)));
+ok('respeta «activa»: la empresa fuera de rotación no recibe fechas',
+  !agenda.some(a => /Becker/.test(a)));
+ok('respeta SIN_REUNION: enero entero queda sin reunión',
+  agenda.filter(a => a.startsWith('2027-01')).every(a => /Sin reunión/.test(a)));
+ok('programa la ronda de novedades según la planilla', agenda.some(a => /Ronda de novedades/.test(a)));
+ok('programa la técnica según la planilla', agenda.some(a => /Técnica/.test(a)));
+
+// ── Los errores de carga de la planilla se ven ──
+await p.evaluate(() => navigate('config'));
+await p.waitForTimeout(900);
+const avisos = await p.evaluate(() => [...document.querySelectorAll('.aviso')].map(e => e.textContent));
+ok('Configuración muestra lo que no se entendió de la planilla',
+  avisos.some(a => /no se entendió/.test(a)));
 
 console.log('ERRORES JS:', errores.length ? errores : 'ninguno');
 await b.close();
