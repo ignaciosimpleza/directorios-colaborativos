@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Directorio Colaborativo</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
   --gris-medio: #7F7F7F;
@@ -387,17 +386,22 @@ textarea.cfg-input { resize:vertical; line-height:1.5; }
 .cfg-quitar, .cfg-mover { background:#f1f1f1; border:0; color:var(--gris-medio); font-size:12px; width:26px; height:26px; border-radius:7px; cursor:pointer; font-family:inherit; }
 .cfg-quitar:hover { background:#fdecea; color:var(--terracota); }
 .cfg-vacio { font-size:12.5px; color:var(--gris-medio); padding:14px 0; }
+.cfg-drive { display:flex; align-items:center; gap:8px; }
+.cfg-drive .cfg-input { flex:1; }
 
 /* ── AVISOS DE LA PLANILLA ── */
 .aviso { font-size:12.5px; color:#8a6d0b; background:#fef9e7; border-left:3px solid var(--amarillo-pastel); border-radius:6px; padding:9px 12px; margin-top:8px; line-height:1.5; }
 .aviso-ok { font-size:12.5px; color:#1a7a55; background:#e8f8f2; border-radius:6px; padding:9px 12px; }
 
-/* ── REGLAS DE LA AGENDA ── */
-.reglas-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-.regla { background:var(--crema-fondo); border-radius:var(--radius-sm); padding:10px 12px; }
-.regla-t { display:block; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--gris-medio); }
-.regla-v { display:block; font-size:13px; font-weight:600; color:var(--navy); margin-top:3px; }
-.regla-detalle { font-size:12px; color:var(--gris-oscuro); line-height:1.6; margin-top:12px; }
+/* ── AGENDA: REGLAS Y DISPONIBILIDAD ── */
+.agenda-bloque { padding:16px 0; border-bottom:1px solid var(--beige-suave); }
+.agenda-bloque:last-child { border-bottom:none; }
+.agenda-bloque-tit { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; color:var(--gris-oscuro); margin-bottom:6px; }
+.disp-tabla { margin-top:12px; }
+.disp-encab { display:grid; grid-template-columns:220px 1fr; gap:12px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--gris-medio); padding-bottom:6px; border-bottom:1px solid var(--beige-suave); }
+.disp-fila { display:grid; grid-template-columns:220px 1fr; gap:12px; align-items:center; padding:7px 0; }
+.disp-empresa { font-size:12.5px; font-weight:600; color:var(--navy); }
+.cal-aviso { font-size:10.5px; font-weight:700; color:#8a6d0b; background:#fef9e7; padding:2px 8px; border-radius:10px; white-space:nowrap; }
 
 /* ── QUÉ SE MUESTRA (visibilidad) ── */
 .vis-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-top:12px; }
@@ -682,7 +686,7 @@ canvas { display:block; }
 
     <!-- Las reglas de la agenda salen de la planilla, no se tocan acá -->
     <div class="card cal-config" id="cal-config" style="display:none">
-      <div class="card-title">Reglas de la agenda <span>Pestañas CALENDARIO y EMPRESAS de la planilla</span></div>
+      <div class="card-title">Cómo se arma la agenda <span>Se aplica al generar las reuniones</span></div>
       <div id="cal-reglas"></div>
       <div class="cal-config-actions" style="margin-top:14px">
         <label class="cal-range">Desde <input type="date" id="cfg-from"></label>
@@ -754,7 +758,7 @@ canvas { display:block; }
   <div id="sec-config" class="section">
     <div class="page-header">
       <h1>Configuración</h1>
-      <p>Todo lo que define al grupo se carga acá. Los documentos siguen en Drive: en «Archivos» se dice dónde están.</p>
+      <p>Todo lo que define al grupo se administra desde esta sección. Los documentos siguen alojados en Drive: en «Archivos» se indica dónde están.</p>
     </div>
     <div class="card" id="config-sa" style="margin-bottom:16px"></div>
     <div id="config-sources"></div>
@@ -802,7 +806,7 @@ canvas { display:block; }
       </div>
 
       <div id="gate-panel-login">
-        <p class="gate-lead">Este espacio tiene información de las empresas del grupo, así que pide una cuenta.</p>
+        <p class="gate-lead">Este espacio contiene información de las empresas del grupo y requiere una cuenta.</p>
         <input id="gate-email" type="email" class="modal-input" placeholder="Email" autocomplete="username">
         <input id="gate-pwd" type="password" class="modal-input" placeholder="Contraseña" autocomplete="current-password"
           onkeydown="if(event.key==='Enter') gateLogin()">
@@ -811,7 +815,7 @@ canvas { display:block; }
       </div>
 
       <div id="gate-panel-registro" class="hidden">
-        <p class="gate-lead">Alcanza con <strong>una cuenta por empresa</strong>: registrala y compartila con tu equipo. Solo se puede registrar un email que el grupo ya tenga en su lista, y la coordinación autoriza la cuenta antes del primer ingreso.</p>
+        <p class="gate-lead">Se registra <strong>una cuenta por empresa</strong>, que luego se comparte con el equipo. Solo pueden registrarse las direcciones que el grupo tenga habilitadas, y la coordinación autoriza la cuenta antes del primer ingreso.</p>
         <input id="gate-r-nombre" type="text" class="modal-input" placeholder="Tu nombre">
         <input id="gate-r-empresa" type="text" class="modal-input" placeholder="Empresa">
         <input id="gate-r-email" type="email" class="modal-input" placeholder="Email">
@@ -822,7 +826,7 @@ canvas { display:block; }
 
       <div id="gate-msg" class="gate-msg"></div>
     </div>
-    <div class="gate-pie">¿Problemas para entrar? Escribile a la coordinación del grupo.</div>
+    <div class="gate-pie">Ante cualquier inconveniente para ingresar, comunicate con la coordinación del grupo.</div>
   </div>
 </div>
 
@@ -1095,7 +1099,7 @@ function renderGrupo() {
   // Si todavía no hay planilla conectada, la sección lo dice en vez de
   // mostrar una página en blanco.
   if (!GRUPO_INFO.nombre && !GRUPO_HITOS.length && !EMPRESAS.length) {
-    el.innerHTML = vacioHtml('Esta sección sale de la <strong>planilla base</strong> de Drive (pestañas GRUPO, HITOS, EJES_2026 y EMPRESAS). Todavía no hay ninguna conectada.', true);
+    el.innerHTML = vacioHtml('Esta sección sale de la <strong>planilla base</strong> de Drive (pestañas GRUPO, HITOS, EJES_2026 y EMPRESAS). Aún no hay ninguna conectada.', true);
     aplicarVisibilidad();
     return;
   }
@@ -1221,7 +1225,7 @@ async function renderActividadReciente() {
   ultimas.sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
 
   if (!ultimas.length) {
-    el.innerHTML = '<div class="act-empty">Todavía no hay reuniones registradas en las bitácoras.</div>';
+    el.innerHTML = '<div class="act-empty">Aún no hay reuniones registradas en las bitácoras.</div>';
     aplicarVisibilidad();
     return;
   }
@@ -1272,11 +1276,17 @@ const API_BITACORA = '/api/bitacora';
 const BITACORAS = {};        // empresaId → promesa con { reuniones, archivo, aviso }
 
 function bitacoraDe(empresa) {
+  // Prioridad: el documento indicado para esa empresa; si no, se busca dentro
+  // de la subcarpeta «Proceso» de su carpeta.
+  const doc = empresa && empresa.bitacoraId;
   const folder = empresaDriveFolder(empresa);
-  if (!folder) return Promise.resolve({ reuniones: [], aviso: 'sin carpeta de Drive vinculada' });
+  if (!doc && !folder) {
+    return Promise.resolve({ reuniones: [], aviso: 'no tiene carpeta ni documento de bitácora indicados' });
+  }
   if (!BITACORAS[empresa.id]) {
     BITACORAS[empresa.id] = (async () => {
-      const r = await fetch(`${API_BITACORA}?folderId=${encodeURIComponent(folder)}`);
+      const q = doc ? `fileId=${encodeURIComponent(doc)}` : `folderId=${encodeURIComponent(folder)}`;
+      const r = await fetch(`${API_BITACORA}?${q}`);
       const j = await r.json().catch(() => ({}));
       if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
       return j;
@@ -1388,7 +1398,7 @@ function pintarReuniones() {
   const problemas = conteo.filter(c => !c.n && c.aviso);
   if (!totalEmpresas && !totalTecnicas) {
     el.innerHTML = `<div class="act-empty">No se encontraron reuniones en las bitácoras.<br>
-      <small>Cada reunión tiene que estar en el documento de la carpeta <strong>Proceso</strong> como un encabezado con su fecha, por ejemplo «13 de abril de 2026 – Avance de líneas estratégicas».</small></div>` +
+      <small>Cada reunión debe figurar en el documento de la carpeta <strong>Proceso</strong> como un encabezado con su fecha; por ejemplo, «13 de abril de 2026 – Avance de líneas estratégicas».</small></div>` +
       (problemas.length ? `<div class="rp-note">${problemas.map(p => `<strong>${esc(p.empresa.nombre)}</strong>: ${esc(p.aviso)}`).join('<br>')}</div>` : '');
     aplicarVisibilidad();
     return;
@@ -1425,7 +1435,7 @@ function pintarReuniones() {
       <div class="rp-stat"><div class="rp-stat-num">${presentaron}<span class="rp-stat-de">/${conteo.length}</span></div><div class="rp-stat-lbl">Empresas que presentaron</div></div>
     </div>
     ${barras}
-    <div class="rp-note">Cada reunión sale de la bitácora de la empresa (el documento de la subcarpeta <strong>Proceso</strong>). Hacé click en el nombre para abrirla.${notaTec}${notaProblemas}</div>`;
+    <div class="rp-note">Cada reunión se toma de la bitácora de la empresa (el documento de la subcarpeta <strong>Proceso</strong>). Hacé click en el nombre para abrirla.${notaTec}${notaProblemas}</div>`;
   aplicarVisibilidad();
 }
 
@@ -1452,7 +1462,7 @@ function renderEmpresas() {
   if (!el) return;
   aplicarIdentidad();
   if (!EMPRESAS.length) {
-    el.innerHTML = vacioHtml('Las empresas salen de la pestaña <strong>EMPRESAS</strong> de la planilla base de Drive (nombre, zona, participantes, resumen). Todavía no hay ninguna cargada.', true);
+    el.innerHTML = vacioHtml('Las empresas salen de la pestaña <strong>EMPRESAS</strong> de la planilla base de Drive (nombre, zona, participantes, resumen). Aún no hay ninguna cargada.', true);
     return;
   }
   el.innerHTML = EMPRESAS.map(e => {
@@ -1575,17 +1585,26 @@ function docsBlockHtml(titulo, files) {
 async function loadEmpresaDocs(empresa) {
   const el = document.getElementById('empresa-docs-' + empresa.id);
   if (!el) return;
+  // Si la empresa tiene indicada su carpeta de presentaciones, se usa esa
+  const pres = empresa.presentacionesId;
   const folder = empresaDriveFolder(empresa);
-  if (!folder) {
-    el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--gris-medio)">Esta empresa todavía no tiene carpeta de Drive vinculada.</div>';
+  if (!pres && !folder) {
+    el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--gris-medio)">Esta empresa no tiene carpeta de Drive indicada. Se carga en Configuración → El grupo → Empresas → Más datos.</div>';
     return;
   }
-  el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--gris-medio)">Cargando documentos del Drive…</div>';
+  el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--gris-medio)">Cargando documentos de Drive…</div>';
   try {
+    if (pres) {
+      const r = await fetch(`${API_BASE_DRIVE}?op=list&folderId=${encodeURIComponent(pres)}`);
+      const j = await r.json();
+      if (j.error) throw new Error(j.error);
+      el.innerHTML = docsBlockHtml('Presentaciones', (j.files || []).filter(f => f.tipo !== 'Carpeta'));
+      return;
+    }
     const r = await fetch(`${API_BASE_DRIVE}?op=empresa&folderId=${encodeURIComponent(folder)}`);
     const j = await r.json();
     if (j.error) throw new Error(j.error);
-    el.innerHTML = docsBlockHtml('Presentaciones', j.presentaciones) + docsBlockHtml('Minutas / Bitácora del proceso', j.minutas);
+    el.innerHTML = docsBlockHtml('Presentaciones', j.presentaciones) + docsBlockHtml('Minutas y bitácora del proceso', j.minutas);
   } catch (e) {
     el.innerHTML = `<div style="padding:16px;font-size:12px;color:var(--terracota)">No se pudieron cargar los documentos del Drive.<br><small>${esc(e.message)}</small></div>`;
   }
@@ -1673,7 +1692,7 @@ async function renderProcesos() {
               <div class="pdf-item-action">Abrir</div>
             </div>`).join('')
       : `<div class="proc-vacio">${empresaDriveFolder(empresa)
-          ? 'Todavía no hay archivos en la carpeta de esta empresa.'
+          ? 'Aún no hay archivos en la carpeta de esta empresa.'
           : 'Esta empresa todavía no tiene carpeta de Drive vinculada (pestaña CONFIG_DRIVE de la planilla base).'}</div>`;
     return `
       <div class="proceso-empresa-section">
@@ -1782,7 +1801,7 @@ function renderRecursosSec() {
       ? `<iframe class="drive-embed" src="https://drive.google.com/embeddedfolderview?id=${encodeURIComponent(fid)}#grid" title="Herramientas del grupo"></iframe>
          <div class="rec-note">Se ve el contenido en vivo de la carpeta: lo que suban a Drive aparece acá. Para que se vea desde cualquier navegador, la carpeta tiene que estar compartida como «Cualquiera con el enlace · Lector».
          <a class="src-link" href="https://drive.google.com/drive/folders/${esc(fid)}" target="_blank" rel="noopener">Abrir en Drive ↗</a></div>`
-      : `<div class="rec-empty">Todavía no hay carpeta vinculada. Armá una carpeta en Drive con las herramientas del grupo (tableros, matrices, plantillas) y pegá su id o su link en <a onclick="navigate('config')">Configuración → Herramientas del grupo</a>.</div>`;
+      : `<div class="rec-empty">Aún no hay carpeta vinculada. Armá una carpeta en Drive con las herramientas del grupo (tableros, matrices, plantillas) y pegá su id o su link en <a onclick="navigate('config')">Configuración → Herramientas del grupo</a>.</div>`;
   }
 
   renderTecnicas();
@@ -1796,7 +1815,7 @@ async function renderTecnicas() {
   if (!el) return;
   const fid = DRIVE_CONFIG.tecnicasFolderId;
   if (!fid) {
-    el.innerHTML = `<div class="rec-empty">Todavía no hay carpeta vinculada. Pegá el id o el link de la carpeta de material técnico en <a onclick="navigate('config')">Configuración → Reuniones Técnicas</a>.</div>`;
+    el.innerHTML = `<div class="rec-empty">Aún no hay carpeta vinculada. Pegá el id o el link de la carpeta de material técnico en <a onclick="navigate('config')">Configuración → Reuniones Técnicas</a>.</div>`;
     aplicarVisibilidad();
     return;
   }
@@ -1950,6 +1969,13 @@ function calColorFor(assignment){
 }
 
 function renderCalendarNative() {
+  if (dashEditing) renderReglasCalendario();   // el panel de la agenda se mantiene al día
+  renderCalendarLista();
+}
+
+// Solo la lista de reuniones. Se repinta sola cuando cambia una regla, sin
+// tocar el panel de arriba (si no, se perdería lo que se está escribiendo).
+function renderCalendarLista() {
   const list = document.getElementById('cal-list');
   if (!list) return;
   MEETINGS.sort((a,b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
@@ -2001,6 +2027,21 @@ function calRowHtml(m, nextDate, todayStr) {
   const isNext = m.date === nextDate;
   const dateCell = `<div class="cal-date">${d.getDate()} ${CAL_MONTHS[d.getMonth()].slice(0,3)}<small>${dow}</small></div>`;
 
+  // La disponibilidad se ve en el calendario: si una empresa quedó asignada a
+  // una fecha en la que declaró que no puede, la fila lo advierte.
+  const emp = EMPRESAS.find(e => e.nombre === m.assignment);
+  let aviso = '';
+  if (emp && !calEmpresaDisponible(emp, m.date)) {
+    aviso = `<span class="cal-aviso" title="En Cómo se arma la agenda figura que no puede presentar en esta fecha">no disponible</span>`;
+  } else if (emp && emp.activa === false) {
+    aviso = `<span class="cal-aviso" title="La empresa está fuera de la rotación">fuera de rotación</span>`;
+  } else {
+    const sr = calSinReunion(m.date);
+    if (sr && !['Sin reunión', 'Feriado'].includes(m.assignment)) {
+      aviso = `<span class="cal-aviso" title="${esc(sr.motivo || 'Semana sin reunión')}">semana sin reunión</span>`;
+    }
+  }
+
   if (dashEditing) {
     const opts = `<optgroup label="Empresas">${EMPRESAS.map(e => `<option value="${esc(e.nombre)}"${m.assignment===e.nombre?' selected':''}>${esc(e.nombre)}</option>`).join('')}</optgroup>`
       + `<optgroup label="Especiales">${CAL_SPECIALS.map(s => `<option value="${s}"${m.assignment===s?' selected':''}>${s}</option>`).join('')}</optgroup>`;
@@ -2009,6 +2050,7 @@ function calRowHtml(m, nextDate, todayStr) {
       <span class="cal-dot" style="background:${color}"></span>
       <select class="cal-input cal-assign-sel" onchange="calUpdateField('${m.date}','assignment',this.value)">${opts}</select>
       <input type="text" class="cal-input cal-topic-inp" value="${esc(m.topic)}" placeholder="Tema (opcional)" onchange="calUpdateField('${m.date}','topic',this.value)">
+      ${aviso}
       <div class="cal-row-actions">
         <button class="cal-pin ${m.fixed?'on':''}" title="Fijar (no se re-genera)" onclick="calTogglePin('${m.date}')">📌</button>
         <button class="cal-del" title="Eliminar" onclick="calDelete('${m.date}')">✕</button>
@@ -2020,6 +2062,7 @@ function calRowHtml(m, nextDate, todayStr) {
     <span class="cal-dot" style="background:${color}"></span>
     <span class="cal-assign">${esc(m.assignment)}</span>
     <span class="cal-topic">${esc(m.topic)}</span>
+    ${aviso}
     ${isNext?'<span class="cal-next-chip">próxima</span>':''}
   </div>`;
 }
@@ -2038,37 +2081,23 @@ function calApplyEditMode() {
   if (currentSection === 'calendario') renderCalendarNative();
 }
 
-// Muestra las reglas que hoy rigen la agenda, tal como están en la planilla.
-// No se editan acá a propósito: si se editaran en dos lugares, nunca se sabría
-// cuál manda.
+// El panel de la agenda: las reglas, la disponibilidad de cada empresa y las
+// semanas sin reunión. Está acá, junto al calendario, porque es lo que
+// determina cómo se asigna cada fecha.
 function renderReglasCalendario() {
   const el = document.getElementById('cal-reglas');
   if (!el) return;
-  const activas = EMPRESAS.filter(e => e.activa !== false);
-  const inactivas = EMPRESAS.filter(e => e.activa === false);
-  const conRestriccion = EMPRESAS.filter(e => e.activa !== false && (e.noDisponible || '').trim());
-
-  const item = (t, v) => `<div class="regla"><span class="regla-t">${t}</span><span class="regla-v">${v}</span></div>`;
-  const cada = CALCFG.cadenciaSemanas === 1 ? 'Todas las semanas' : `Cada ${CALCFG.cadenciaSemanas} semanas`;
-  const dia = CAL_DOWS[Number(CALCFG.diaSemana)] || '';
-
-  el.innerHTML = `
-    <div class="reglas-grid">
-      ${item('Cuándo se reúnen', `${cada}, los ${esc(dia)}${CALCFG.hora ? ' a las ' + esc(CALCFG.hora) : ''}`)}
-      ${item('Feriados', CALCFG.saltarFeriados ? 'No se reúnen' : 'Se reúnen igual')}
-      ${item('Ronda de novedades', CALCFG.rondaNovedadesCada ? `Cada ${CALCFG.rondaNovedadesCada} reuniones` : 'No se programa sola')}
-      ${item('Reunión técnica', CALCFG.tecnicaCada ? `Cada ${CALCFG.tecnicaCada} reuniones` : 'No se programa sola')}
-      ${item('Empresas en la rotación', `${activas.length} activa${activas.length === 1 ? '' : 's'}${inactivas.length ? ` · ${inactivas.length} fuera de rotación` : ''}`)}
-      ${item('Semanas sin reunión', SIN_REUNION.length ? `${SIN_REUNION.length} cargadas` : 'Ninguna cargada')}
-    </div>
-    ${conRestriccion.length ? `<div class="regla-detalle"><strong>Cuándo no puede presentar cada empresa:</strong><br>${
-      conRestriccion.map(e => `${esc(e.nombre)}: ${esc(e.noDisponible)}`).join('<br>')}</div>` : ''}
-    ${inactivas.length ? `<div class="regla-detalle">Fuera de la rotación (columna <strong>activa</strong> en FALSE): ${
-      inactivas.map(e => esc(e.nombre)).join(', ')}. Siguen apareciendo en Empresas y conservan su historial.</div>` : ''}
-    ${SIN_REUNION.length ? `<div class="regla-detalle"><strong>Semanas sin reunión:</strong><br>${
-      SIN_REUNION.map(r => `${esc(fechaCorta(r.desde))}${r.hasta !== r.desde ? ' al ' + esc(fechaCorta(r.hasta)) : ''}${r.motivo ? ' · ' + esc(r.motivo) : ''}`).join('<br>')}</div>` : ''}
-    <div class="regla-detalle">Todo esto se cambia en la planilla (pestañas <strong>CALENDARIO</strong>, <strong>SIN_REUNION</strong> y la columna <strong>no_disponible</strong> de <strong>EMPRESAS</strong>), no acá.${
-      DRIVE_CONFIG.baseFileId ? ` <a class="src-link" href="https://drive.google.com/file/d/${esc(DRIVE_CONFIG.baseFileId)}/view" target="_blank" rel="noopener">Abrir la planilla ↗</a>` : ''}</div>`;
+  if (!CONFIG) { el.innerHTML = '<div class="act-empty">Cargando la configuración…</div>'; return; }
+  el.innerHTML = ESQUEMA_CONFIG.filter(b => BLOQUES_AGENDA.includes(b.id))
+    .map(b => `<div class="agenda-bloque">
+      <div class="agenda-bloque-tit">${b.icono} ${esc(b.titulo)}</div>
+      <div class="src-estructura">${esc(b.desc)}</div>
+      ${b.tipo === 'campos' ? `<div class="cfg-grid">${bloqueCamposHtml(b)}</div>`
+        : b.tipo === 'disponibilidad' ? bloqueDisponibilidadHtml(b)
+        : bloqueTablaHtml(b)}
+      ${b.pie ? `<div class="cfg-pie">${b.pie}</div>` : ''}
+    </div>`).join('') +
+    `<div class="cfg-estado" id="cfg-estado" style="margin-top:10px"></div>`;
 }
 
 function calStatus(msg) {
@@ -2145,37 +2174,45 @@ function calCuentaEmpresasHasta(fechaStr) {
   return MEETINGS.filter(m => m.date < fechaStr && nombres.has(m.assignment)).length;
 }
 
-function calTocaEspecial(fechaStr, tipo, cada) {
-  if (!cada) return false;
-  const previas = MEETINGS.filter(m => m.date < fechaStr && m.assignment === tipo).length;
-  const reuniones = MEETINGS.filter(m => m.date < fechaStr && !['Feriado', 'Sin reunión'].includes(m.assignment)).length;
-  return reuniones >= (previas + 1) * cada - 1;
-}
-
-// La empresa activa y disponible que hace más tiempo que no presenta
+// La empresa activa y disponible que hace más tiempo que no presenta, siempre
+// que haya superado el mínimo de semanas entre presentaciones.
 function calPickBest(fechaStr) {
+  const minDias = Math.max(1, Number(CALCFG.semanasEntrePresentaciones) || 1) * 7;
   const candidatas = EMPRESAS
     .filter(e => e.activa !== false)
     .filter(e => calEmpresaDisponible(e, fechaStr));
-  if (!candidatas.length) return null;
+  if (!candidatas.length) return { nombre: null, motivo: 'ninguna empresa activa está disponible en esa fecha' };
   let best = null, maxGap = -1;
   candidatas.forEach(e => {
     const last = [...MEETINGS].reverse().find(m => m.assignment === e.nombre && m.date < fechaStr);
     const gap = last ? Math.floor((new Date(fechaStr) - new Date(last.date)) / 86400000) : 99999;
     if (gap > maxGap) { maxGap = gap; best = e; }
   });
-  return best ? best.nombre : null;
+  if (!best) return { nombre: null, motivo: 'no hay empresas para asignar' };
+  // Si todavía no pasó el mínimo, la fecha se completa con ronda o técnica
+  if (maxGap < minDias) return { nombre: null, relleno: true };
+  return { nombre: best.nombre };
 }
 
 function calAsignacionPara(fecha, fechaStr) {
   if (CALCFG.saltarFeriados && calIsHoliday(fecha)) return { asignacion: 'Feriado' };
   const sr = calSinReunion(fechaStr);
   if (sr) return { asignacion: 'Sin reunión', tema: sr.motivo || '' };
-  if (calTocaEspecial(fechaStr, 'Ronda de novedades', CALCFG.rondaNovedadesCada)) return { asignacion: 'Ronda de novedades' };
-  if (calTocaEspecial(fechaStr, 'Técnica', CALCFG.tecnicaCada)) return { asignacion: 'Técnica' };
-  const empresa = calPickBest(fechaStr);
-  if (empresa) return { asignacion: empresa };
-  return { asignacion: 'Flexible', aviso: `${fechaStr}: ninguna empresa activa está disponible (ver la columna no_disponible).` };
+
+  const elegida = calPickBest(fechaStr);
+  if (elegida.nombre) return { asignacion: elegida.nombre };
+
+  // Fecha libre: se completa con ronda de novedades o técnica según la proporción
+  const rondas = MEETINGS.filter(m => m.date < fechaStr && m.assignment === 'Ronda de novedades').length;
+  const tecnicas = MEETINGS.filter(m => m.date < fechaStr && m.assignment === 'Técnica').length;
+  const tipo = window.Reglas
+    ? Reglas.tipoDeRelleno(rondas, tecnicas, CALCFG.proporcionRonda, CALCFG.proporcionTecnica)
+    : '';
+  if (tipo) return { asignacion: tipo };
+  return {
+    asignacion: 'Flexible',
+    aviso: elegida.motivo ? `${fechaStr}: ${elegida.motivo}.` : '',
+  };
 }
 
 async function calGenerate() {
@@ -2187,7 +2224,7 @@ async function calGenerate() {
   const fromStr = document.getElementById('cfg-from').value;
   const toStr = document.getElementById('cfg-to').value;
   if (!fromStr || !toStr) { alert('Indicá el rango de fechas (Desde / Hasta).'); return; }
-  if (!confirm(`Se van a generar reuniones cada ${Number(CALCFG.cadenciaSemanas) === 1 ? 'semana' : CALCFG.cadenciaSemanas + ' semanas'}, los ${CAL_DOWS[Number(CALCFG.diaSemana)] || 'lunes'}, respetando las fijadas 📌. ¿Seguimos?`)) return;
+  if (!confirm(`Se van a generar reuniones cada ${Number(CALCFG.cadenciaSemanas) === 1 ? 'semana' : CALCFG.cadenciaSemanas + ' semanas'}, los ${CAL_DOWS[Number(CALCFG.diaSemana)] || 'lunes'}, respetando las fijadas 📌. ¿Confirmás?`)) return;
 
   const avisos = [];
   const dia = Number(CALCFG.diaSemana);
@@ -2235,30 +2272,29 @@ function esc(s){ return String(s ?? '').replace(/[&<>"]/g, m => ({'&':'&amp;','<
 
 // En modo edición cada sección explica de dónde sale su contenido y linkea el
 // archivo o la carpeta de Drive que hay que tocar para cambiarlo.
+// En modo edición, cada sección indica dónde se administra su contenido.
 const DRIVE_SECTIONS = {
-  dashboard: { texto: 'Las <strong>reuniones realizadas</strong> y la <strong>actividad reciente</strong> salen de la <strong>bitácora</strong> de cada empresa: el documento de la subcarpeta <em>Proceso</em>, donde cada reunión es un encabezado con su fecha. Las técnicas salen de su carpeta. Del Calendario salen solo las <strong>próximas fechas</strong>.', tipo: 'carpetas' },
-  grupo:     { texto: 'Identidad, objetivos, principios, hitos y ejes salen de las pestañas <strong>GRUPO</strong>, <strong>HITOS</strong> y <strong>EJES_2026</strong> de la planilla base.', tipo: 'base' },
-  empresas:  { texto: 'Cada ficha sale de la pestaña <strong>EMPRESAS</strong> de la planilla base: nombre, <strong>zona</strong> (📍), <strong>participantes</strong> (👤), <strong>resumen_corto</strong> y <strong>foco_actual</strong>. Para cambiar un nombre de participante, editá esa celda.', tipo: 'base' },
-  procesos:  { texto: 'Cada empresa lista los archivos de su carpeta de Drive (subcarpeta <strong>Presentaciones</strong>). Subí el archivo a Drive y aparece acá. El botón <strong>Bitácora</strong> abre el documento del proceso, que está en la subcarpeta <strong>Proceso</strong>.', tipo: 'carpetas' },
-  eventos:   { texto: 'Los <strong>hitos</strong> salen de la pestaña <strong>HITOS</strong> y la <strong>agenda</strong> de la pestaña <strong>EVENTOS</strong> (columnas fecha, titulo, descripcion, lugar). La fecha es texto libre: «4-5-6/8», «23 y 24/10».', tipo: 'base' },
-  recursos:  { texto: 'El <strong>marco conceptual</strong> sale del archivo Marco Conceptual (pestaña CONCEPTOS) y las <strong>herramientas del grupo</strong> de la carpeta de Drive vinculada.', tipo: 'config' },
+  dashboard: { texto: 'Las <strong>reuniones realizadas</strong> y la <strong>actividad reciente</strong> se toman de la <strong>bitácora</strong> de cada empresa: el documento de la subcarpeta <em>Proceso</em>, donde cada reunión figura como un encabezado con su fecha. Las técnicas provienen de su carpeta. El Calendario aporta únicamente las <strong>próximas fechas</strong>.', destino: 'archivos' },
+  grupo:     { texto: 'La identidad, los objetivos, los principios, los hitos y los ejes se administran en <strong>Configuración → El grupo</strong>.', destino: 'contenido' },
+  empresas:  { texto: 'Las fichas se administran en <strong>Configuración → El grupo → Empresas</strong>. Los documentos de cada una provienen de su carpeta de Drive.', destino: 'contenido' },
+  procesos:  { texto: 'Cada empresa lista los archivos de su carpeta de Drive (subcarpeta <strong>Presentaciones</strong>). Al subir un archivo a Drive, aparece en esta sección. El botón <strong>Bitácora</strong> abre el documento de la subcarpeta <strong>Proceso</strong>.', destino: 'archivos' },
+  calendario:{ texto: 'Las reuniones se editan en esta misma sección. Las reglas de generación, la disponibilidad de cada empresa y las semanas sin reunión están en el panel <strong>Cómo se arma la agenda</strong>, arriba.', destino: '' },
+  eventos:   { texto: 'Los <strong>hitos</strong> y la <strong>agenda de eventos</strong> se administran en <strong>Configuración → El grupo</strong>. La fecha de un evento admite texto libre: «4-5-6/8», «23 y 24/10».', destino: 'contenido' },
+  recursos:  { texto: 'El <strong>marco conceptual</strong> se administra en <strong>Configuración → El grupo</strong>. Las <strong>reuniones técnicas</strong> y las <strong>herramientas</strong> provienen de las carpetas de Drive indicadas en <strong>Configuración → Archivos</strong>.', destino: 'archivos' },
 };
 
 function onEditingChange(on) {
   document.querySelectorAll('.drive-hint').forEach(b => b.remove());
   if (!on) return;
-  const linkBase = DRIVE_CONFIG.baseFileId
-    ? ` <a href="https://drive.google.com/file/d/${esc(DRIVE_CONFIG.baseFileId)}/view" target="_blank" rel="noopener">Abrir la planilla ↗</a>`
-    : '';
   for (const [sec, info] of Object.entries(DRIVE_SECTIONS)) {
     const ph = document.querySelector(`#sec-${sec} .page-header`);
     if (!ph) continue;
     const d = document.createElement('div');
     d.className = 'drive-hint';
-    const cola = info.tipo === 'base'
-      ? ` Editá ese archivo (o cambiá la fuente en <a onclick="navigate('config')">Configuración</a>).${linkBase}`
-      : ` Las fuentes se conectan en <a onclick="navigate('config')">Configuración</a>.`;
-    d.innerHTML = `📄 ${info.texto}${cola}`;
+    const ir = info.destino
+      ? ` <a onclick="navigate('config'); configPestana('${info.destino}')">Ir a Configuración →</a>`
+      : '';
+    d.innerHTML = `${info.texto}${ir}`;
     ph.appendChild(d);
   }
 }
@@ -2337,6 +2373,13 @@ async function loadBaseFromDrive() {
     AVISOS_PLANILLA = Array.isArray(j.avisos) ? j.avisos : [];
     // Los hitos de "Eventos e Hitos" son los mismos de la planilla
     HITOS = (j.hitos || []).map(h => ({ fecha: h.anio || h.fecha || '', titulo: h.titulo, desc: h.desc, tipo: 'pasada' }));
+    // La planilla es un punto de partida, no una fuente paralela: lo leído queda
+    // volcado en la configuración del sitio, que es donde después se edita. Sin
+    // esto los formularios (y el panel de la agenda) se ven vacíos aunque el
+    // sitio esté funcionando con esos datos.
+    if (CONFIG && !((CONFIG.grupo || {}).nombre) && !(CONFIG.empresas || []).length) {
+      CONFIG = configDesdePlanilla(j);
+    }
     await vincularCarpetasDeEmpresas();
     aplicarIdentidad();
   } catch (err) {
@@ -2390,31 +2433,31 @@ const DIAS_OPCIONES = CAL_DOWS.map((d, i) => ({ v: i, t: d[0].toUpperCase() + d.
 const ESQUEMA_CONFIG = [
   {
     id: 'grupo', titulo: 'Identidad del grupo', icono: '🏷️',
-    desc: 'El nombre y los textos que se ven en el menú, en la portada y en la sección El Grupo.',
+    desc: 'Nombre y textos institucionales que se muestran en el menú, en la portada y en la sección El Grupo.',
     tipo: 'campos', ruta: 'grupo',
     campos: [
-      { k: 'nombre', label: 'Nombre del grupo', tipo: 'texto', req: true, ayuda: 'Se ve en el menú, en el encabezado y en la pantalla de acceso.' },
-      { k: 'tipo', label: 'Tipo de espacio', tipo: 'texto', ph: 'Directorio Colaborativo', ayuda: 'La bajada que va debajo del nombre.' },
+      { k: 'nombre', label: 'Nombre del grupo', tipo: 'texto', req: true, ayuda: 'Se muestra en el menú, en el encabezado y en la pantalla de acceso.' },
+      { k: 'tipo', label: 'Tipo de espacio', tipo: 'texto', ph: 'Directorio Colaborativo', ayuda: 'Texto que acompaña al nombre en el menú.' },
       { k: 'facilitadoPor', label: 'Facilitado por', tipo: 'texto', ph: 'Simpleza' },
-      { k: 'etiqueta', label: 'Etiqueta del menú', tipo: 'texto', ayuda: 'Opcional. Una etiqueta chica bajo el nombre, por ejemplo «Grupo IV».' },
-      { k: 'descripcion', label: 'Descripción del grupo', tipo: 'parrafo', req: true, ayuda: 'Se ve en la portada y en El Grupo.' },
+      { k: 'etiqueta', label: 'Etiqueta del menú', tipo: 'texto', ayuda: 'Opcional. Etiqueta breve debajo del nombre, por ejemplo «Grupo IV».' },
+      { k: 'descripcion', label: 'Descripción del grupo', tipo: 'parrafo', req: true, ayuda: 'Se muestra en la portada y en la sección El Grupo.' },
       { k: 'inicio', label: 'Año de inicio', tipo: 'texto', ancho: 'chico' },
-      { k: 'nombreDesde', label: 'Nombre actual desde', tipo: 'texto', ancho: 'chico', ayuda: 'Dejalo vacío si nunca cambió de nombre.' },
+      { k: 'nombreDesde', label: 'Nombre actual desde', tipo: 'texto', ancho: 'chico', ayuda: 'Dejar vacío si el grupo no cambió de nombre.' },
       { k: 'objetivoGeneral', label: 'Objetivo general', tipo: 'parrafo' },
       { k: 'objetivoAnioTitulo', label: 'Título del objetivo del año', tipo: 'texto', ph: 'Objetivo 2026' },
       { k: 'objetivoAnio', label: 'Objetivo del año', tipo: 'parrafo' },
       { k: 'objetivoAnioAmpliado', label: 'Objetivo del año (ampliado)', tipo: 'parrafo' },
-      { k: 'fraseDestacada', label: 'Frase destacada', tipo: 'texto', ayuda: 'Se muestra resaltada al final de los principios.' },
+      { k: 'fraseDestacada', label: 'Frase destacada', tipo: 'texto', ayuda: 'Se muestra destacada al final de los principios.' },
     ],
   },
   {
     id: 'principios', titulo: 'Principios', icono: '📌',
-    desc: 'Cómo trabaja el grupo. Se ven como lista en la sección El Grupo.',
+    desc: 'Criterios de funcionamiento del grupo. Se listan en la sección El Grupo.',
     tipo: 'lista-texto', ruta: 'grupo.principios', etiquetaItem: 'principio',
   },
   {
     id: 'equipo', titulo: 'Equipo del grupo', icono: '👥',
-    desc: 'Quiénes coordinan o facilitan. Se ve al pie del menú lateral.',
+    desc: 'Integrantes que coordinan o facilitan el grupo. Se muestran al pie del menú lateral.',
     tipo: 'tabla', ruta: 'equipo', etiquetaItem: 'persona',
     cols: [
       { k: 'nombre', label: 'Nombre', tipo: 'texto' },
@@ -2423,7 +2466,7 @@ const ESQUEMA_CONFIG = [
   },
   {
     id: 'empresas', titulo: 'Empresas', icono: '🏢',
-    desc: 'Las empresas del grupo. «Activa» decide si entra en la rotación del calendario y en los números del tablero; una empresa inactiva conserva su ficha y su historial.',
+    desc: 'Empresas que integran el grupo. «Activa» determina si participa de la rotación del calendario y del tablero; una empresa inactiva conserva su ficha y su historial.',
     tipo: 'tabla', ruta: 'empresas', etiquetaItem: 'empresa', filaExpandible: true,
     cols: [
       { k: 'nombre', label: 'Nombre', tipo: 'texto', req: true },
@@ -2432,11 +2475,13 @@ const ESQUEMA_CONFIG = [
       { k: 'participantes', label: 'Participan', tipo: 'texto' },
     ],
     colsExtra: [
-      { k: 'noDisponible', label: 'Cuándo NO puede presentar', tipo: 'texto', valida: 'noDisponible',
-        ayuda: 'Escribilo en criollo, separando con comas: «enero», «diciembre a febrero», «julio 2026», «6/7/2026», «1/9/2026 a 20/9/2026».' },
-      { k: 'carpetaId', label: 'Carpeta de Drive', tipo: 'drive-carpeta',
-        ayuda: 'Opcional. Si no la cargás, el sitio la busca sola por nombre dentro de la carpeta de empresas.' },
-      { k: 'resumen', label: 'Resumen corto', tipo: 'parrafo', ayuda: 'Se ve en la tarjeta de la empresa.' },
+      { k: 'carpetaId', label: 'Carpeta de la empresa en Drive', tipo: 'drive', ayudaTipo: 'carpeta',
+        ayuda: 'Opcional. Si no se indica, el sitio la identifica por nombre dentro de la carpeta de empresas. Adentro busca las subcarpetas «Presentaciones» y «Proceso».' },
+      { k: 'presentacionesId', label: 'Carpeta de presentaciones', tipo: 'drive', ayudaTipo: 'carpeta',
+        ayuda: 'Opcional. Solo si no está dentro de la carpeta de la empresa o no se llama «Presentaciones».' },
+      { k: 'bitacoraId', label: 'Documento de bitácora', tipo: 'drive', ayudaTipo: 'documento',
+        ayuda: 'Opcional. El documento donde se registra cada reunión. Si no se indica, se busca dentro de la subcarpeta «Proceso». Pegá el enlace del documento (Google Doc o .docx).' },
+      { k: 'resumen', label: 'Resumen corto', tipo: 'parrafo', ayuda: 'Se muestra en la tarjeta de la empresa.' },
       { k: 'foco', label: 'Foco actual', tipo: 'texto' },
       { k: 'identidad', label: 'Identidad', tipo: 'parrafo' },
       { k: 'queHace', label: 'Qué hace y cómo funciona', tipo: 'parrafo' },
@@ -2449,23 +2494,31 @@ const ESQUEMA_CONFIG = [
     tipo: 'campos', ruta: 'calendario',
     campos: [
       { k: 'diaSemana', label: 'Día de reunión', tipo: 'select', opciones: DIAS_OPCIONES },
-      { k: 'hora', label: 'Hora', tipo: 'texto', ancho: 'chico', ph: '08:00', ayuda: 'Solo se muestra.' },
+      { k: 'hora', label: 'Hora', tipo: 'texto', ancho: 'chico', ph: '08:00', ayuda: 'Solo informativa: no afecta la generación.' },
       { k: 'cadenciaSemanas', label: 'Cada cuántas semanas', tipo: 'numero', ancho: 'chico', min: 1,
-        ayuda: '1 = todas las semanas. 2 = una sí y una no.' },
+        ayuda: '1 = todas las semanas. 2 = una semana de por medio.' },
       { k: 'saltarFeriados', label: 'Si cae feriado, no hay reunión', tipo: 'siNo' },
-      { k: 'rondaNovedadesCada', label: 'Ronda de novedades cada N reuniones', tipo: 'numero', ancho: 'chico', min: 0,
-        ayuda: '0 = no se programa sola.' },
-      { k: 'tecnicaCada', label: 'Reunión técnica cada N reuniones', tipo: 'numero', ancho: 'chico', min: 0,
-        ayuda: '0 = no se programa sola.' },
+      { k: 'semanasEntrePresentaciones', label: 'Semanas mínimas entre presentaciones de una misma empresa', tipo: 'numero', ancho: 'chico', min: 1,
+        ayuda: 'Define cada cuánto le vuelve a tocar a una empresa. Las fechas que quedan libres se completan con rondas de novedades y reuniones técnicas.' },
+      { k: 'proporcionRonda', label: 'Proporción · ronda de novedades', tipo: 'numero', ancho: 'chico', min: 0,
+        ayuda: 'Proporción de las fechas libres destinadas a ronda de novedades.' },
+      { k: 'proporcionTecnica', label: 'Proporción · reunión técnica', tipo: 'numero', ancho: 'chico', min: 0,
+        ayuda: 'Con 1 y 2, de cada tres fechas libres una es ronda y dos son técnicas. Con 0 y 0, esas fechas quedan como Flexible.' },
     ],
-    pie: `<strong>Cómo decide cada fecha:</strong> 1) las fijadas 📌 y las Flexible no se tocan ·
-          2) feriado → Feriado · 3) semana sin reunión → Sin reunión · 4) si toca, ronda o técnica ·
-          5) si no, la empresa activa que hace más que no presenta y esté disponible ·
-          6) si ninguna está disponible, queda Flexible y el sitio avisa.`,
+    pie: `<strong>Orden en que se decide cada fecha:</strong> 1) las fijadas 📌 y las marcadas Flexible no se modifican ·
+          2) feriado → Feriado · 3) semana sin reunión → Sin reunión ·
+          4) la empresa activa que hace más tiempo que no presenta, si superó el mínimo de semanas y está disponible ·
+          5) si ninguna empresa corresponde, la fecha se completa con ronda de novedades o reunión técnica según la proporción ·
+          6) si no hay proporciones cargadas, queda Flexible.`,
+  },
+  {
+    id: 'disponibilidad', titulo: 'Disponibilidad de las empresas', icono: '🏢',
+    desc: 'Períodos en los que cada empresa no puede presentar. Al generar la agenda, esas fechas se le asignan a otra empresa.',
+    tipo: 'disponibilidad', ruta: 'empresas',
   },
   {
     id: 'sinReunion', titulo: 'Semanas sin reunión', icono: '🚫',
-    desc: 'Recesos, cosecha, congresos. Esas fechas quedan como «Sin reunión». Si es un solo día, dejá «hasta» vacío.',
+    desc: 'Períodos en los que el grupo no sesiona (recesos, campaña, congresos). Esas fechas se marcan como «Sin reunión». Para un único día, dejá «Hasta» vacío.',
     tipo: 'tabla', ruta: 'sinReunion', etiquetaItem: 'período',
     cols: [
       { k: 'desde', label: 'Desde', tipo: 'fecha' },
@@ -2475,7 +2528,7 @@ const ESQUEMA_CONFIG = [
   },
   {
     id: 'hitos', titulo: 'Hitos del grupo', icono: '🏁',
-    desc: 'La línea de tiempo. Se ve en El Grupo y en Eventos e Hitos.',
+    desc: 'Línea de tiempo del grupo. Se muestra en El Grupo y en Eventos e Hitos.',
     tipo: 'tabla', ruta: 'hitos', etiquetaItem: 'hito',
     cols: [
       { k: 'anio', label: 'Año', tipo: 'texto', ancho: 'chico' },
@@ -2485,7 +2538,7 @@ const ESQUEMA_CONFIG = [
   },
   {
     id: 'ejes', titulo: 'Ejes temáticos', icono: '🎯',
-    desc: 'Las prioridades del período. El título de la sección se cambia en Identidad del grupo.',
+    desc: 'Prioridades temáticas del período. El título de la sección se define en Identidad del grupo.',
     tipo: 'tabla', ruta: 'ejes', etiquetaItem: 'eje',
     cols: [
       { k: 'titulo', label: 'Título', tipo: 'texto' },
@@ -2494,7 +2547,7 @@ const ESQUEMA_CONFIG = [
   },
   {
     id: 'eventos', titulo: 'Agenda de eventos', icono: '🗓️',
-    desc: 'Congresos, viajes y encuentros. La fecha es texto libre: se muestra tal cual («4-5-6/8», «23 y 24/10»). Las reuniones semanales no van acá: las arma el calendario.',
+    desc: 'Congresos, viajes y encuentros. La fecha admite texto libre y se muestra tal como se escribe («4-5-6/8», «23 y 24/10»). Las reuniones periódicas se administran en el Calendario.',
     tipo: 'tabla', ruta: 'eventos', etiquetaItem: 'evento',
     cols: [
       { k: 'fecha', label: 'Fecha', tipo: 'texto', ancho: 'chico' },
@@ -2505,7 +2558,7 @@ const ESQUEMA_CONFIG = [
   },
   {
     id: 'conceptos', titulo: 'Marco conceptual', icono: '📚',
-    desc: 'El vocabulario común del grupo. Cada concepto se ve como una tarjeta en Recursos.',
+    desc: 'Conceptos con los que trabaja el grupo. Cada uno se muestra como una tarjeta en Recursos.',
     tipo: 'tabla', ruta: 'conceptos', etiquetaItem: 'concepto',
     cols: [
       { k: 'icon', label: 'Emoji', tipo: 'texto', ancho: 'chico', ph: '📌' },
@@ -2538,7 +2591,8 @@ function cfgGuardar(refrescar) {
       await saveContentToDB('config_grupo', CONFIG);
       cfgEstado('Guardado ✓', 'ok');
       aplicarConfigAlSitio();
-      if (refrescar) renderConfig();
+      if (currentSection === 'calendario') renderCalendarLista();   // los avisos se recalculan
+      if (refrescar) { if (currentSection === 'calendario') renderReglasCalendario(); else renderConfig(); }
     } catch (e) {
       cfgEstado('No se pudo guardar: ' + e.message, 'err');
     }
@@ -2584,6 +2638,8 @@ function aplicarConfigAlSitio() {
     noDisponible: e.noDisponible || '',
     noDisponibleReglas: (window.Reglas ? Reglas.parseNoDisponible(e.noDisponible || '').reglas : []),
     driveFolderId: e.carpetaId || '',
+    presentacionesId: e.presentacionesId || '',
+    bitacoraId: e.bitacoraId || '',
     zona: e.zona || '', participantes: e.participantes || '', resumen: e.resumen || '',
     foco: e.foco || '', identidad: e.identidad || '', queHace: e.queHace || '', recorrido: e.recorrido || '',
     tags: [],
@@ -2611,8 +2667,11 @@ function campoHtml(campo, valor, onchange, idBase) {
     control = `<input type="number" id="${id}" class="${cls}" min="${campo.min ?? 0}" value="${esc(valor ?? '')}" oninput="${onchange}">`;
   } else if (campo.tipo === 'fecha') {
     control = `<input type="date" id="${id}" class="${cls}" value="${esc(valor || '')}" onchange="${onchange}">`;
-  } else if (campo.tipo === 'drive-carpeta') {
-    control = `<input type="text" id="${id}" class="${cls}" placeholder="Pegá el link o el id de la carpeta" value="${esc(valor || '')}" onchange="${onchange}">`;
+  } else if (campo.tipo === 'drive') {
+    const abrir = valor
+      ? `<a class="src-link" href="https://drive.google.com/${campo.ayudaTipo === 'carpeta' ? 'drive/folders/' : 'file/d/'}${esc(valor)}${campo.ayudaTipo === 'carpeta' ? '' : '/view'}" target="_blank" rel="noopener">Abrir ↗</a>`
+      : '';
+    control = `<span class="cfg-drive"><input type="text" id="${id}" class="${cls}" placeholder="Enlace de ${esc(campo.ayudaTipo)} en Drive" value="${esc(valor || '')}" onchange="${onchange}">${abrir}</span>`;
   } else {
     control = `<input type="text" id="${id}" class="${cls}"${ph} value="${esc(valor || '')}" oninput="${onchange}">`;
   }
@@ -2668,7 +2727,7 @@ function cfgSetItemTexto(ruta, i, v) {
 function bloqueTablaHtml(b) {
   const lista = cfgLeer(b.ruta) || [];
   if (!lista.length) {
-    return `<div class="cfg-vacio">Todavía no hay ${esc(b.etiquetaItem)}s cargados.</div>
+    return `<div class="cfg-vacio">Aún no hay ${esc(b.etiquetaItem)}s cargados.</div>
       <button class="cfg-agregar" onclick="cfgAgregar('${b.ruta}','ficha')">＋ Agregar ${esc(b.etiquetaItem)}</button>`;
   }
   const fichas = lista.map((item, i) => {
@@ -2699,7 +2758,7 @@ function cfgSetFicha(ruta, i, clave, tipo, el) {
   const lista = cfgLeer(ruta) || [];
   if (!lista[i]) return;
   let v = tipo === 'siNo' ? el.checked : el.value;
-  if (tipo === 'drive-carpeta') { v = extractDriveId(v); el.value = v; }
+  if (tipo === 'drive') { v = extractDriveId(v); el.value = v; }
   lista[i][clave] = v;
   if (clave === 'nombre' && !lista[i].slug) lista[i].slug = slugDe(v);
   cfgEscribir(ruta, lista);
@@ -2713,8 +2772,38 @@ function cfgSetFicha(ruta, i, clave, tipo, el) {
       : (reglas.length ? `✓ ${reglas.length} regla${reglas.length === 1 ? '' : 's'} entendida${reglas.length === 1 ? '' : 's'}` : '');
     aviso.className = 'cfg-valida' + (noEntendido.length ? ' err' : ' ok');
   }
+  // Un enlace de Drive pegado se comprueba contra Drive en el momento: si no se
+  // puede leer, hay que enterarse acá y no descubrirlo por un número en cero.
+  if (aviso && tipo === 'drive') comprobarDrive(v, clave, aviso);
   // Cambiar el nombre o el estado cambia el encabezado de la ficha
   cfgGuardar(clave === 'nombre' || clave === 'activa');
+}
+
+// Lee lo que se acaba de indicar y lo dice: cuántas reuniones tiene la bitácora,
+// cuántos archivos tiene la carpeta, o por qué no se pudo abrir.
+async function comprobarDrive(id, clave, aviso) {
+  if (!id) { aviso.textContent = ''; aviso.className = 'cfg-valida'; return; }
+  aviso.textContent = 'Comprobando en Drive…';
+  aviso.className = 'cfg-valida';
+  const decir = (texto, ok) => { aviso.textContent = texto; aviso.className = 'cfg-valida' + (ok ? ' ok' : ' err'); };
+  try {
+    if (clave === 'bitacoraId') {
+      const r = await fetch(`/api/bitacora?fileId=${encodeURIComponent(id)}`);
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j.error) return decir('No se pudo leer: ' + (j.error || `HTTP ${r.status}`), false);
+      const n = (j.reuniones || []).length;
+      return n
+        ? decir(`✓ ${(j.archivo || {}).nombre ? `«${j.archivo.nombre}»: ` : ''}${n} reunion${n === 1 ? '' : 'es'} con fecha`, true)
+        : decir(j.aviso || 'El documento se abrió, pero no se reconoció ninguna reunión con fecha.', false);
+    }
+    const r = await fetch(`/api/drive?op=list&folderId=${encodeURIComponent(id)}`);
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.error) return decir('No se pudo abrir: ' + (j.error || `HTTP ${r.status}`), false);
+    const n = (j.files || j.archivos || []).length;
+    decir(`✓ Carpeta abierta · ${n} elemento${n === 1 ? '' : 's'}`, true);
+  } catch (e) {
+    decir('No se pudo comprobar: ' + e.message, false);
+  }
 }
 
 const slugDe = n => String(n || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -2744,10 +2833,35 @@ function cfgMover(ruta, i, dir) {
   cfgGuardar(true);
 }
 
+// Disponibilidad: una fila por empresa activa, con los períodos en los que no
+// puede presentar. Vive junto al calendario porque es lo que condiciona la
+// asignación de cada fecha.
+function bloqueDisponibilidadHtml(b) {
+  const lista = cfgLeer(b.ruta) || [];
+  const activas = lista.map((e, i) => ({ e, i })).filter(x => x.e.nombre && x.e.activa !== false);
+  if (!activas.length) return '<div class="cfg-vacio">No hay empresas activas cargadas.</div>';
+  const filas = activas.map(({ e, i }) => {
+    const id = `cfg-disp-${i}`;
+    return `<div class="disp-fila">
+      <span class="disp-empresa">${esc(e.nombre)}</span>
+      <input type="text" id="${id}" class="cfg-input" placeholder="Sin restricciones"
+        value="${esc(e.noDisponible || '')}"
+        oninput="cfgSetFicha('${b.ruta}',${i},'noDisponible','texto',this)">
+      <span class="cfg-valida" id="${id}-valida"></span>
+    </div>`;
+  }).join('');
+  return `<div class="disp-tabla">
+    <div class="disp-encab"><span>Empresa</span><span>Períodos en los que no puede presentar</span></div>
+    ${filas}
+  </div>
+  <div class="cfg-ayuda" style="margin-top:10px">Separá los períodos con comas. Formatos admitidos: «enero», «diciembre a febrero», «julio 2026», «06/07/2026», «01/09/2026 a 20/09/2026».</div>`;
+}
+
 // Un bloque completo del esquema
 function bloqueConfigHtml(b) {
   const cuerpo = b.tipo === 'campos' ? `<div class="cfg-grid">${bloqueCamposHtml(b)}</div>`
     : b.tipo === 'lista-texto' ? bloqueListaTextoHtml(b)
+    : b.tipo === 'disponibilidad' ? bloqueDisponibilidadHtml(b)
     : bloqueTablaHtml(b);
   return `<div class="card cfg-bloque" id="bloque-${b.id}">
     <div class="card-title">${b.icono} ${esc(b.titulo)}</div>
@@ -2770,15 +2884,15 @@ async function getServiceAccountEmail() {
 
 const DRIVE_SOURCES = [
   { key:'raizFolderId', tipo:'carpeta', label:'Carpeta del grupo en Drive', destacado:true,
-    desc:'La carpeta madre del grupo, la que contiene todo lo demás. Pegala una vez y tocá «Detectar contenido»: el sitio busca adentro la planilla, las carpetas de empresas, el material técnico, las novedades y el logo, y completa los campos de abajo solo.',
+    desc:'Carpeta raíz del grupo, la que contiene a las demás. Indicala una vez y usá «Detectar contenido»: el sitio identifica la carpeta de empresas, el material técnico, las novedades y el logo, y completa los campos siguientes.',
     donde:'No se ve en el sitio: sirve para completar el resto de una sola vez.',
     estructura:'Una carpeta de Drive compartida con la cuenta de servicio. Adentro, subcarpetas con nombres reconocibles («Empresas y procesos», «Material teórico», «Información institucional», «Novedades», «Logos»).' },
   { key:'empresasFolderId', tipo:'carpeta', label:'Carpeta de las empresas',
-    desc:'La carpeta que tiene adentro una subcarpeta por empresa. El sitio las vincula solo, comparando el nombre de la carpeta con el de la empresa en la planilla: no hace falta pegar el id de cada una. Si igual cargás un id en la pestaña CONFIG_DRIVE, ese manda.',
+    desc:'Carpeta que contiene una subcarpeta por empresa. El sitio las vincula automáticamente comparando el nombre de la carpeta con el de la empresa. Si indicás la carpeta de una empresa en su ficha, esa tiene prioridad.',
     donde:'Procesos · Dashboard (reuniones y actividad) · documentos de cada ficha',
     estructura:'Una carpeta de Drive con una subcarpeta por empresa. Adentro de cada una: «Presentaciones» y «Proceso» (donde va la bitácora).' },
   { key:'logoFileId', tipo:'archivo', label:'Logo del grupo',
-    desc:'La imagen del logo, subida a Drive. Se muestra en el menú y en el encabezado. No hace falta que sea pública: el sitio la sirve con la cuenta de servicio.',
+    desc:'Imagen del logo alojada en Drive. Se muestra en el menú y en el encabezado. No requiere ser pública: el sitio la sirve con la cuenta de servicio.',
     donde:'Menú lateral y barra superior',
     estructura:'Un archivo de imagen (PNG o JPG) en Drive. Para cambiar el logo, se reemplaza el archivo en Drive.' },
   { key:'baseFileId', tipo:'archivo', label:'El Grupo, Empresas y Agenda', obligatorio:true,
@@ -2787,26 +2901,26 @@ const DRIVE_SOURCES = [
     estructura:'Pestañas: GRUPO (clave/contenido), HITOS, EJES_2026, EMPRESAS, CONFIG_DRIVE, EQUIPO (nombre, rol), EVENTOS (fecha, titulo, descripcion, lugar) y ACCESOS (email, empresa, nombre: quiénes pueden crear cuenta).',
     plantilla:'plantillas/Plantilla_Base_Grupo.xlsx' },
   { key:'marcoFileId', tipo:'archivo', label:'Marco Conceptual',
-    desc:'El vocabulario común del grupo: qué es un directorio colaborativo, una línea estratégica, una devolución. Cada concepto se ve como una tarjeta. Bajate la plantilla: ya viene con ejemplos escritos para editar.',
+    desc:'Los conceptos con los que trabaja el grupo: directorio colaborativo, línea estratégica, devolución. Cada concepto se muestra como una tarjeta en Recursos.',
     donde:'Recursos del grupo → tarjeta «Marco conceptual»',
     estructura:'Pestaña CONCEPTOS: una fila por concepto. Obligatorias: titulo y descripcion. Opcionales: icono (un emoji), frase_corta y orden. La plantilla viene con 6 conceptos de ejemplo ya escritos.',
     plantilla:'plantillas/Plantilla_Marco_Conceptual.xlsx' },
   { key:'tecnicasFolderId', tipo:'carpeta', label:'Reuniones Técnicas',
-    desc:'Material teórico y técnico del grupo (presentaciones, minutas, materiales de las técnicas). Se lista con sus subcarpetas, y además de acá sale el conteo de reuniones técnicas del Dashboard.',
+    desc:'Material teórico y técnico del grupo (presentaciones, minutas, materiales de las reuniones técnicas). Se lista con sus subcarpetas y alimenta el conteo de reuniones técnicas del tablero.',
     donde:'Recursos del grupo → tarjeta «Reuniones técnicas» · Dashboard → «Reuniones realizadas»',
     estructura:'Una carpeta de Drive. Puede tener subcarpetas (por ejemplo, por año o por tema): se muestran anidadas.' },
   { key:'novedadesFolderId', tipo:'carpeta', label:'Ronda de novedades',
-    desc:'Carpeta donde se sube la gaceta o ronda de novedades. El sitio muestra siempre la última pieza subida (imagen o PDF), sin tocar nada más.',
+    desc:'Carpeta donde se publica la ronda de novedades. El sitio muestra la última pieza cargada (imagen o PDF).',
     donde:'Dashboard → tarjeta «Ronda de novedades» (se puede apagar en «Qué se muestra»)',
     estructura:'Una carpeta de Drive con la gaceta. La más reciente es la que se muestra.' },
   { key:'herramientasFolderId', tipo:'carpeta', label:'Herramientas del grupo',
-    desc:'Carpeta con las herramientas, tableros y matrices que el grupo comparte. Se muestra embebida (iframe): lo que suban a la carpeta aparece solo.',
+    desc:'Carpeta con las herramientas, tableros y matrices que comparte el grupo. Se muestra embebida: el contenido que se suba a esa carpeta aparece en el sitio.',
     donde:'Recursos del grupo → tarjeta «Herramientas del grupo»',
     estructura:'Una carpeta de Drive compartida como «Cualquiera con el enlace · Lector» (si no, el iframe no se ve desde otros navegadores).' },
   { key:'herramientasUrl', tipo:'enlace', label:'Herramientas del facilitador (web)',
-    desc:'Link al sitio de herramientas de quien facilita el grupo (el nombre sale de la clave facilitado_por de la planilla).',
+    desc:'Dirección del sitio de herramientas de la organización que facilita el grupo.',
     donde:'Recursos del grupo → tarjeta «Herramientas»',
-    estructura:'Una URL completa (https://…). Si se deja vacío, la tarjeta no se muestra.' },
+    estructura:'Dirección completa (https://…). Si queda vacía, la tarjeta no se muestra.' },
 ];
 
 // ── Mapa: cada cosa que se ve en el sitio y de dónde sale ──
@@ -2931,10 +3045,10 @@ function configRevisionHtml() {
   const avisos = revisarConfig();
   if (!avisos.length) {
     return `<div class="card"><div class="card-title">Revisión</div>
-      <div class="aviso-ok">✓ Está todo lo que el sitio necesita.</div></div>`;
+      <div class="aviso-ok">✓ La configuración está completa.</div></div>`;
   }
   return `<div class="card"><div class="card-title">Revisión <span>${avisos.length} para completar</span></div>
-    <div class="src-estructura">Nada de esto rompe el sitio, pero son cosas que van a faltar o que no se entendieron.</div>
+    <div class="src-estructura">Ninguno de estos puntos impide el funcionamiento del sitio, pero son datos que faltan o que no se pudieron interpretar.</div>
     ${avisos.map(a => `<div class="aviso">${esc(a)}</div>`).join('')}</div>`;
 }
 
@@ -2958,7 +3072,7 @@ function configMapaHtml() {
   }).join('');
   return `<div class="card">
     <div class="card-title" style="margin-bottom:10px">2) Qué se ve y de dónde sale</div>
-    <div class="src-estructura">Todo el contenido del sitio sale de Google Drive. Acá está, sección por sección, qué alimenta cada cosa y cómo está hoy. Lo único que se edita adentro del sitio es el Calendario.</div>
+    <div class="src-estructura">Detalle, sección por sección, de qué alimenta cada contenido y en qué estado se encuentra esa fuente.</div>
     <div class="mapa">${bloques}${configVinculosHtml()}</div>
   </div>`;
 }
@@ -2972,27 +3086,44 @@ function irAFuente(key) {
   if (card) { card.classList.add('src-destacada'); setTimeout(() => card.classList.remove('src-destacada'), 1600); }
 }
 
-// Extrae el ID de Drive de un link pegado (o devuelve el valor si ya es un ID)
+// Extrae el ID de Drive de un enlace pegado. Se leen las formas conocidas de
+// URL antes de adivinar por longitud: un enlace puede traer otros valores
+// largos (parámetros, ouid) que no son el id.
 function extractDriveId(v) {
   v = String(v || '').trim();
-  const m = v.match(/[-\w]{25,}/);
-  return m ? m[0] : v;
+  if (!v) return '';
+  const formas = [
+    /\/(?:document|spreadsheets|presentation|file)\/d\/([-\w]+)/,  // documentos y archivos
+    /\/drive\/(?:u\/\d+\/)?folders\/([-\w]+)/,                    // carpetas
+    /\/open\?id=([-\w]+)/,
+    /[?&]id=([-\w]+)/,
+  ];
+  for (const rx of formas) {
+    const m = v.match(rx);
+    if (m) return m[1];
+  }
+  if (/^https?:\/\//i.test(v)) {
+    // Enlace no reconocido: se toma el segmento más largo que parezca un id
+    const cand = (v.match(/[-\w]{20,}/g) || []).filter(x => !/^https?$/i.test(x));
+    return cand.length ? cand[0] : v;
+  }
+  return v;
 }
 
 // Configuración se organiza en pestañas, para que cada cosa esté en un solo
 // lugar y no haya que scrollear una página infinita.
 const CONFIG_PESTANAS = [
-  { id: 'contenido', titulo: 'El grupo',   desc: 'Quién es el grupo y qué contiene el sitio.' },
-  { id: 'agenda',    titulo: 'Agenda',     desc: 'Cuándo se reúnen y quién presenta.' },
-  { id: 'archivos',  titulo: 'Archivos',   desc: 'Las carpetas y archivos de Drive que alimentan documentos y bitácoras.' },
-  { id: 'sitio',     titulo: 'El sitio',   desc: 'Qué secciones se muestran y quién puede entrar.' },
+  { id: 'contenido', titulo: 'El grupo',   desc: 'Datos institucionales del grupo y contenidos del sitio.' },
+  { id: 'archivos',  titulo: 'Archivos',   desc: 'Carpetas y archivos de Drive que alimentan documentos y bitácoras.' },
+  { id: 'sitio',     titulo: 'El sitio',   desc: 'Secciones visibles y control de acceso.' },
 ];
 let CONFIG_PESTANA = 'contenido';
 
 const BLOQUES_POR_PESTANA = {
   contenido: ['grupo', 'principios', 'equipo', 'empresas', 'hitos', 'ejes', 'eventos', 'conceptos'],
-  agenda: ['calendario', 'sinReunion'],
 };
+// La agenda se administra en la sección Calendario, junto al calendario mismo
+const BLOQUES_AGENDA = ['calendario', 'disponibilidad', 'sinReunion'];
 
 function configPestana(id) {
   CONFIG_PESTANA = id;
@@ -3020,21 +3151,21 @@ async function renderConfig() {
     return;
   }
 
-  if (CONFIG_PESTANA === 'contenido' || CONFIG_PESTANA === 'agenda') {
-    const ids = BLOQUES_POR_PESTANA[CONFIG_PESTANA];
-    cont.innerHTML = (CONFIG_PESTANA === 'contenido' ? configImportarHtml() + configRevisionHtml() : '') +
+  if (CONFIG_PESTANA === 'contenido') {
+    const ids = BLOQUES_POR_PESTANA.contenido;
+    cont.innerHTML = configImportarHtml() + configRevisionHtml() +
       ESQUEMA_CONFIG.filter(b => ids.includes(b.id)).map(bloqueConfigHtml).join('');
   } else if (CONFIG_PESTANA === 'archivos') {
     const email = await getServiceAccountEmail();
     cont.innerHTML = `
       <div class="card">
         <div class="card-title">Compartí en Drive</div>
-        <div class="src-estructura">Los documentos (presentaciones, bitácoras, material técnico) siguen viviendo en Drive: acá solo se dice dónde están. Compartí cada carpeta o archivo, como <strong>Lector</strong>, con la cuenta de servicio del sitio:</div>
+        <div class="src-estructura">Los documentos (presentaciones, bitácoras, material técnico) permanecen en Drive: acá solo se indica dónde están. Compartí cada carpeta o archivo, con rol <strong>Lector</strong>, con la cuenta de servicio del sitio:</div>
         <div class="sa-email" style="margin-top:10px">${email ? esc(email) : '⚠ No se pudo obtener (¿falta GOOGLE_SERVICE_ACCOUNT_JSON en Vercel?)'}${email ? ` <button class="btn-cal-add" onclick="copySA('${esc(email)}')">Copiar</button>` : ''}</div>
       </div>` +
       DRIVE_SOURCES.map(configSourceHtml).join('') +
       `<div class="card"><div class="card-title">Carpeta de cada empresa</div>
-        <div class="src-estructura">El sitio busca la carpeta de cada empresa por nombre dentro de la «Carpeta de las empresas». Si alguna no aparece, cargale la carpeta a mano en <a onclick="configPestana('contenido')">El grupo → Empresas → Más datos</a>.</div>
+        <div class="src-estructura">El sitio identifica la carpeta de cada empresa por nombre dentro de la «Carpeta de las empresas». Si alguna no se resuelve, indicá su carpeta en <a onclick="configPestana('contenido')">El grupo → Empresas → Más datos</a>.</div>
         <div class="mapa">${configVinculosHtml()}</div></div>`;
   } else {
     cont.innerHTML = configMapaHtml() + configVisibilidadHtml();
@@ -3049,10 +3180,10 @@ function configImportarHtml() {
   return `<div class="card">
     <div class="card-title">${vacia ? 'Empezar' : 'Importar desde una planilla'}</div>
     <div class="src-estructura">${vacia
-      ? 'Podés cargar todo acá abajo, o traer de una vez lo que ya tengas escrito en una planilla de Drive (la del grupo, si venías usando una).'
-      : 'Si cambiaste algo en la planilla y querés volver a traerlo, importala de nuevo. Ojo: reemplaza lo que esté cargado acá.'}</div>
+      ? 'Podés cargar los datos en los formularios siguientes, o importar de una vez lo que ya esté cargado en una planilla de Drive.'
+      : 'Si actualizaste la planilla y querés volver a tomar esos datos, importala nuevamente. Tené en cuenta que reemplaza lo que esté cargado en el sitio.'}</div>
     <div class="src-row" style="margin-top:10px">
-      <input type="text" id="import-planilla" class="cal-input" placeholder="Pegá el link de la planilla en Drive" value="${esc(DRIVE_CONFIG.baseFileId || '')}">
+      <input type="text" id="import-planilla" class="cal-input" placeholder="Dirección de la planilla en Drive" value="${esc(DRIVE_CONFIG.baseFileId || '')}">
       <button class="btn-cal-primary" onclick="importarDesdePlanilla()">Importar</button>
     </div>
     <div class="src-status" id="import-status"></div>
@@ -3062,8 +3193,8 @@ function configImportarHtml() {
 async function importarDesdePlanilla() {
   const st = document.getElementById('import-status');
   const id = extractDriveId((document.getElementById('import-planilla') || {}).value || '');
-  if (!id) { if (st) { st.textContent = 'Pegá primero el link de la planilla.'; st.className = 'src-status err'; } return; }
-  if ((CONFIG.empresas || []).length && !confirm('Importar reemplaza lo que esté cargado acá con lo que diga la planilla. ¿Seguimos?')) return;
+  if (!id) { if (st) { st.textContent = 'Indicá primero la dirección de la planilla.'; st.className = 'src-status err'; } return; }
+  if ((CONFIG.empresas || []).length && !confirm('La importación reemplaza los datos cargados en el sitio por los de la planilla. ¿Confirmás?')) return;
   if (st) { st.textContent = 'Leyendo la planilla…'; st.className = 'src-status'; }
   try {
     const r = await fetch(`${API_BASE_SHEET}?fileId=${encodeURIComponent(id)}`);
@@ -3079,7 +3210,7 @@ async function importarDesdePlanilla() {
     const st2 = document.getElementById('import-status');
     if (st2) {
       const avisos = Array.isArray(j.avisos) ? j.avisos : [];
-      st2.innerHTML = `Importado ✓ · ${(CONFIG.empresas || []).length} empresas, ${(CONFIG.hitos || []).length} hitos, ${(CONFIG.ejes || []).length} ejes. Revisalo acá abajo.` +
+      st2.innerHTML = `Importado ✓ · ${(CONFIG.empresas || []).length} empresas, ${(CONFIG.hitos || []).length} hitos, ${(CONFIG.ejes || []).length} ejes. Revisalo en los formularios siguientes.` +
         (avisos.length ? `<div style="margin-top:8px">La planilla tenía cosas sin entender:${avisos.map(a => `<div class="aviso">${esc(a)}</div>`).join('')}</div>` : '');
       st2.className = 'src-status ok';
     }
@@ -3133,7 +3264,7 @@ function configSourceHtml(s) {
     ${s.donde ? `<div class="src-estructura"><strong>Dónde se ve:</strong> ${esc(s.donde)}</div>` : ''}
     <div class="src-estructura"><strong>Estructura esperada:</strong> ${esc(s.estructura)}</div>
     <div class="src-row">
-      <input type="text" id="src-${s.key}" class="cal-input" placeholder="${esEnlace ? 'Pegá la URL (https://…)' : 'Pegá el ID o el link de Drive'}" value="${esc(id)}">
+      <input type="text" id="src-${s.key}" class="cal-input" placeholder="${esEnlace ? 'Dirección completa (https://…)' : 'ID o dirección del elemento en Drive'}" value="${esc(id)}">
       <button class="btn-cal-primary" onclick="saveDriveSource('${s.key}')">Guardar</button>
       ${esEnlace ? '' : `<button class="btn-cal-add" onclick="testDriveSource('${s.key}')">Probar conexión</button>`}
       ${s.key === 'raizFolderId' ? `<button class="btn-cal-primary" onclick="detectarContenido()">🔎 Detectar contenido</button>` : ''}
@@ -3158,7 +3289,7 @@ async function detectarContenido() {
   const st = document.getElementById('src-status-raizFolderId');
   const inp = document.getElementById('src-raizFolderId');
   const id = extractDriveId((inp || {}).value || DRIVE_CONFIG.raizFolderId || '');
-  if (!id) { if (st) { st.textContent = 'Pegá primero la carpeta del grupo.'; st.className = 'src-status err'; } return; }
+  if (!id) { if (st) { st.textContent = 'Indicá primero la carpeta del grupo.'; st.className = 'src-status err'; } return; }
   if (st) { st.textContent = 'Mirando la carpeta…'; st.className = 'src-status'; }
   try {
     const r = await fetch(`${API_BASE_DRIVE}?op=descubrir&folderId=${encodeURIComponent(id)}`);
@@ -3232,7 +3363,7 @@ async function testDriveSource(key) {
   const src = DRIVE_SOURCES.find(s => s.key === key);
   const id = extractDriveId((document.getElementById('src-' + key) || {}).value || DRIVE_CONFIG[key] || '');
   const st = document.getElementById('src-status-' + key);
-  if (!id) { if (st) { st.textContent = 'Pegá un ID primero.'; st.className = 'src-status err'; } return; }
+  if (!id) { if (st) { st.textContent = 'Indicá primero un ID.'; st.className = 'src-status err'; } return; }
   if (st) { st.textContent = 'Probando…'; st.className = 'src-status'; }
   try {
     const url = src.tipo === 'carpeta'
@@ -3310,7 +3441,7 @@ function avisarSeccionesVacias() {
         aviso.className = 'rec-empty seccion-vacia';
         cont.appendChild(aviso);
       }
-      aviso.innerHTML = `${texto} Todavía no hay nada conectado.` +
+      aviso.innerHTML = `${texto} Aún no hay nada conectado.` +
         (dashEditing ? ` <a onclick="navigate('config')" style="cursor:pointer;font-weight:700">Conectar en Configuración →</a>` : '');
       aviso.style.display = '';
     } else if (aviso) {
@@ -3399,7 +3530,7 @@ async function renderNovedades() {
     const archivos = (j.files || []).filter(f => f.tipo !== 'Carpeta');
     const ultima = archivos[0];   // /api/drive ya ordena por fecha de modificación
     if (!ultima) {
-      box.innerHTML = '<div class="act-empty">Todavía no hay ninguna novedad en la carpeta.</div>';
+      box.innerHTML = '<div class="act-empty">Aún no hay ninguna novedad en la carpeta.</div>';
       if (sub) sub.textContent = '';
       aplicarVisibilidad();
       return;
@@ -3533,16 +3664,16 @@ async function gateRegistro() {
   try {
     await authPost('registro', datos);
     gateTab('login');
-    gateMsg('Listo. La cuenta quedó <strong>pendiente de autorización</strong>: el equipo del grupo la habilita y ahí vas a poder entrar.', 'ok');
+    gateMsg('La cuenta quedó <strong>pendiente de autorización</strong>. La coordinación del grupo la habilita y a partir de ese momento vas a poder ingresar.', 'ok');
   } catch (e) { gateMsg(esc(e.message), 'err'); }
 }
 
 async function gatePedirReset() {
   const email = (document.getElementById('gate-email').value || '').trim();
-  if (!email) return gateMsg('Escribí tu email arriba y volvé a tocar «Olvidé mi contraseña».', 'err');
+  if (!email) return gateMsg('Ingresá tu dirección de correo y volvé a seleccionar «Olvidé mi contraseña».', 'err');
   try {
     await authPost('pedirReset', { email });
-    gateMsg('Le avisamos a la coordinación del grupo para que te reestablezca la contraseña.', 'ok');
+    gateMsg('Se notificó a la coordinación del grupo para restablecer la contraseña.', 'ok');
   } catch (e) { gateMsg(esc(e.message), 'err'); }
 }
 
@@ -3558,7 +3689,7 @@ async function renderAccesos() {
   const el = document.getElementById('config-accesos');
   if (!el) return;
   if (!ADMIN_PASSWORD) {
-    el.innerHTML = `<div class="card"><div class="card-title">5) Quién puede entrar</div><div class="act-empty">Entrá con la clave de edición para ver y autorizar las cuentas.</div></div>`;
+    el.innerHTML = `<div class="card"><div class="card-title">5) Quién puede entrar</div><div class="act-empty">Ingresá con la clave de edición para ver y autorizar las cuentas.</div></div>`;
     return;
   }
   el.innerHTML = `<div class="card"><div class="card-title">5) Quién puede entrar</div><div class="act-empty">Cargando cuentas…</div></div>`;
@@ -3573,8 +3704,8 @@ async function renderAccesos() {
     const modo = la.error
       ? `<div class="rec-empty" style="margin:10px 0">⚠ No se pudo leer la lista de la planilla (${esc(la.error)}). Mientras tanto, no se acepta ningún registro nuevo.</div>`
       : la.activa
-        ? `<div class="src-estructura" style="margin:10px 0"><strong>Solo por lista.</strong> Únicamente los ${la.habilitados} emails de la pestaña <strong>ACCESOS</strong> de la planilla pueden crear cuenta. Cualquier otro mail (inventado o no) rebota al registrarse. Igual, cada cuenta necesita que la autorices acá antes del primer ingreso.</div>`
-        : `<div class="rec-empty" style="margin:10px 0"><strong>Registro abierto.</strong> Hoy cualquiera con el link puede crear una cuenta (queda pendiente y no ve nada hasta que la autorices). Para cerrarlo, agregá la pestaña <strong>ACCESOS</strong> a la planilla con los emails habilitados: ahí el registro pasa a ser solo por lista.</div>`;
+        ? `<div class="src-estructura" style="margin:10px 0"><strong>Solo por lista.</strong> Únicamente los ${la.habilitados} emails de la pestaña <strong>ACCESOS</strong> de la planilla pueden crear cuenta. Cualquier otra dirección es rechazada al registrarse. Además, cada cuenta requiere autorización antes del primer ingreso.</div>`
+        : `<div class="rec-empty" style="margin:10px 0"><strong>Registro abierto.</strong> Cualquier persona con la dirección del sitio puede crear una cuenta; queda pendiente y sin acceso hasta que se la autorice. Para restringirlo, cargá la pestaña <strong>ACCESOS</strong> de la planilla con las direcciones habilitadas.</div>`;
     const filas = usuarios.map(x => {
       const badge = x.estado === 'autorizado' ? 'badge-green' : x.estado === 'bloqueado' ? 'badge-gray' : 'badge-yellow';
       const reset = x.reset
@@ -3606,7 +3737,7 @@ async function renderAccesos() {
           <input type="checkbox" ${AUTH_REQUIRED ? 'checked' : ''} onchange="cambiarRequerirLogin(this.checked)">
           <span><strong>Pedir cuenta para entrar al sitio</strong></span>
         </label>
-        <div class="src-estructura">Con esto apagado el sitio se ve sin cuenta (útil mientras se arma). Prendelo cuando las empresas ya tengan su cuenta autorizada: ahí el contenido y los datos de Drive dejan de responder sin sesión.${pendientes.length ? ` <strong>Hay ${pendientes.length} cuenta${pendientes.length === 1 ? '' : 's'} esperando autorización.</strong>` : ''}</div>
+        <div class="src-estructura">Desactivado, el sitio se ve sin cuenta (útil durante la puesta en marcha). Activalo cuando las empresas tengan su cuenta autorizada: a partir de ese momento el contenido y los datos de Drive no responden sin sesión.${pendientes.length ? ` <strong>Hay ${pendientes.length} cuenta${pendientes.length === 1 ? '' : 's'} esperando autorización.</strong>` : ''}</div>
         ${modo}
         <div style="margin-top:14px">${filas}</div>
       </div>

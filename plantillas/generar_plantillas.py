@@ -87,12 +87,12 @@ def plantilla_base():
         ('CONFIG_DRIVE', 'Opcional. Solo si el sitio no encuentra sola la carpeta de alguna empresa.'),
         ('', ''),
         ('CÓMO SE ARMA LA AGENDA', 'El sitio genera las reuniones con estas reglas, en este orden:'),
-        ('1', 'Las reuniones fijadas (📌) y las marcadas como «Flexible» en el sitio no se tocan nunca.'),
-        ('2', 'Si la fecha cae en feriado y CALENDARIO dice saltar_feriados = TRUE, queda «Feriado».'),
+        ('1', 'Las reuniones fijadas (📌) y las marcadas como «Flexible» en el sitio no se modifican.'),
+        ('2', 'Si la fecha cae en feriado y saltar_feriados = TRUE, queda «Feriado».'),
         ('3', 'Si la fecha cae dentro de un rango de SIN_REUNION, queda «Sin reunión».'),
-        ('4', 'Si toca ronda de novedades o técnica según CALENDARIO, se asigna esa.'),
-        ('5', 'Si no, presenta la empresa ACTIVA que hace más tiempo que no presenta y que esté DISPONIBLE esa fecha.'),
-        ('6', 'Si ninguna empresa está disponible, la fecha queda «Flexible» y el sitio te avisa cuál fue.'),
+        ('4', 'Presenta la empresa ACTIVA que hace más tiempo que no presenta, si superó semanas_entre_presentaciones y está DISPONIBLE esa fecha.'),
+        ('5', 'Si ninguna empresa corresponde, la fecha se completa con ronda de novedades o reunión técnica según la proporción configurada.'),
+        ('6', 'Si no hay proporciones cargadas, la fecha queda «Flexible».'),
         ('', ''),
         ('ACTIVA vs. NO_DISPONIBLE', 'Son dos cosas distintas, en la pestaña EMPRESAS:'),
         ('activa', 'FALSE = la empresa dejó de participar. Sale de la rotación del calendario, pero sigue apareciendo en Empresas y conserva su historial de reuniones.'),
@@ -187,10 +187,11 @@ def plantilla_base():
     filas(ca, [
         ('dia_semana', 'lunes', 'Qué día se reúne el grupo. Escribilo con letras: lunes, martes, miércoles…'),
         ('hora', '08:00', 'Solo se muestra. No cambia nada del cálculo.'),
-        ('cadencia_semanas', 1, '1 = todas las semanas. 2 = una semana sí y una no. 3 = cada tres semanas.'),
-        ('saltar_feriados', 'TRUE', 'TRUE = si cae feriado no hay reunión. FALSE = se reúnen igual.'),
-        ('ronda_novedades_cada', 6, 'Cada cuántas reuniones va una ronda de novedades. 0 = nunca automáticamente.'),
-        ('tecnica_cada', 8, 'Cada cuántas reuniones va una reunión técnica. 0 = nunca automáticamente.'),
+        ('cadencia_semanas', 1, '1 = hay encuentro todas las semanas. 2 = una semana de por medio. 3 = cada tres semanas.'),
+        ('saltar_feriados', 'TRUE', 'TRUE = si la fecha cae feriado no hay reunión. FALSE = se sesiona igual.'),
+        ('semanas_entre_presentaciones', 26, 'Mínimo de semanas entre dos presentaciones de la misma empresa. Con 26, cada empresa presenta unas dos veces al año; las fechas que quedan libres se completan con ronda de novedades y reuniones técnicas, según las proporciones de abajo.'),
+        ('proporcion_ronda_novedades', 1, 'Proporción de las fechas libres destinadas a ronda de novedades.'),
+        ('proporcion_tecnica', 2, 'Proporción destinada a reunión técnica. Con 1 y 2, de cada tres fechas libres una es ronda y dos son técnicas. Con 0 y 0, quedan como Flexible.'),
     ])
     anchos(ca, {'A': 26, 'B': 16, 'C': 92})
 

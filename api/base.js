@@ -153,7 +153,7 @@ function parseBase(wb) {
     .map(r => {
       const nd = parseNoDisponible(r['no_disponible'] || '');
       if (nd.noEntendido.length) {
-        avisos.push(`EMPRESAS · ${r['nombre'] || r['slug']}: no se entendió «${nd.noEntendido.join('», «')}» en la columna no_disponible. Se acepta por ejemplo: «enero», «diciembre a febrero», «julio 2026», «6/7/2026» o «1/9/2026 a 20/9/2026».`);
+        avisos.push(`EMPRESAS · ${r['nombre'] || r['slug']}: no se entendió «${nd.noEntendido.join('», «')}» en la columna no_disponible. Formatos admitidos: «enero», «diciembre a febrero», «julio 2026», «06/07/2026» o «01/09/2026 a 20/09/2026».`);
       }
       return {
         slug: r['slug'], orden: parseInt(r['orden']) || 0, nombre: r['nombre'], zona: r['zona'] || '',
@@ -185,7 +185,7 @@ function parseBase(wb) {
     .map(r => {
       const desde = aFecha(r['desde']);
       const hasta = aFecha(r['hasta'] || r['desde']) || desde;
-      if (!desde) avisos.push(`SIN_REUNION: no se entendió la fecha «${r['desde']}». Escribila como 6/7/2026 o 2026-07-06.`);
+      if (!desde) avisos.push(`SIN_REUNION: no se entendió la fecha «${r['desde']}». Formatos admitidos: 06/07/2026 o 2026-07-06.`);
       return desde ? { desde, hasta: hasta < desde ? desde : hasta, motivo: r['motivo'] || '' } : null;
     })
     .filter(Boolean) : [];
@@ -233,9 +233,9 @@ function parseBase(wb) {
   empresas.forEach(e => { const c = cfgBySlug[e.slug]; if (c) { e.driveFolderId = c.driveFolderId || ''; if (!e.urlLogo) e.urlLogo = c.urlLogo || ''; } });
 
   // Avisos de contenido: cosas que el sitio no puede adivinar
-  if (!grupo.nombre) avisos.push('GRUPO: falta la clave grupo_nombre. Sin eso el sitio no tiene nombre.');
-  if (!equipo.length) avisos.push('No se encontró la pestaña EQUIPO (columnas nombre, rol): el pie del menú va a quedar vacío.');
-  if (!accesos.length) avisos.push('La pestaña ACCESOS está vacía: cualquiera con el link va a poder registrarse (igual necesita autorización manual).');
+  if (!grupo.nombre) avisos.push('GRUPO: falta la clave grupo_nombre. Sin ese dato el sitio no tiene denominación.');
+  if (!equipo.length) avisos.push('No se encontró la pestaña EQUIPO (columnas nombre, rol): el pie del menú quedará vacío.');
+  if (!accesos.length) avisos.push('La pestaña ACCESOS está vacía: cualquier persona con la dirección del sitio podrá registrarse; de todos modos requiere autorización.');
 
   return { grupo, hitos, ejes, empresas, eventos, conceptos, accesos, calendario, sinReunion, avisos };
 }

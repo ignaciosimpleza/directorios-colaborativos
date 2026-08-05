@@ -123,17 +123,25 @@ ok('en modo edición se ven todas las tarjetas, aunque estén vacías', enEdicio
 // ── Las reglas del calendario salen de la planilla y se cumplen ──
 await p.evaluate(() => navigate('calendario'));
 await p.waitForTimeout(600);
-const reglas = await p.evaluate(() => [...document.querySelectorAll('.regla')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
-ok('el calendario muestra las reglas que dice la planilla', /Todas las semanas, los lunes/.test(reglas[0] || ''));
-ok('y cuántas empresas están en rotación', /8 activas · 1 fuera de rotación/.test(reglas[4] || ''));
+const reglas = await p.evaluate(() => ({
+  diaSemana: document.getElementById('cfg-calendario-diaSemana')?.value,
+  cadencia: document.getElementById('cfg-calendario-cadenciaSemanas')?.value,
+  separacion: document.getElementById('cfg-calendario-semanasEntrePresentaciones')?.value,
+  enRotacion: document.querySelectorAll('.disp-fila').length,
+}));
+console.log('reglas:', JSON.stringify(reglas));
+ok('el calendario muestra las reglas que dice la planilla',
+  reglas.diaSemana === '1' && reglas.cadencia === '1');
+ok('y una fila por empresa en rotación (8 activas de 9)', reglas.enRotacion === 8);
 
 p.on('dialog', d => d.accept());
 await p.fill('#cfg-from', '2026-12-01');
-await p.fill('#cfg-to', '2027-02-28');
+await p.fill('#cfg-to', '2027-11-30');
 await p.evaluate(() => calGenerate());
-await p.waitForTimeout(1500);
-const agenda = await p.evaluate(() =>
-  MEETINGS.filter(x => x.date >= '2026-12-01' && x.date <= '2027-02-28').map(x => x.date + ' ' + x.assignment));
+await p.waitForTimeout(2000);
+const anio = await p.evaluate(() =>
+  MEETINGS.filter(x => x.date >= '2026-12-01' && x.date <= '2027-11-30').map(x => x.date + ' ' + x.assignment));
+const agenda = anio.filter(a => a <= '2027-02-28');
 console.log('agenda:', JSON.stringify(agenda, null, 1));
 ok('respeta «no_disponible»: MACSA no presenta entre diciembre y febrero',
   !agenda.some(a => /MACSA/.test(a)));
@@ -141,8 +149,17 @@ ok('respeta «activa»: la empresa fuera de rotación no recibe fechas',
   !agenda.some(a => /Becker/.test(a)));
 ok('respeta SIN_REUNION: enero entero queda sin reunión',
   agenda.filter(a => a.startsWith('2027-01')).every(a => /Sin reunión/.test(a)));
-ok('programa la ronda de novedades según la planilla', agenda.some(a => /Ronda de novedades/.test(a)));
-ok('programa la técnica según la planilla', agenda.some(a => /Técnica/.test(a)));
+// Con 26 semanas entre presentaciones cada empresa presenta unas dos veces al
+// año: las fechas que sobran se completan con ronda y técnica, 1 a 2.
+const rellenos = {
+  ronda: anio.filter(a => /Ronda de novedades/.test(a)).length,
+  tecnica: anio.filter(a => /Técnica/.test(a)).length,
+};
+console.log('relleno del año:', JSON.stringify(rellenos));
+ok('programa la ronda de novedades según la planilla', rellenos.ronda > 0);
+ok('programa la técnica según la planilla', rellenos.tecnica > 0);
+ok('y respeta la proporción 1 a 2 de la planilla',
+  rellenos.tecnica >= rellenos.ronda * 1.5 && rellenos.tecnica <= rellenos.ronda * 2.5);
 
 // ── La revisión de lo cargado se ve donde se arregla ──
 await p.evaluate(() => navigate('config'));

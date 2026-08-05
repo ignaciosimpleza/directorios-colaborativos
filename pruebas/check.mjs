@@ -58,11 +58,18 @@ await p.screenshot({ path: SHOT + '/02-recursos.png', fullPage: true });
 await p.evaluate(() => setEditing(true));
 await p.evaluate(() => navigate('config'));
 await p.waitForTimeout(700);
-const cfg = await p.evaluate(() => ({
+await p.evaluate(() => configPestana('archivos'));
+await p.waitForTimeout(500);
+const fuentes = await p.evaluate(() => ({
   fuentes: [...document.querySelectorAll('.src-title')].map(e => e.textContent),
   donde: [...document.querySelectorAll('.src-estructura')].filter(e => /Dónde se ve/.test(e.textContent)).length,
-  bloques: document.querySelectorAll('.vis-row input').length,
 }));
+await p.evaluate(() => configPestana('sitio'));
+await p.waitForTimeout(500);
+const cfg = {
+  ...fuentes,
+  bloques: await p.evaluate(() => document.querySelectorAll('.vis-row input').length),
+};
 console.log('CONFIG', JSON.stringify(cfg, null, 1));
 await p.screenshot({ path: SHOT + '/03-config.png', fullPage: true });
 

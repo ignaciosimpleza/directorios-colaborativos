@@ -38,7 +38,7 @@ test('trae las empresas, con activa y no_disponible', () => {
 test('trae las reglas del calendario', () => {
   assert.deepEqual(base.calendario, {
     diaSemana: 1, hora: '08:00', cadenciaSemanas: 1, saltarFeriados: true,
-    rondaNovedadesCada: 6, tecnicaCada: 8,
+    semanasEntrePresentaciones: 26, proporcionRonda: 1, proporcionTecnica: 2,
   });
 });
 
@@ -68,4 +68,26 @@ test('la plantilla del marco conceptual trae los seis ejemplos', () => {
   assert.equal(marco.conceptos[0].titulo, 'Directorio Colaborativo');
   assert.ok(marco.conceptos[0].desc.length > 40);
   assert.equal(marco.conceptos[0].formula, 'entre pares, no consultores', 'la columna frase_corta');
+});
+
+// El campo de Drive tiene que entender los enlaces que se copian del navegador
+test('del enlace de Drive se extrae el id, sea documento o carpeta', async () => {
+  const { readFileSync } = await import('node:fs');
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const src = html.slice(html.indexOf('function extractDriveId'), html.indexOf('async function renderConfig'));
+  const extractDriveId = new Function(src + '; return extractDriveId;')();
+
+  const casos = {
+    'https://docs.google.com/document/d/1R3FKdR5yFhm/edit?usp=drivesdk&ouid=112108234735738965849': '1R3FKdR5yFhm',
+    'https://drive.google.com/drive/folders/1RdZfN28PJEVPwFj04ymstaKJIDsCcXjY': '1RdZfN28PJEVPwFj04ymstaKJIDsCcXjY',
+    'https://drive.google.com/drive/u/0/folders/1glfNT1MAjDSUIjbzmyrI6F2VEUWksXvA': '1glfNT1MAjDSUIjbzmyrI6F2VEUWksXvA',
+    'https://drive.google.com/file/d/1zwjXVPt7McV6hsDla5ylUJfZUX3UP-5_/view?usp=drivesdk': '1zwjXVPt7McV6hsDla5ylUJfZUX3UP-5_',
+    'https://docs.google.com/spreadsheets/d/1lTXBc5COmNj41naJiJHdWjHL9/edit#gid=0': '1lTXBc5COmNj41naJiJHdWjHL9',
+    'https://drive.google.com/open?id=1caOZM90DLaM4hndwGp1b6VTllF6dGetn': '1caOZM90DLaM4hndwGp1b6VTllF6dGetn',
+    '1hdGYpzGrqIh5gADoVkp9yNp8pPGM29dt': '1hdGYpzGrqIh5gADoVkp9yNp8pPGM29dt',
+    '': '',
+  };
+  for (const [entrada, esperado] of Object.entries(casos)) {
+    assert.equal(extractDriveId(entrada), esperado, entrada);
+  }
 });

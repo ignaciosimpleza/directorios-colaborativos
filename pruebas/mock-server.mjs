@@ -40,7 +40,7 @@ const BASE = {
   ejes: [{ titulo: 'Eje 1', desc: 'Desc eje' }],
   empresas: EMPRESAS,
   eventos: [{ fecha: '23 y 24/10', titulo: 'Encuentro', descripcion: 'Anual', lugar: 'Rosario' }],
-  calendario: { diaSemana: 1, hora: '08:00', cadenciaSemanas: 1, saltarFeriados: true, rondaNovedadesCada: 6, tecnicaCada: 8 },
+  calendario: { diaSemana: 1, hora: '08:00', cadenciaSemanas: 1, saltarFeriados: true, semanasEntrePresentaciones: 26, proporcionRonda: 1, proporcionTecnica: 2 },
   sinReunion: [{ desde: '2027-01-04', hasta: '2027-01-25', motivo: 'Receso de enero' }],
   avisos: ['EMPRESAS · Tricampo S.A.: no se entendió «cuando termine la cosecha» en la columna no_disponible.'],
 };
@@ -215,6 +215,11 @@ http.createServer((req, res) => {
   }
   if (u.pathname === '/api/base') return json(res, BASE);
   if (u.pathname === '/api/bitacora') {
+    const fileId = u.searchParams.get('fileId');
+    if (fileId) {
+      const b = Object.values(BITACORAS).find(x => x.archivo && x.archivo.id === fileId);
+      return json(res, b || { reuniones: [], aviso: `«${fileId}» no es un documento de texto.` });
+    }
     const b = BITACORAS[u.searchParams.get('folderId')];
     return json(res, b || { reuniones: [], aviso: 'sin carpeta Proceso' });
   }

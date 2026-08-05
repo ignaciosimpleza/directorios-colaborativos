@@ -69,7 +69,7 @@ export function aFecha(v, anioPorDefecto) {
 }
 
 // ── «no_disponible» de cada empresa ──
-// Se escribe en criollo, separando con comas. Formas aceptadas:
+// Se escriben separados por comas. Formatos admitidos:
 //   enero                     → todos los eneros
 //   enero a marzo             → esos meses, todos los años
 //   julio 2026                → solo julio de 2026
@@ -132,22 +132,43 @@ export function disponibleEn(reglas, fechaISO) {
 
 // ── Parámetros de la pestaña CALENDARIO ──
 export const CALENDARIO_POR_DEFECTO = {
-  diaSemana: 1,              // lunes
+  diaSemana: 1,                  // lunes
   hora: '',
-  cadenciaSemanas: 1,        // una reunión por semana
+  cadenciaSemanas: 1,            // hay encuentro todas las semanas
   saltarFeriados: true,
-  rondaNovedadesCada: 0,     // 0 = no se programan solas
-  tecnicaCada: 0,
+  semanasEntrePresentaciones: 6, // mínimo entre dos presentaciones de la misma empresa
+  proporcionRonda: 1,            // de cada (ronda + tecnica) fechas de relleno…
+  proporcionTecnica: 1,          // …esta proporción va a cada tipo
 };
 
 export function leerCalendario(kv) {
   const g = k => kv[k] !== undefined ? kv[k] : '';
+  const d = CALENDARIO_POR_DEFECTO;
   return {
-    diaSemana: aDiaSemana(g('dia_semana'), CALENDARIO_POR_DEFECTO.diaSemana),
+    diaSemana: aDiaSemana(g('dia_semana'), d.diaSemana),
     hora: String(g('hora') || '').trim(),
-    cadenciaSemanas: aNumero(g('cadencia_semanas'), CALENDARIO_POR_DEFECTO.cadenciaSemanas),
-    saltarFeriados: aBooleano(g('saltar_feriados'), CALENDARIO_POR_DEFECTO.saltarFeriados),
-    rondaNovedadesCada: aNumero(g('ronda_novedades_cada'), 0) || 0,
-    tecnicaCada: aNumero(g('tecnica_cada'), 0) || 0,
+    cadenciaSemanas: aNumero(g('cadencia_semanas'), d.cadenciaSemanas),
+    saltarFeriados: aBooleano(g('saltar_feriados'), d.saltarFeriados),
+    semanasEntrePresentaciones: aNumero(g('semanas_entre_presentaciones'), d.semanasEntrePresentaciones),
+    proporcionRonda: aNumero(g('proporcion_ronda_novedades'), d.proporcionRonda),
+    proporcionTecnica: aNumero(g('proporcion_tecnica'), d.proporcionTecnica),
   };
+}
+
+// ── Qué va en una fecha de relleno ──
+// Cuando ninguna empresa alcanzó el mínimo de semanas entre presentaciones, la
+// fecha se completa con una ronda de novedades o una reunión técnica,
+// manteniendo la proporción configurada. Se mira lo ya programado para no
+// desviarse: con proporción 1:2 se alternan una ronda cada dos técnicas.
+export function tipoDeRelleno(rondasPrevias, tecnicasPrevias, proporcionRonda, proporcionTecnica) {
+  const pr = Math.max(0, Number(proporcionRonda) || 0);
+  const pt = Math.max(0, Number(proporcionTecnica) || 0);
+  if (!pr && !pt) return '';
+  if (!pt) return 'Ronda de novedades';
+  if (!pr) return 'Técnica';
+  // Se elige el tipo que quedó más atrás respecto de su proporción
+  const total = rondasPrevias + tecnicasPrevias;
+  if (total === 0) return pr >= pt ? 'Ronda de novedades' : 'Técnica';
+  return (rondasPrevias / (pr / (pr + pt))) <= (tecnicasPrevias / (pt / (pr + pt)))
+    ? 'Ronda de novedades' : 'Técnica';
 }

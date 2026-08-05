@@ -55,7 +55,7 @@ completar.
 | El Grupo (identidad, objetivos, principios) | Configuración → El grupo |
 | Hitos · Ejes · Eventos · Marco conceptual | Configuración → El grupo |
 | Empresas | Configuración → El grupo → Empresas |
-| Carpeta de Drive de cada empresa | Se vincula sola por nombre dentro de la «Carpeta de las empresas». Se puede fijar a mano en cada empresa |
+| Carpeta de Drive de cada empresa | Se vincula sola por nombre dentro de la «Carpeta de las empresas». Se puede fijar a mano en Configuración → El grupo → Empresas → Más datos |
 | Procesos y documentos de cada ficha | Carpeta de la empresa (subcarpetas `Presentaciones` y `Proceso`) |
 | Dashboard · Reuniones realizadas | **Bitácora** de cada empresa: cada encabezado con fecha es una reunión |
 | Dashboard · Actividad reciente | Las últimas reuniones de las bitácoras, con su fecha y su tema |
@@ -65,9 +65,10 @@ completar.
 | Recursos · Reuniones técnicas | Carpeta de Drive de material técnico (con subcarpetas) |
 | Recursos · Herramientas | Carpeta de Drive embebida + URL del facilitador |
 | Quién puede crear cuenta | Planilla base: pestaña `ACCESOS` (no se edita en el sitio: son emails) |
-| Reglas de la agenda | Configuración → Agenda |
-| Semanas sin reunión | Configuración → Agenda |
-| Qué empresas rotan y cuándo no pueden | Configuración → El grupo → Empresas («Activa» y «Cuándo no puede presentar») |
+| Reglas de la agenda | Calendario (en modo edición) |
+| Semanas sin reunión | Calendario (en modo edición) |
+| Cuándo no puede presentar cada empresa | Calendario → Disponibilidad de las empresas |
+| Qué empresas rotan | Configuración → El grupo → Empresas («Activa») |
 | Las reuniones ya agendadas | Se editan en el Calendario del sitio y se guardan en Turso |
 
 Para agregar un documento, se sube a la carpeta de Drive que corresponda: el
@@ -75,9 +76,8 @@ sitio lo toma solo. Para cambiar un texto o una regla, se entra a Configuración
 
 ### Reuniones realizadas
 
-Salen de la **bitácora**: el documento que cada empresa tiene en su subcarpeta
-`Proceso`. Adentro, **cada reunión es un encabezado con su fecha**, tal como ya
-las escriben los facilitadores:
+Salen de la **bitácora**: un único documento por empresa, donde **cada reunión es
+un encabezado con su fecha**, tal como ya lo escriben los facilitadores:
 
 ```
 # Lunes 3 Agosto de 2026 Reunión MACSA — Crecimiento empresarial
@@ -89,6 +89,21 @@ las escriben los facilitadores:
 acceso directo), lee los encabezados y arma la lista de reuniones con su fecha y
 su tema. De ahí salen los números del Dashboard, el gráfico por empresa, el
 filtro por año y la actividad reciente.
+
+#### Dónde se le indica al sitio cuál es
+
+En **Configuración → El grupo → Empresas → Más datos** cada empresa tiene tres
+campos de Drive, separados y opcionales. En cualquiera de los tres se puede pegar
+el enlace completo copiado del navegador: el sitio se queda con el identificador.
+
+| Campo | Qué se indica | Si queda vacío |
+|---|---|---|
+| **Carpeta de la empresa** | La carpeta con todo el material de esa empresa | El sitio la busca por nombre dentro de la «Carpeta de las empresas» |
+| **Carpeta de presentaciones** | De dónde salen los documentos de la ficha | Se usa la subcarpeta `Presentaciones` de la carpeta de la empresa |
+| **Documento de bitácora** | El documento del que salen las reuniones | Se busca en la subcarpeta `Proceso`, `Bitácora` o `Minutas` de la carpeta de la empresa |
+
+El documento de bitácora es el camino directo y el más confiable: no depende de
+cómo esté nombrada la subcarpeta ni de que haya un solo documento adentro.
 
 Para que una reunión cuente tiene que estar como **encabezado** (Título 1 o
 Título 2), no como texto suelto, y tener la fecha en el título. Si el documento
@@ -102,12 +117,26 @@ El Calendario **no** interviene acá: de él salen solo las fechas próximas.
 El sitio genera las reuniones con estas reglas, **en este orden**:
 
 1. Las reuniones fijadas (📌) y las marcadas **Flexible** no se tocan nunca.
-2. Si cae feriado y `CALENDARIO.saltar_feriados` = TRUE → **Feriado**.
+2. Si cae feriado y `saltar_feriados` = TRUE → **Feriado**.
 3. Si cae dentro de un rango de `SIN_REUNION` → **Sin reunión**.
-4. Si toca según `ronda_novedades_cada` / `tecnica_cada` → esa.
-5. Si no: presenta la empresa **activa** que hace más tiempo que no presenta y
-   que esté **disponible** esa fecha.
-6. Si ninguna está disponible, la fecha queda **Flexible** y el sitio avisa cuál.
+4. Presenta la empresa **activa** que hace más tiempo que no presenta, siempre
+   que haya superado `semanas_entre_presentaciones` y esté **disponible** esa
+   fecha.
+5. Si ninguna empresa corresponde, la fecha se completa con **Ronda de
+   novedades** o **Técnica**, según `proporcion_ronda_novedades` y
+   `proporcion_tecnica`.
+6. Si las dos proporciones son 0, la fecha queda **Flexible** y el sitio avisa
+   por qué.
+
+`semanas_entre_presentaciones` es el mínimo que tiene que pasar entre dos
+presentaciones de la misma empresa: define cada cuánto le vuelve a tocar. Con
+26, cada empresa presenta unas dos veces al año y las fechas que sobran son las
+que se completan con ronda y técnica. Si el número es chico y hay muchas
+empresas activas, no sobra ninguna fecha y no se programa relleno.
+
+Las proporciones se leen como una razón, no como una cantidad: con `1` y `2`, de
+cada tres fechas libres una es ronda y dos son técnicas. Con `0` y `1`, todas son
+técnicas.
 
 `activa` y `no_disponible` son dos cosas distintas:
 
@@ -222,8 +251,12 @@ iframe, que se carga con la sesión de quien mira el sitio.
   - `?op=list&folderId=…` → archivos de una carpeta
   - `?op=arbol&folderId=…&depth=n` → árbol anidado de carpetas y archivos
   - `?op=empresa&folderId=…` → `{ presentaciones, minutas }`
-  - `?op=bitacora&folderId=…` → documento de bitácora de la carpeta `Proceso`
   - `?op=actividad&folderIds=a,b,c&depth=n` → archivos de varias carpetas por fecha
+  - `?op=imagen&fileId=…` → sirve una imagen de Drive sin que tenga que ser pública
+  - `?op=descubrir&folderId=…` → detecta subcarpetas conocidas por su nombre
+- `GET /api/bitacora` → `{ reuniones, aviso }`, las reuniones con fecha y tema
+  - `?fileId=…` → lee ese documento (Google Doc, `.docx` o acceso directo)
+  - `?folderId=…` → busca el documento en la subcarpeta `Proceso`/`Bitácora`/`Minutas`
 - `GET /api/db?group_id=…` → `{ env, config, companies, meetings, content }`
 - `POST /api/db` → escrituras del calendario y la configuración (requiere la clave)
 - `GET /api/auth` → `{ requireLogin, grupo, usuario }`

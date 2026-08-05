@@ -55,20 +55,21 @@ test('sin nada cargado, la empresa siempre está disponible', () => {
 test('lee los parámetros de la pestaña CALENDARIO', () => {
   const c = leerCalendario({
     dia_semana: 'Lunes', cadencia_semanas: '1', saltar_feriados: 'TRUE',
-    ronda_novedades_cada: '6', tecnica_cada: '4', hora: '08:00',
+    semanas_entre_presentaciones: '6', proporcion_ronda_novedades: '1',
+    proporcion_tecnica: '2', hora: '08:00',
   });
   assert.deepEqual(c, {
     diaSemana: 1, hora: '08:00', cadenciaSemanas: 1, saltarFeriados: true,
-    rondaNovedadesCada: 6, tecnicaCada: 4,
+    semanasEntrePresentaciones: 6, proporcionRonda: 1, proporcionTecnica: 2,
   });
 });
 
-test('si la pestaña CALENDARIO está vacía, usa valores razonables', () => {
+test('si la pestaña CALENDARIO está vacía, usa valores por defecto', () => {
   const c = leerCalendario({});
   assert.equal(c.diaSemana, 1);
   assert.equal(c.cadenciaSemanas, 1);
   assert.equal(c.saltarFeriados, true);
-  assert.equal(c.rondaNovedadesCada, 0, 'sin valor no se programan solas');
+  assert.equal(c.semanasEntrePresentaciones, 6);
 });
 
 test('entiende los días escritos como los escribe una persona', () => {
@@ -89,4 +90,35 @@ test('entiende las fechas como se escriben en la planilla', () => {
   assert.equal(aFecha('6/7/2026'), '2026-07-06');
   assert.equal(aFecha('2026-07-06'), '2026-07-06');
   assert.equal(aFecha('6 de julio de 2026'), '2026-07-06');
+});
+
+test('la proporción entre ronda de novedades y técnica se respeta', async () => {
+  const { tipoDeRelleno } = await import('../reglas.js');
+  // Proporción 1:2 → de cada tres fechas de relleno, una ronda y dos técnicas
+  const salida = [];
+  let rondas = 0, tecnicas = 0;
+  for (let i = 0; i < 9; i++) {
+    const t = tipoDeRelleno(rondas, tecnicas, 1, 2);
+    salida.push(t);
+    if (t === 'Ronda de novedades') rondas++; else tecnicas++;
+  }
+  assert.equal(rondas, 3, 'un tercio de rondas');
+  assert.equal(tecnicas, 6, 'dos tercios de técnicas');
+});
+
+test('con proporción 1:1 se alternan', async () => {
+  const { tipoDeRelleno } = await import('../reglas.js');
+  let r = 0, t = 0;
+  for (let i = 0; i < 6; i++) {
+    if (tipoDeRelleno(r, t, 1, 1) === 'Ronda de novedades') r++; else t++;
+  }
+  assert.equal(r, 3);
+  assert.equal(t, 3);
+});
+
+test('si una proporción es 0, solo se programa el otro tipo', async () => {
+  const { tipoDeRelleno } = await import('../reglas.js');
+  assert.equal(tipoDeRelleno(0, 0, 0, 1), 'Técnica');
+  assert.equal(tipoDeRelleno(0, 0, 1, 0), 'Ronda de novedades');
+  assert.equal(tipoDeRelleno(0, 0, 0, 0), '', 'sin proporciones no se rellena');
 });

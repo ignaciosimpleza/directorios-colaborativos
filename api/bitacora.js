@@ -133,6 +133,8 @@ async function leerReuniones(archivo) {
 
 // Las bitácoras son documentos grandes (hay algunos de más de 20 MB): se le
 // pide a Vercel el máximo de tiempo disponible para leerlas.
+const AVISO_SIN_REUNIONES = 'Se localizó la bitácora pero no se reconoció ninguna reunión. Cada reunión debe figurar como un encabezado (Título 1 o Título 2) que incluya la fecha; por ejemplo, «13 de abril de 2026 – Avance de líneas estratégicas».';
+
 export const config = { maxDuration: 60 };
 
 export default async function handler(req, res) {
@@ -141,14 +143,38 @@ export default async function handler(req, res) {
   try {
     if (await bloqueaPorLogin(req, res, req.query.group_id)) return;
 
+    // Se puede indicar el documento de bitácora directamente (fileId) o la
+    // carpeta de la empresa (folderId), y en ese caso se busca adentro.
+    const fileId = req.query.fileId;
+    if (fileId) {
+      const meta = await driveGet(`files/${encodeURIComponent(fileId)}`, {
+        fields: 'id,name,mimeType,webViewLink,shortcutDetails(targetId,targetMimeType)',
+      });
+      const doc = await meta.json();
+      const mime = doc.mimeType === SHORTCUT_MIME ? (doc.shortcutDetails || {}).targetMimeType : doc.mimeType;
+      if (mime !== DOC_MIME && mime !== DOCX_MIME) {
+        return res.status(200).json({
+          reuniones: [],
+          aviso: `«${doc.name || fileId}» no es un documento de texto. La bitácora tiene que ser un Google Doc o un archivo .docx.`,
+        });
+      }
+      const reuniones = await leerReuniones(doc);
+      const idReal = doc.mimeType === SHORTCUT_MIME ? doc.shortcutDetails.targetId : doc.id;
+      return res.status(200).json({
+        archivo: { id: idReal, nombre: doc.name, url: doc.webViewLink || `https://docs.google.com/document/d/${idReal}/edit` },
+        reuniones,
+        aviso: reuniones.length ? '' : AVISO_SIN_REUNIONES,
+      });
+    }
+
     const folderId = req.query.folderId;
-    if (!folderId) return res.status(400).json({ error: 'Falta folderId' });
+    if (!folderId) return res.status(400).json({ error: 'Indicá la carpeta de la empresa (folderId) o el documento de bitácora (fileId).' });
 
     const proc = await carpetaProceso(folderId);
     if (!proc) {
       return res.status(200).json({
         reuniones: [],
-        aviso: 'La carpeta de la empresa no tiene una subcarpeta «Proceso» con la bitácora adentro.',
+        aviso: 'La carpeta de la empresa no contiene una subcarpeta «Proceso» con la bitácora.',
       });
     }
     const carpeta = `https://drive.google.com/drive/folders/${proc.id}`;
@@ -157,7 +183,7 @@ export default async function handler(req, res) {
     if (!doc) {
       return res.status(200).json({
         reuniones: [], carpeta,
-        aviso: 'En la carpeta «Proceso» no hay ningún documento de bitácora (Google Doc o .docx).',
+        aviso: 'La carpeta «Proceso» no contiene ningún documento de bitácora (Google Doc o .docx).',
       });
     }
 
@@ -172,8 +198,7 @@ export default async function handler(req, res) {
         url: doc.webViewLink || `https://docs.google.com/document/d/${idReal}/edit`,
       },
       reuniones,
-      aviso: reuniones.length ? '' :
-        'Se encontró la bitácora pero no se reconoció ninguna reunión. Cada reunión tiene que estar como un encabezado (Título 1 o Título 2) que incluya la fecha, por ejemplo «13 de abril de 2026 – Avance de líneas estratégicas».',
+      aviso: reuniones.length ? '' : AVISO_SIN_REUNIONES,
     });
   } catch (e) {
     console.error('api/bitacora error:', e);

@@ -121,7 +121,7 @@ export default async function handler(req, res) {
       case 'registro': {
         const email = normEmail(body.email);
         const password = String(body.password || '');
-        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'Pegá un email válido.' });
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'Ingresá una dirección de correo válida.' });
         if (password.length < 6) return res.status(400).json({ error: 'La contraseña necesita al menos 6 caracteres.' });
 
         // Solo se puede registrar quien está en la lista de la planilla
@@ -129,15 +129,15 @@ export default async function handler(req, res) {
         const invitado = lista.porEmail[email];
         if (lista.hayLista && !invitado) {
           return res.status(403).json({
-            error: 'Ese email no figura en la lista del grupo. Pedile a la coordinación que lo agregue a la pestaña ACCESOS de la planilla y volvé a intentar.',
+            error: 'Esta dirección no figura entre las habilitadas por el grupo. Solicitá a la coordinación que la incorpore y volvé a intentarlo.',
           });
         }
         const ya = await db.execute({ sql: 'SELECT estado FROM users WHERE group_id = ? AND email = ?', args: [groupId, email] });
         if (ya.rows[0]) {
           return res.status(409).json({
             error: ya.rows[0].estado === 'autorizado'
-              ? 'Ese email ya tiene cuenta. Iniciá sesión.'
-              : 'Ese email ya se registró y está esperando autorización.',
+              ? 'Esta dirección ya tiene una cuenta. Iniciá sesión.'
+              : 'Esta dirección ya se registró y está pendiente de autorización.',
           });
         }
         const { salt, hash } = hashPassword(password);
@@ -161,9 +161,9 @@ export default async function handler(req, res) {
         if (!u || !passwordOk(String(body.password || ''), u.salt, u.pass_hash)) {
           return res.status(401).json({ error: 'Email o contraseña incorrectos.' });
         }
-        if (u.estado === 'bloqueado') return res.status(403).json({ error: 'Esta cuenta está bloqueada. Escribile al equipo del grupo.' });
+        if (u.estado === 'bloqueado') return res.status(403).json({ error: 'Esta cuenta está bloqueada. Comunicate con la coordinación del grupo.' });
         if (u.estado !== 'autorizado') {
-          return res.status(403).json({ error: 'Tu cuenta todavía no fue autorizada. El equipo del grupo la revisa y te avisa.', pendiente: true });
+          return res.status(403).json({ error: 'Tu cuenta aún no fue autorizada. La coordinación del grupo la revisa y te notifica.', pendiente: true });
         }
         const token = nuevoToken();
         await db.execute({
@@ -205,7 +205,7 @@ export default async function handler(req, res) {
         if (password.length < 6) return res.status(400).json({ error: 'La contraseña necesita al menos 6 caracteres.' });
         const r = await db.execute({ sql: 'SELECT * FROM users WHERE group_id = ? AND reset_token = ?', args: [groupId, token] });
         const u = r.rows[0];
-        if (!u || !u.reset_exp || u.reset_exp < ahora()) return res.status(400).json({ error: 'El link de reset venció. Pedí uno nuevo.' });
+        if (!u || !u.reset_exp || u.reset_exp < ahora()) return res.status(400).json({ error: 'El enlace de restablecimiento venció. Solicitá uno nuevo.' });
         const { salt, hash } = hashPassword(password);
         await db.execute({
           sql: 'UPDATE users SET pass_hash = ?, salt = ?, reset_token = NULL, reset_exp = NULL WHERE group_id = ? AND email = ?',

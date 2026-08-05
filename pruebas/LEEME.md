@@ -18,7 +18,10 @@ node pruebas/check-config.mjs             # cargar el grupo desde Configuración
 
 El Chromium ya viene instalado en el entorno
 (`/opt/pw-browsers/chromium-1194/chrome-linux/chrome`). Si en tu máquina está
-en otro lado, cambiá `executablePath` en los tres `check-*.mjs`.
+en otro lado, cambiá `executablePath` en los `check-*.mjs`.
+
+Las suites comparten el mismo servidor y se escriben datos entre sí: cada una
+arranca pidiéndole al mock un `_reset`. Si se corren en paralelo, se pisan.
 
 ## Qué verifica cada una
 
@@ -35,7 +38,9 @@ en otro lado, cambiá `executablePath` en los tres `check-*.mjs`.
   no entregue datos sin sesión cuando el portero está prendido.
 - **check-config.mjs** — que se pueda configurar todo el grupo desde el sitio:
   importar una planilla, editar textos, agregar y desactivar empresas, validar
-  «cuándo no puede presentar» y que la agenda salga con esas reglas.
+  «cuándo no puede presentar», que la agenda salga con esas reglas, que las
+  fechas libres se completen respetando la proporción de ronda y técnica, y que
+  al pegar el enlace de un documento de bitácora el sitio lo lea.
 - **check-dashboard.mjs** — lo que el grupo pidió ver: el número de reuniones de
   cada empresa sacado de su bitácora, el gráfico, el filtro por año, la actividad
   reciente con fecha y tema, las reuniones técnicas visibles en Recursos, la
