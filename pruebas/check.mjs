@@ -20,7 +20,7 @@ const dash = await p.evaluate(() => {
   const vis = id => { const e = document.getElementById(id); return e ? getComputedStyle(e).display !== 'none' : null; };
   return {
     stats: [...document.querySelectorAll('.rp-stat')].map(e => e.textContent.replace(/\s+/g, ' ').trim()),
-    barras: [...document.querySelectorAll('.rp-bar-row')].map(e => e.textContent.replace(/\s+/g, ' ').trim()),
+    porEmpresa: [...document.querySelectorAll('.rp-tabla tbody tr')].map(e => e.textContent.replace(/\s+/g, ' ').trim()),
     anios: [...document.querySelectorAll('.rp-anio option')].map(o => o.value),
     actividad: document.querySelectorAll('#actividad-reciente .activity-item').length,
     proximas: document.querySelectorAll('#proximas-reuniones .historial-item').length,

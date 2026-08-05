@@ -14,23 +14,29 @@ const errores = [];
 p.on('pageerror', e => errores.push('PAGEERROR: ' + e.message));
 
 await p.goto('http://localhost:8099/', { waitUntil: 'networkidle' });
-await p.waitForSelector('.rp-bar-row', { timeout: 15000 });
+await p.waitForSelector('.rp-tabla tbody tr', { timeout: 15000 });
 await p.waitForTimeout(400);
 
 // ── Números por empresa desde la bitácora ──
-const barras = await p.evaluate(() =>
-  [...document.querySelectorAll('.rp-bar-row')].map(r => ({
-    empresa: r.querySelector('.rp-bar-name').textContent.trim(),
-    n: +r.querySelector('.rp-bar-num').textContent.trim(),
-    ancho: (r.querySelector('.rp-bar-fill') || {}).style?.width || '0',
+const leerTabla = () => p.evaluate(() =>
+  [...document.querySelectorAll('.rp-tabla tbody tr')].map(r => ({
+    empresa: r.querySelector('.rp-emp').textContent.trim(),
+    n: +r.querySelector('.rp-mini-num').textContent.trim(),
+    ancho: (r.querySelector('.rp-mini-fill') || {}).style?.width || '0',
+    ultima: r.children[2].textContent.replace(/\s+/g, ' ').trim(),
   })));
-console.log('barras:', JSON.stringify(barras));
+const barras = await leerTabla();
+console.log('tabla:', JSON.stringify(barras));
 ok('el tablero muestra solo las empresas activas (8 de 9)', barras.length === 8);
 ok('la empresa marcada como inactiva no aparece en el tablero',
   !barras.some(x => /Becker/.test(x.empresa)));
 ok('MACSA cuenta 7 reuniones de su bitácora', barras.find(x => /MACSA/.test(x.empresa))?.n === 7);
 ok('El Sueño cuenta 3', barras.find(x => /Sueño/.test(x.empresa))?.n === 3);
 ok('la empresa sin bitácora queda en 0', barras.find(x => /Tricampo/.test(x.empresa))?.n === 0);
+ok('dice cuándo presentó cada una por última vez',
+  /3 ago 2026/.test(barras.find(x => /MACSA/.test(x.empresa))?.ultima || ''));
+ok('y las que hace más que no presentan van primero',
+  barras.findIndex(x => /Motivo/.test(x.empresa)) < barras.findIndex(x => /MACSA/.test(x.empresa)));
 
 // ── Vínculo automático empresa ↔ carpeta de Drive (CONFIG_DRIVE vacía) ──
 const vinculos = await p.evaluate(() => EMPRESAS.map(e => ({
@@ -45,12 +51,20 @@ ok('resuelve «El Porvenir / Beheran Sarciat S.A.» → «Beheran Sarciat SA»',
   vinculos.find(v => /Porvenir/.test(v.empresa))?.carpeta === 'Beheran Sarciat SA');
 ok('resuelve «Estudio Tomás Becker» → «Estudio Becker»',
   vinculos.find(v => /Becker/.test(v.empresa))?.carpeta === 'Estudio Becker');
-ok('el gráfico dibuja la barra más larga al 100%', barras.some(x => x.ancho === '100%'));
+ok('la empresa con más presentaciones marca el 100% de la barra', barras.some(x => x.ancho === '100%'));
 
 const stats = await p.evaluate(() => [...document.querySelectorAll('.rp-stat')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
 console.log('totales:', JSON.stringify(stats));
-ok('el total de reuniones de empresa es 10', /^10\D/.test(stats[0]));
-ok('muestra cuántas empresas presentaron sobre las activas', /2\/8/.test(stats[2].replace(/\s/g, '')));
+ok('el total de presentaciones de empresa es 14', /^14\D/.test(stats[1]));
+ok('muestra cuántas empresas presentaron sobre las activas', /4\/8/.test(stats[3].replace(/\s/g, '')));
+
+// ── El gráfico del ritmo del grupo ──
+const ritmo = await p.evaluate(() => [...document.querySelectorAll('.rp-chart .col title')].map(e => e.textContent));
+console.log('ritmo:', JSON.stringify(ritmo));
+ok('el gráfico apila presentaciones y técnicas por período', ritmo.length >= 5);
+ok('y no saltea un año sin reuniones', ritmo.some(t => /^2023 · 0 de empresa/.test(t)));
+ok('las dos series están identificadas con leyenda, no solo por color',
+  await p.evaluate(() => document.querySelectorAll('.rp-leyenda span').length === 2));
 
 // ── Filtro por año ──
 const anios = await p.evaluate(() => [...document.querySelectorAll('.rp-anio option')].map(o => o.value));
@@ -58,8 +72,11 @@ console.log('años:', JSON.stringify(anios));
 ok('el selector ofrece los años de las bitácoras', anios.includes('2026') && anios.includes('2022'));
 await p.selectOption('.rp-anio', '2026');
 await p.waitForTimeout(300);
-const n2026 = await p.evaluate(() => [...document.querySelectorAll('.rp-bar-num')].map(e => +e.textContent));
-ok('filtrando 2026 bajan los números (MACSA 2, El Sueño 2)', n2026[0] === 2 && n2026[1] === 2);
+const t2026 = await leerTabla();
+ok('filtrando 2026 bajan los números (MACSA 2, El Sueño 2)',
+  t2026.find(x => /MACSA/.test(x.empresa))?.n === 2 && t2026.find(x => /Sueño/.test(x.empresa))?.n === 2);
+ok('y el gráfico pasa a mostrar los meses de ese año',
+  await p.evaluate(() => /por mes/.test(document.querySelector('.rp-seccion').textContent)));
 await p.selectOption('.rp-anio', 'todos');
 await p.waitForTimeout(300);
 

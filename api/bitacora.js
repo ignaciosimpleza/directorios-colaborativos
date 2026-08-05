@@ -158,11 +158,12 @@ export default async function handler(req, res) {
           aviso: `«${doc.name || fileId}» no es un documento de texto. La bitácora tiene que ser un Google Doc o un archivo .docx.`,
         });
       }
-      const reuniones = await leerReuniones(doc);
+      const { reuniones, sinFecha } = await leerReuniones(doc);
       const idReal = doc.mimeType === SHORTCUT_MIME ? doc.shortcutDetails.targetId : doc.id;
       return res.status(200).json({
         archivo: { id: idReal, nombre: doc.name, url: doc.webViewLink || `https://docs.google.com/document/d/${idReal}/edit` },
         reuniones,
+        sinFecha,
         aviso: reuniones.length ? '' : AVISO_SIN_REUNIONES,
       });
     }
@@ -187,7 +188,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const reuniones = await leerReuniones(doc);
+    const { reuniones, sinFecha } = await leerReuniones(doc);
     const esAtajo = doc.mimeType === SHORTCUT_MIME;
     const idReal = esAtajo ? doc.shortcutDetails.targetId : doc.id;
     return res.status(200).json({
@@ -198,6 +199,7 @@ export default async function handler(req, res) {
         url: doc.webViewLink || `https://docs.google.com/document/d/${idReal}/edit`,
       },
       reuniones,
+      sinFecha,
       aviso: reuniones.length ? '' : AVISO_SIN_REUNIONES,
     });
   } catch (e) {

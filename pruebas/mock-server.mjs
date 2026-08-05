@@ -94,6 +94,14 @@ const BITACORAS = {
     { fecha: '2025-08-05', titulo: 'Presentación de la empresa' },
   ] },
   'f-tricampo': { archivo: { id: 'doc-tri', nombre: 'Proceso | Tricampo.docx', url: '#' }, reuniones: [] , aviso: 'En la carpeta «Proceso» no hay ningún documento de bitácora.' },
+  'f-beheran': { archivo: { id: 'doc-beheran', nombre: 'Proceso | Beheran Sarciat SA', url: '#' }, reuniones: [
+    { fecha: '2026-06-01', titulo: 'Reunión de Accionistas' },
+    { fecha: '2026-02-09', titulo: 'Primera presentación de la empresa', anioDeducido: true },
+  ] },
+  'f-motivo': { archivo: { id: 'doc-motivo', nombre: 'Proceso El Motivo', url: '#' }, reuniones: [
+    { fecha: '2025-03-10', titulo: 'Brechas y causas' },
+    { fecha: '2021-08-26', titulo: 'Presentación de la empresa' },
+  ], sinFecha: ['Grupo Estratégico: EL MOTIVO', 'Consigna 3: Análisis interno. Brechas y Causas'] },
 };
 
 const NOVEDADES = [

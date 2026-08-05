@@ -424,21 +424,50 @@ textarea.cfg-input { resize:vertical; line-height:1.5; }
 .arb-count { font-size:10px; font-weight:700; color:var(--gris-medio); background:#f1f1f1; padding:1px 7px; border-radius:10px; }
 .arb-carpeta-body { border-left:2px solid var(--beige-suave); padding-left:10px; margin-left:4px; }
 
-/* ── REUNIONES REALIZADAS (desde la bitácora) ── */
+/* ── REUNIONES REALIZADAS (desde la bitácora) ──
+   Dos colores de datos, y nada más: verde para las presentaciones de empresa,
+   azul para las reuniones técnicas. Están verificados contra el fondo crema
+   (banda de luminosidad, chroma, separación bajo daltonismo y contraste). El
+   resto de la tarjeta usa los grises de texto: el color solo lo lleva el dato. */
+:root { --dato-empresa:#0B8F66; --dato-tecnica:#4A63C8; --dato-alerta:#9C4238; }
 .rp-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
 .rp-anio-lbl { font-size:11.5px; font-weight:600; color:var(--gris-medio); }
 .rp-anio { font-size:12.5px; font-family:inherit; padding:6px 10px; border:1px solid var(--beige-suave); border-radius:8px; background:#fff; color:var(--navy); font-weight:600; }
-.rp-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
+.rp-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:20px; }
 .rp-stat { background:var(--crema-fondo); border-radius:var(--radius-sm); padding:12px 14px; }
-.rp-stat-num { font-size:24px; font-weight:700; color:var(--navy); line-height:1.1; }
+.rp-stat-num { font-size:26px; font-weight:700; color:var(--navy); line-height:1.1; }
 .rp-stat-de { font-size:15px; font-weight:600; color:var(--gris-medio); }
 .rp-stat-lbl { font-size:11px; color:var(--gris-oscuro); margin-top:3px; line-height:1.35; }
-.rp-bar-row { display:flex; align-items:center; gap:10px; margin-bottom:7px; }
-.rp-bar-name { flex:0 0 150px; font-size:12px; font-weight:600; color:var(--navy); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.rp-bar-track { flex:1; height:16px; background:#f2eee9; border-radius:8px; overflow:hidden; }
-.rp-bar-fill { height:100%; border-radius:8px; min-width:2px; transition:width .3s; }
-.rp-bar-num { flex:0 0 26px; text-align:right; font-size:12px; font-weight:700; color:var(--gris-oscuro); }
-.rp-note { font-size:11px; color:var(--gris-medio); margin-top:12px; line-height:1.5; }
+
+/* Ritmo del grupo: columnas apiladas por período */
+.rp-seccion { font-size:11px; font-weight:700; color:var(--gris-medio); text-transform:uppercase; letter-spacing:0.7px; margin-bottom:10px; }
+.rp-leyenda { display:flex; gap:14px; margin-bottom:8px; }
+.rp-leyenda span { display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--gris-oscuro); }
+.rp-leyenda i { width:10px; height:10px; border-radius:3px; display:inline-block; }
+.rp-chart { width:100%; height:auto; max-height:170px; display:block; }
+.rp-chart .col:hover rect { opacity:0.75; }
+.rp-chart text { font-size:10px; fill:var(--gris-medio); font-family:inherit; }
+.rp-chart .val { font-size:10.5px; font-weight:700; fill:var(--gris-oscuro); }
+
+/* Tabla de empresas: una fila por empresa, ordenada por quién hace más que no presenta */
+.rp-tabla { width:100%; border-collapse:collapse; margin-top:4px; }
+.rp-tabla thead tr { background:transparent; color:inherit; }
+.rp-tabla th { font-size:10.5px; font-weight:700; color:var(--gris-medio); text-transform:uppercase; letter-spacing:0.6px; text-align:left; padding:0 8px 7px 0; border-bottom:1px solid #efeae3; }
+.rp-tabla th.num, .rp-tabla td.num { text-align:right; }
+.rp-tabla td { font-size:12.5px; color:#3a4a4b; padding:8px 8px 8px 0; border-bottom:1px solid #f4f0ea; vertical-align:middle; }
+.rp-tabla tr:last-child td { border-bottom:none; }
+.rp-emp { font-weight:600; color:var(--navy); cursor:pointer; }
+.rp-emp:hover { text-decoration:underline; }
+.rp-mini { display:flex; align-items:center; gap:8px; }
+.rp-mini-track { flex:1; min-width:40px; max-width:160px; height:10px; background:#f2eee9; border-radius:5px; overflow:hidden; }
+.rp-mini-fill { height:100%; background:var(--dato-empresa); border-radius:0 5px 5px 0; min-width:2px; }
+.rp-mini-num { font-size:12.5px; font-weight:700; color:var(--gris-oscuro); min-width:16px; text-align:right; }
+.rp-nunca { color:var(--gris-medio); }
+.rp-atraso { color:var(--dato-alerta); font-weight:600; }
+.rp-note { font-size:11px; color:var(--gris-medio); margin-top:14px; line-height:1.5; }
+.rp-pendientes { margin-top:12px; font-size:11.5px; color:var(--gris-oscuro); }
+.rp-pendientes summary { cursor:pointer; color:var(--gris-medio); }
+.rp-pendientes div { margin-top:6px; line-height:1.6; }
 
 .activity-item { display:flex; gap:10px; padding:9px 0; border-bottom:1px solid #f0ece6; align-items:flex-start; }
 .activity-item:last-child { border-bottom:none; }
@@ -1303,7 +1332,7 @@ async function todasLasBitacoras(alAvanzar) {
   const res = await Promise.all(activas.map(async e => {
     try {
       const b = await bitacoraDe(e);
-      return { empresa: e, reuniones: b.reuniones || [], archivo: b.archivo, aviso: b.aviso || '' };
+      return { empresa: e, reuniones: b.reuniones || [], archivo: b.archivo, aviso: b.aviso || '', sinFecha: b.sinFecha || [] };
     } catch (err) {
       return { empresa: e, reuniones: [], aviso: err.message, error: true };
     } finally {
@@ -1388,18 +1417,22 @@ function pintarReuniones() {
   if (REUNIONES_ANIO !== 'todos' && !listaAnios.includes(REUNIONES_ANIO)) REUNIONES_ANIO = 'todos';
   const delAnio = f => REUNIONES_ANIO === 'todos' || f.slice(0, 4) === REUNIONES_ANIO;
 
-  const conteo = porEmpresa
-    .map(x => ({ empresa: x.empresa, n: x.reuniones.filter(r => delAnio(r.fecha)).length, aviso: x.aviso, error: x.error }))
-    .sort((a, b) => b.n - a.n);
-  const totalEmpresas = conteo.reduce((s, c) => s + c.n, 0);
-  const totalTecnicas = tecnicas.filter(delAnio).length;
-  const presentaron = conteo.filter(c => c.n > 0).length;
+  const filas = porEmpresa.map(x => {
+    const fechas = x.reuniones.map(r => r.fecha).filter(delAnio).sort();
+    return { empresa: x.empresa, fechas, n: fechas.length, ultima: fechas.at(-1) || '',
+             aviso: x.aviso, error: x.error, sinFecha: x.sinFecha || [] };
+  });
+  const totalEmpresas = filas.reduce((s, f) => s + f.n, 0);
+  const fechasTecnicas = tecnicas.filter(delAnio);
+  const totalTecnicas = fechasTecnicas.length;
+  const presentaron = filas.filter(f => f.n > 0).length;
+  const pendientes = filas.filter(f => !f.n && f.aviso);
+  const sinFechar = filas.filter(f => f.sinFecha.length);
 
-  const problemas = conteo.filter(c => !c.n && c.aviso);
   if (!totalEmpresas && !totalTecnicas) {
-    el.innerHTML = `<div class="act-empty">No se encontraron reuniones en las bitácoras.<br>
-      <small>Cada reunión debe figurar en el documento de la carpeta <strong>Proceso</strong> como un encabezado con su fecha; por ejemplo, «13 de abril de 2026 – Avance de líneas estratégicas».</small></div>` +
-      (problemas.length ? `<div class="rp-note">${problemas.map(p => `<strong>${esc(p.empresa.nombre)}</strong>: ${esc(p.aviso)}`).join('<br>')}</div>` : '');
+    el.innerHTML = `<div class="act-empty">Todavía no se leyó ninguna reunión.<br>
+      <small>Cada reunión debe figurar en la bitácora de la empresa como un encabezado con su fecha; por ejemplo, «13 de abril de 2026 – Avance de líneas estratégicas».</small></div>` +
+      (pendientes.length ? avisosPendientesHtml(pendientes) : '');
     aplicarVisibilidad();
     return;
   }
@@ -1407,22 +1440,6 @@ function pintarReuniones() {
   const opciones = ['todos'].concat(listaAnios)
     .map(a => `<option value="${esc(a)}"${a === REUNIONES_ANIO ? ' selected' : ''}>${a === 'todos' ? 'Todos los años' : esc(a)}</option>`)
     .join('');
-  const max = Math.max(1, ...conteo.map(c => c.n));
-  const barras = conteo.map(c => {
-    const pct = Math.round(c.n / max * 100);
-    const detalle = c.n ? '' : (c.aviso ? ` title="${esc(c.aviso)}"` : '');
-    return `<div class="rp-bar-row"${detalle}>
-      <span class="rp-bar-name" onclick="abrirBitacora(${c.empresa.id})" style="cursor:pointer" title="Abrir la bitácora de ${esc(c.empresa.nombre)}">${esc(c.empresa.nombre)}</span>
-      <div class="rp-bar-track">${c.n ? `<div class="rp-bar-fill" style="width:${pct}%;background:${c.empresa.color || '#6C868C'}"></div>` : ''}</div>
-      <span class="rp-bar-num">${c.n}</span>
-    </div>`;
-  }).join('');
-
-  const notaTec = DRIVE_CONFIG.tecnicasFolderId ? '' :
-    ' Para contar las técnicas, conectá la carpeta de <strong>Reuniones Técnicas</strong> en Configuración.';
-  const notaProblemas = problemas.length
-    ? `<br>${problemas.map(p => `⚠ <strong>${esc(p.empresa.nombre)}</strong>: ${esc(p.aviso)}`).join('<br>')}`
-    : '';
 
   el.innerHTML = `
     <div class="rp-head">
@@ -1430,14 +1447,159 @@ function pintarReuniones() {
       <select class="rp-anio" onchange="setReunionesAnio(this.value)">${opciones}</select>
     </div>
     <div class="rp-stats">
-      <div class="rp-stat"><div class="rp-stat-num">${totalEmpresas}</div><div class="rp-stat-lbl">Reuniones de empresa</div></div>
+      <div class="rp-stat"><div class="rp-stat-num">${totalEmpresas + totalTecnicas}</div><div class="rp-stat-lbl">Reuniones registradas</div></div>
+      <div class="rp-stat"><div class="rp-stat-num">${totalEmpresas}</div><div class="rp-stat-lbl">Presentaciones de empresa</div></div>
       <div class="rp-stat"><div class="rp-stat-num">${totalTecnicas}</div><div class="rp-stat-lbl">Reuniones técnicas</div></div>
-      <div class="rp-stat"><div class="rp-stat-num">${presentaron}<span class="rp-stat-de">/${conteo.length}</span></div><div class="rp-stat-lbl">Empresas que presentaron</div></div>
+      <div class="rp-stat"><div class="rp-stat-num">${presentaron}<span class="rp-stat-de">/${filas.length}</span></div><div class="rp-stat-lbl">Empresas que presentaron</div></div>
     </div>
-    ${barras}
-    <div class="rp-note">Cada reunión se toma de la bitácora de la empresa (el documento de la subcarpeta <strong>Proceso</strong>). Hacé click en el nombre para abrirla.${notaTec}${notaProblemas}</div>`;
+    ${ritmoHtml(filas, fechasTecnicas)}
+    ${tablaEmpresasHtml(filas)}
+    <div class="rp-note">Cada reunión sale de la bitácora de la empresa: un encabezado con su fecha. Hacé click en el nombre para abrir el documento.</div>
+    ${pendientes.length ? avisosPendientesHtml(pendientes) : ''}
+    ${sinFechar.length ? seccionesSinFechaHtml(sinFechar) : ''}`;
   aplicarVisibilidad();
 }
+
+// Las empresas sin bitácora conectada no son un error del tablero: son algo que
+// falta configurar. Van juntas y plegadas, no como nueve líneas en rojo.
+function avisosPendientesHtml(pendientes) {
+  return `<details class="rp-pendientes">
+    <summary>${pendientes.length} ${pendientes.length === 1 ? 'empresa sin bitácora conectada' : 'empresas sin bitácora conectada'}</summary>
+    <div>${pendientes.map(p => `<strong>${esc(p.empresa.nombre)}</strong>: ${esc(p.aviso)}`).join('<br>')}
+    <br><a onclick="navigate('config'); configPestana('contenido')">Indicar el documento de cada una en Configuración →</a></div>
+  </details>`;
+}
+
+// Secciones de una bitácora que parecen una reunión pero no tienen una fecha
+// legible. No se cuentan, y hay que decir cuáles son para poder corregirlas.
+function seccionesSinFechaHtml(filas) {
+  const total = filas.reduce((s, f) => s + f.sinFecha.length, 0);
+  return `<details class="rp-pendientes">
+    <summary>${total} ${total === 1 ? 'sección sin fecha reconocida' : 'secciones sin fecha reconocida'} en las bitácoras</summary>
+    <div>Estas secciones no se contaron porque no se les encontró la fecha. Se cuentan si el encabezado (o el renglón de abajo) incluye el día y el mes; por ejemplo, «09 de febrero – Primera presentación».<br>
+    ${filas.map(f => `<strong>${esc(f.empresa.nombre)}</strong>: ${f.sinFecha.slice(0, 6).map(t => `«${esc(t)}»`).join(', ')}${f.sinFecha.length > 6 ? ` y ${f.sinFecha.length - 6} más` : ''}`).join('<br>')}</div>
+  </details>`;
+}
+
+// ── Ritmo del grupo: columnas apiladas por período ──
+// Un año seleccionado se muestra por mes; «todos los años», por año. Dos series
+// (presentaciones y técnicas) con leyenda y una separación de 2px entre ellas.
+function ritmoHtml(filas, fechasTecnicas) {
+  const porAnio = REUNIONES_ANIO === 'todos';
+  const clave = f => porAnio ? f.slice(0, 4) : f.slice(5, 7);
+  const etiqueta = k => porAnio ? k : MESES_CORTOS[+k - 1];
+
+  const cubos = new Map();
+  const sumar = (f, campo) => {
+    const k = clave(f);
+    if (!cubos.has(k)) cubos.set(k, { empresa: 0, tecnica: 0 });
+    cubos.get(k)[campo]++;
+  };
+  filas.forEach(fi => fi.fechas.forEach(f => sumar(f, 'empresa')));
+  fechasTecnicas.forEach(f => sumar(f, 'tecnica'));
+
+  // El eje del tiempo va corrido: un período sin reuniones se muestra vacío, no
+  // se saltea, porque justamente eso es parte del ritmo.
+  const conDatos = [...cubos.keys()].sort();
+  if (conDatos.length < 2) return '';   // con un solo período no hay ritmo que mostrar
+  const desde = +conDatos[0], hasta = +conDatos.at(-1);
+  const claves = [];
+  for (let n = desde; n <= hasta; n++) claves.push(porAnio ? String(n) : String(n).padStart(2, '0'));
+  claves.forEach(k => { if (!cubos.has(k)) cubos.set(k, { empresa: 0, tecnica: 0 }); });
+
+  // Coordenadas fijas: el SVG escala entero, sin deformar el texto.
+  const W = 800, ALTO = 120, BASE = 96, TOPE = 16, PIE = 18;
+  const paso = W / claves.length;
+  const ancho = Math.min(22, paso * 0.5);
+  const max = Math.max(...claves.map(k => cubos.get(k).empresa + cubos.get(k).tecnica));
+  const alto = v => (v / max) * (BASE - TOPE);
+
+  const cols = claves.map((k, i) => {
+    const c = cubos.get(k), total = c.empresa + c.tecnica;
+    const x = paso * i + paso / 2;
+    const hTec = c.tecnica ? Math.max(2, alto(c.tecnica)) : 0;
+    const hEmp = c.empresa ? Math.max(2, alto(c.empresa)) : 0;
+    // 2 unidades de aire entre los dos tramos: lo que los separa es el fondo.
+    const yTec = BASE - hTec;
+    const yEmp = yTec - hEmp - (hTec ? 2 : 0);
+    const partes = [];
+    if (hTec) partes.push(`<path d="${barra(x, yTec, ancho, hTec, hEmp ? 0 : 4)}" fill="var(--dato-tecnica)"></path>`);
+    if (hEmp) partes.push(`<path d="${barra(x, yEmp, ancho, hEmp, 4)}" fill="var(--dato-empresa)"></path>`);
+    const cima = hEmp ? yEmp : yTec;
+    return `<g class="col">
+      <title>${esc(etiqueta(k))} · ${c.empresa} de empresa, ${c.tecnica} ${c.tecnica === 1 ? 'técnica' : 'técnicas'}</title>
+      <rect x="${(x - paso / 2).toFixed(1)}" y="0" width="${paso.toFixed(1)}" height="${BASE + PIE}" fill="transparent"></rect>
+      ${partes.join('')}
+      ${total ? `<text class="val" x="${x.toFixed(1)}" y="${(cima - 5).toFixed(1)}" text-anchor="middle">${total}</text>` : ''}
+      <text x="${x.toFixed(1)}" y="${BASE + 15}" text-anchor="middle">${esc(etiqueta(k))}</text>
+    </g>`;
+  }).join('');
+
+  return `<div class="rp-seccion">Ritmo del grupo${porAnio ? ', por año' : ', por mes'}</div>
+    <div class="rp-leyenda">
+      <span><i style="background:var(--dato-empresa)"></i>Presentaciones de empresa</span>
+      <span><i style="background:var(--dato-tecnica)"></i>Reuniones técnicas</span>
+    </div>
+    <svg class="rp-chart" viewBox="0 0 ${W} ${ALTO}" role="img"
+      aria-label="Reuniones por período: ${esc(claves.map(k => `${etiqueta(k)} ${cubos.get(k).empresa + cubos.get(k).tecnica}`).join(', '))}">
+      <line x1="0" y1="${BASE}" x2="${W}" y2="${BASE}" stroke="#e6e0d8" stroke-width="1"></line>
+      ${cols}
+    </svg>`;
+}
+
+// Una columna: esquinas redondeadas arriba, al ras en la base.
+function barra(cx, y, w, h, r) {
+  const x = cx - w / 2, rr = Math.min(r, w / 2, h);
+  return `M${x.toFixed(1)},${(y + h).toFixed(1)} L${x.toFixed(1)},${(y + rr).toFixed(1)} Q${x.toFixed(1)},${y.toFixed(1)} ${(x + rr).toFixed(1)},${y.toFixed(1)}` +
+    ` L${(x + w - rr).toFixed(1)},${y.toFixed(1)} Q${(x + w).toFixed(1)},${y.toFixed(1)} ${(x + w).toFixed(1)},${(y + rr).toFixed(1)}` +
+    ` L${(x + w).toFixed(1)},${(y + h).toFixed(1)} Z`;
+}
+
+// ── Una fila por empresa ──
+// Nueve empresas son demasiadas para nueve colores: van en tabla, con el dato
+// que sirve para decidir (hace cuánto que no presenta) y no solo el total.
+function tablaEmpresasHtml(filas) {
+  const hoy = new Date().toISOString().slice(0, 10);
+  const meses = f => {
+    if (!f) return null;
+    const a = new Date(f + 'T12:00:00'), b = new Date(hoy + 'T12:00:00');
+    return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+  };
+  const limiteMeses = Math.round((Number(CALCFG.semanasEntrePresentaciones) || 26) / 4.35);
+  const max = Math.max(1, ...filas.map(f => f.n));
+  // Primero las que hace más que no presentan: es lo que hay que decidir.
+  const orden = filas.slice().sort((a, b) => {
+    if (!a.ultima && !b.ultima) return a.empresa.nombre.localeCompare(b.empresa.nombre);
+    if (!a.ultima) return -1;
+    if (!b.ultima) return 1;
+    return a.ultima < b.ultima ? -1 : 1;
+  });
+
+  const cuerpo = orden.map(f => {
+    const m = meses(f.ultima);
+    const atrasada = f.ultima ? m >= limiteMeses : true;
+    const cuando = f.ultima
+      ? `${fechaCorta(f.ultima)}<br><span class="${atrasada ? 'rp-atraso' : 'rp-nunca'}">${m === 0 ? 'este mes' : m === 1 ? 'hace 1 mes' : `hace ${m} meses`}</span>`
+      : `<span class="rp-nunca">${f.aviso ? 'sin bitácora conectada' : 'todavía no presentó'}</span>`;
+    return `<tr>
+      <td><span class="rp-emp" onclick="abrirBitacora(${f.empresa.id})" title="Abrir la bitácora de ${esc(f.empresa.nombre)}">${esc(f.empresa.nombre)}</span></td>
+      <td><div class="rp-mini">
+        <div class="rp-mini-track">${f.n ? `<div class="rp-mini-fill" style="width:${Math.round(f.n / max * 100)}%"></div>` : ''}</div>
+        <span class="rp-mini-num">${f.n}</span>
+      </div></td>
+      <td>${cuando}</td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="rp-seccion" style="margin-top:22px">Por empresa</div>
+    <table class="rp-tabla">
+      <thead><tr><th>Empresa</th><th>Presentaciones</th><th>Última</th></tr></thead>
+      <tbody>${cuerpo}</tbody>
+    </table>`;
+}
+
+// Etiquetas del eje del gráfico
+const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 async function abrirBitacora(empresaId) {
   const empresa = EMPRESAS.find(e => e.id === empresaId);

@@ -13,14 +13,16 @@ la gaceta. Eso el sitio lo lee, no lo administra.
 Para armar otro grupo: se entra a Configuración y se carga. Si el grupo ya tenía
 sus datos en una planilla, se importa de una vez y después se edita en el sitio.
 
-### Configuración, en cuatro pestañas
+### Configuración, en tres pestañas
 
 | Pestaña | Qué se carga |
 | --- | --- |
 | **El grupo** | Identidad, principios, equipo, empresas, hitos, ejes, eventos y marco conceptual |
-| **Agenda** | Las reglas del calendario y las semanas sin reunión |
 | **Archivos** | Las carpetas y archivos de Drive (documentos, bitácoras, logo) |
 | **El sitio** | Qué secciones se muestran y quién puede entrar |
+
+Las reglas de la agenda no están acá: se administran en el **Calendario**, que es
+donde se ven sus efectos.
 
 Se guarda solo mientras se escribe. Cada campo dice para qué sirve y dónde se ve,
 y lo que no se entiende se avisa en el momento (por ejemplo, al escribir cuándo
@@ -76,19 +78,50 @@ sitio lo toma solo. Para cambiar un texto o una regla, se entra a Configuración
 
 ### Reuniones realizadas
 
-Salen de la **bitácora**: un único documento por empresa, donde **cada reunión es
-un encabezado con su fecha**, tal como ya lo escriben los facilitadores:
+Salen de la **bitácora**: un único documento por empresa donde cada reunión
+arranca con un encabezado. Lo que se cuenta no es el documento ni el archivo: es
+**cada fecha de reunión** que aparece en él.
+
+Las bitácoras del grupo no están escritas todas igual, y las tres formas cuentan:
 
 ```
-# Lunes 3 Agosto de 2026 Reunión MACSA — Crecimiento empresarial
+# Lunes 3 Agosto de 2026 Reunión MACSA — Crecimiento empresarial   ← fecha completa
 # 13 DE ABRIL DE 2026 – Avance Líneas Estratégicas
 # Brechas, causas y línea estratégica | 29 de Septiembre 2022
+
+# FECHA Y TÍTULO: 1 DE JUNIO – Reunión de Accionistas junio 2026   ← el año, suelto
+# 🗓️ 09 de Febrero - Primera presentación de la empresa            ← sin año
+
+# Grupo Estratégico: EL MOTIVO                                     ← encabezado repetido
+Presentación de la empresa | 26 de agosto de 2021                  ← la fecha, abajo
 ```
 
-`api/bitacora.js` abre ese documento (Google Doc o `.docx`, también si es un
-acceso directo), lee los encabezados y arma la lista de reuniones con su fecha y
-su tema. De ahí salen los números del Dashboard, el gráfico por empresa, el
-filtro por año y la actividad reciente.
+Reglas del parser (`api/_bitacora.js`):
+
+- La fecha se busca primero en el encabezado y después en los **primeros renglones
+  cortos** de abajo. La prosa larga de la reunión no se mira: ahí hay años sueltos
+  («la empresa creció desde 2010») que no son la fecha del encuentro.
+- Si la fecha no trae año, se toma el de la reunión fechada más cercana del mismo
+  documento, eligiendo el año que deja las dos fechas más juntas. Sirve igual si el
+  documento va de la más nueva a la más vieja o al revés.
+- Dos encabezados con la misma fecha cuentan una sola reunión.
+- Los encabezados de primer nivel a los que no se les encontró ninguna fecha **no se
+  cuentan y se listan** en el Dashboard, para poder corregir el documento.
+
+`api/bitacora.js` abre el documento (Google Doc o `.docx`, también si es un acceso
+directo) y devuelve `{ reuniones, sinFecha }`. De ahí salen los números del
+Dashboard, el gráfico de ritmo, la tabla por empresa, el filtro por año y la
+actividad reciente.
+
+#### Qué muestra el Dashboard
+
+Cuatro números (reuniones registradas, presentaciones de empresa, reuniones
+técnicas, empresas que presentaron), un gráfico de columnas apiladas con el
+**ritmo del grupo** —por año, o por mes si se filtra un año— y una **tabla por
+empresa** ordenada por quién hace más tiempo que no presenta, con la fecha de su
+última presentación. No es un gráfico de nueve colores: nueve empresas son
+demasiadas categorías para distinguirlas por color, así que van en tabla y el
+color queda para las dos series del gráfico.
 
 #### Dónde se le indica al sitio cuál es
 
@@ -105,10 +138,10 @@ el enlace completo copiado del navegador: el sitio se queda con el identificador
 El documento de bitácora es el camino directo y el más confiable: no depende de
 cómo esté nombrada la subcarpeta ni de que haya un solo documento adentro.
 
-Para que una reunión cuente tiene que estar como **encabezado** (Título 1 o
-Título 2), no como texto suelto, y tener la fecha en el título. Si el documento
-no se puede leer o no se reconoce ninguna fecha, el sitio lo dice con nombre y
-apellido de la empresa en vez de mostrar un cero sin explicación.
+Para que una reunión cuente tiene que arrancar con un **encabezado** (Título 1 a
+3), no con texto suelto. Si el documento no se puede leer, o si hay encabezados a
+los que no se les reconoció la fecha, el sitio lo dice con nombre y apellido de la
+empresa en vez de mostrar un cero sin explicación.
 
 El Calendario **no** interviene acá: de él salen solo las fechas próximas.
 

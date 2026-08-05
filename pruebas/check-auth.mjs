@@ -71,7 +71,7 @@ await p.click('#gate-panel-login .gate-btn');
 await p.waitForTimeout(900);
 ok('con la cuenta autorizada entra', await p.evaluate(() => !document.getElementById('gate').classList.contains('open')));
 ok('el dashboard carga los datos ya logueado',
-  await p.evaluate(() => document.querySelectorAll('.rp-stat').length === 3));
+  await p.evaluate(() => document.querySelectorAll('.rp-stat').length === 4));
 ok('aparece el chip de sesión',
   await p.evaluate(() => { const c = document.getElementById('sesion-chip'); return c && c.style.display !== 'none' && /MACSA/.test(c.textContent); }));
 await p.screenshot({ path: SHOT + '/08-logueado.png', fullPage: true });
