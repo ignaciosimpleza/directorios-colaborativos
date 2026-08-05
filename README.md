@@ -3,15 +3,28 @@
 Plantilla de sitio para un grupo de directorio colaborativo, desplegada en
 Vercel. Es una sola app (`index.html`) más funciones serverless.
 
-**La planilla ES la configuración del grupo.** En el código no hay contenido ni
-reglas: ni nombres, ni empresas, ni hitos, ni cada cuánto se reúnen. Todo sale de
-la planilla y de las carpetas de Drive.
+**El grupo se configura en el sitio, en Configuración.** En el código no hay
+contenido ni reglas: ni nombres, ni empresas, ni hitos, ni cada cuánto se reúnen.
+Todo eso se carga desde el sitio y se guarda en la base.
 
-Para armar otro grupo: se copia la plantilla, se completa, se sube a la carpeta
-del grupo y se pega su link en el sitio. Nada más.
+**Drive queda para los documentos**: presentaciones, bitácoras, material técnico,
+la gaceta. Eso el sitio lo lee, no lo administra.
 
-Lo único que se guarda fuera de la planilla son **las reuniones ya agendadas**
-(se editan en el sitio) y **los ids de Drive** (se pegan en Configuración).
+Para armar otro grupo: se entra a Configuración y se carga. Si el grupo ya tenía
+sus datos en una planilla, se importa de una vez y después se edita en el sitio.
+
+### Configuración, en cuatro pestañas
+
+| Pestaña | Qué se carga |
+| --- | --- |
+| **El grupo** | Identidad, principios, equipo, empresas, hitos, ejes, eventos y marco conceptual |
+| **Agenda** | Las reglas del calendario y las semanas sin reunión |
+| **Archivos** | Las carpetas y archivos de Drive (documentos, bitácoras, logo) |
+| **El sitio** | Qué secciones se muestran y quién puede entrar |
+
+Se guarda solo mientras se escribe. Cada campo dice para qué sirve y dónde se ve,
+y lo que no se entiende se avisa en el momento (por ejemplo, al escribir cuándo
+una empresa no puede presentar).
 
 ## Estructura
 
@@ -24,8 +37,8 @@ Lo único que se guarda fuera de la planilla son **las reuniones ya agendadas**
 | `api/db.js` | Turso (libSQL): calendario y configuración |
 | `api/auth.js` | Registro, ingreso, autorización de cuentas y log de accesos |
 | `api/_auth.js` | Sesiones y portero compartido por las funciones de lectura |
-| `api/_calendario.js` | Las reglas de la agenda (disponibilidad, cadencia), probadas aparte |
-| `plantillas/` | Planillas modelo + `generar_plantillas.py` que las produce |
+| `reglas.js` | Las reglas de la agenda. Lo importan el navegador **y** las funciones de `/api` |
+| `plantillas/` | Planillas para importar de una vez + `generar_plantillas.py` |
 | `pruebas/` | Pruebas en navegador (ver `pruebas/LEEME.md`) |
 
 ## De dónde sale cada cosa
@@ -37,29 +50,28 @@ completar.
 
 | Lo que se ve | De dónde sale |
 | --- | --- |
-| Nombre del grupo, bajada y equipo del menú | Planilla base: pestañas `GRUPO` y `EQUIPO` |
-| Logo del grupo | Una imagen subida a Drive y conectada en Configuración |
-| El Grupo (identidad, objetivos, principios) | Planilla base: pestaña `GRUPO` |
-| Hitos · Ejes | Planilla base: pestañas `HITOS` y `EJES_2026` |
-| Empresas | Planilla base: pestaña `EMPRESAS` |
-| Carpeta de Drive de cada empresa | Se vincula sola por nombre dentro de la «Carpeta de las empresas». `CONFIG_DRIVE` manda si está cargada |
+| Nombre del grupo, bajada y equipo del menú | Configuración → El grupo |
+| Logo del grupo | Una imagen subida a Drive, conectada en Configuración → Archivos |
+| El Grupo (identidad, objetivos, principios) | Configuración → El grupo |
+| Hitos · Ejes · Eventos · Marco conceptual | Configuración → El grupo |
+| Empresas | Configuración → El grupo → Empresas |
+| Carpeta de Drive de cada empresa | Se vincula sola por nombre dentro de la «Carpeta de las empresas». Se puede fijar a mano en cada empresa |
 | Procesos y documentos de cada ficha | Carpeta de la empresa (subcarpetas `Presentaciones` y `Proceso`) |
 | Dashboard · Reuniones realizadas | **Bitácora** de cada empresa: cada encabezado con fecha es una reunión |
 | Dashboard · Actividad reciente | Las últimas reuniones de las bitácoras, con su fecha y su tema |
 | Dashboard · Próximas reuniones | El Calendario del sitio |
 | Dashboard · Ronda de novedades | Carpeta de Drive de novedades (última pieza subida) |
-| Agenda de eventos | Planilla base: pestaña `EVENTOS` (fecha en texto libre) |
-| Recursos · Marco conceptual | Archivo Marco Conceptual (pestaña `CONCEPTOS`) |
+| Recursos · Marco conceptual | Configuración → El grupo → Marco conceptual |
 | Recursos · Reuniones técnicas | Carpeta de Drive de material técnico (con subcarpetas) |
 | Recursos · Herramientas | Carpeta de Drive embebida + URL del facilitador |
-| Quién puede crear cuenta | Planilla base: pestaña `ACCESOS` |
-| Reglas de la agenda | Planilla base: pestaña `CALENDARIO` |
-| Semanas sin reunión | Planilla base: pestaña `SIN_REUNION` |
-| Qué empresas rotan y cuándo no pueden | Planilla base: columnas `activa` y `no_disponible` de `EMPRESAS` |
+| Quién puede crear cuenta | Planilla base: pestaña `ACCESOS` (no se edita en el sitio: son emails) |
+| Reglas de la agenda | Configuración → Agenda |
+| Semanas sin reunión | Configuración → Agenda |
+| Qué empresas rotan y cuándo no pueden | Configuración → El grupo → Empresas («Activa» y «Cuándo no puede presentar») |
 | Las reuniones ya agendadas | Se editan en el Calendario del sitio y se guardan en Turso |
 
-Para agregar contenido, se sube el archivo a la carpeta de Drive que corresponda
-o se edita la fila de la planilla. El sitio lo toma solo.
+Para agregar un documento, se sube a la carpeta de Drive que corresponda: el
+sitio lo toma solo. Para cambiar un texto o una regla, se entra a Configuración.
 
 ### Reuniones realizadas
 
@@ -107,9 +119,9 @@ El sitio genera las reuniones con estas reglas, **en este orden**:
   no se entienda, el sitio lo lista en *Configuración → Revisión de la planilla*
   en vez de ignorarlo en silencio.
 
-Las reglas **no se editan en el sitio**: se ven en el Calendario (modo edición) y
-se cambian en la planilla. Si se pudieran editar en los dos lados, nunca se
-sabría cuál manda.
+Las reglas se cargan en *Configuración → Agenda* y se ven en el Calendario. Las
+mismas reglas las aplican el navegador y las funciones del servidor porque
+las dos importan **el mismo archivo**, `reglas.js`: no hay dos versiones.
 
 ### Qué se muestra
 

@@ -249,7 +249,7 @@ http.createServer((req, res) => {
   const f = path.join(ROOT, u.pathname === '/' ? 'index.html' : u.pathname.slice(1));
   if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end('no'); }
   const ext = path.extname(f);
-  const ct = { '.html': 'text/html', '.png': 'image/png', '.js': 'text/javascript', '.xlsx': 'application/octet-stream' }[ext] || 'text/plain';
+  const ct = { '.html': 'text/html', '.png': 'image/png', '.js': 'text/javascript', '.mjs': 'text/javascript', '.xlsx': 'application/octet-stream' }[ext] || 'text/plain';
   res.writeHead(200, { 'Content-Type': ct });
   res.end(fs.readFileSync(f));
 }).listen(8099, () => console.log('mock server en http://localhost:8099'));

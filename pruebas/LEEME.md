@@ -13,6 +13,7 @@ node pruebas/check.mjs                    # dashboard, reuniones desde la bitác
 node pruebas/check-limpio.mjs             # que NADA de contenido esté escrito en el código
 node pruebas/check-auth.mjs               # registro, autorización, sesión y portero
 node pruebas/check-dashboard.mjs          # números por empresa desde la bitácora, gráfico, año, técnicas
+node pruebas/check-config.mjs             # cargar el grupo desde Configuración y que impacte en el sitio
 ```
 
 El Chromium ya viene instalado en el entorno
@@ -32,6 +33,9 @@ en otro lado, cambiá `executablePath` en los tres `check-*.mjs`.
 - **check-auth.mjs** — el circuito completo de acceso: registro → pendiente →
   autorización → ingreso → sesión que sobrevive al reload → salida, y que la API
   no entregue datos sin sesión cuando el portero está prendido.
+- **check-config.mjs** — que se pueda configurar todo el grupo desde el sitio:
+  importar una planilla, editar textos, agregar y desactivar empresas, validar
+  «cuándo no puede presentar» y que la agenda salga con esas reglas.
 - **check-dashboard.mjs** — lo que el grupo pidió ver: el número de reuniones de
   cada empresa sacado de su bitácora, el gráfico, el filtro por año, la actividad
   reciente con fecha y tema, las reuniones técnicas visibles en Recursos, la

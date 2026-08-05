@@ -74,6 +74,8 @@ await p2.fill('#login-pwd', 'faro26');
 await p2.evaluate(() => tryDashLogin());
 await p2.waitForTimeout(400);
 await p2.evaluate(() => navigate('config'));
+await p2.waitForTimeout(600);
+await p2.evaluate(() => configPestana('sitio'));   // el mapa y los accesos viven acá
 await p2.waitForTimeout(900);
 const mapa = await p2.evaluate(() => ({
   filas: document.querySelectorAll('.mapa-fila').length,

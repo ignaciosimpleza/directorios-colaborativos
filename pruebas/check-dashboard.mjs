@@ -95,7 +95,9 @@ await p.fill('#login-pwd', 'faro26');
 await p.evaluate(() => tryDashLogin());
 await p.waitForTimeout(500);
 await p.evaluate(() => navigate('config'));
-await p.waitForTimeout(800);
+await p.waitForTimeout(600);
+await p.evaluate(() => configPestana('archivos'));   // las carpetas de Drive viven acá
+await p.waitForTimeout(900);
 await p.fill('#src-raizFolderId', '1RdZfN28PJEVPwFj04ymstaKJIDsCcXjY');
 await p.evaluate(() => detectarContenido());
 await p.waitForTimeout(1200);
@@ -142,12 +144,16 @@ ok('respeta SIN_REUNION: enero entero queda sin reunión',
 ok('programa la ronda de novedades según la planilla', agenda.some(a => /Ronda de novedades/.test(a)));
 ok('programa la técnica según la planilla', agenda.some(a => /Técnica/.test(a)));
 
-// ── Los errores de carga de la planilla se ven ──
+// ── La revisión de lo cargado se ve donde se arregla ──
 await p.evaluate(() => navigate('config'));
-await p.waitForTimeout(900);
-const avisos = await p.evaluate(() => [...document.querySelectorAll('.aviso')].map(e => e.textContent));
-ok('Configuración muestra lo que no se entendió de la planilla',
-  avisos.some(a => /no se entendió/.test(a)));
+await p.waitForTimeout(600);
+await p.evaluate(() => configPestana('contenido'));
+await p.waitForTimeout(700);
+await p.waitForSelector('#config-sources .card-title', { timeout: 8000 });
+const revision = await p.evaluate(() =>
+  [...document.querySelectorAll('#config-sources .card-title')].map(e => e.textContent.trim()).join(' | '));
+console.log('revisión:', revision.slice(0, 120));
+ok('Configuración revisa lo cargado y lo dice', /Revisi/.test(revision));
 
 console.log('ERRORES JS:', errores.length ? errores : 'ninguno');
 await b.close();

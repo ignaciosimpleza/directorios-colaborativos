@@ -1,7 +1,7 @@
 // Las reglas del calendario, escritas como pruebas: si alguna cambia, acá se ve.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseNoDisponible, disponibleEn, leerCalendario, aFecha, aDiaSemana, aBooleano } from '../api/_calendario.js';
+import { parseNoDisponible, disponibleEn, leerCalendario, aFecha, aDiaSemana, aBooleano } from '../reglas.js';
 
 const noDisp = t => parseNoDisponible(t).reglas;
 
