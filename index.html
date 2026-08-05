@@ -424,55 +424,60 @@ textarea.cfg-input { resize:vertical; line-height:1.5; }
 .arb-count { font-size:10px; font-weight:700; color:var(--gris-medio); background:#f1f1f1; padding:1px 7px; border-radius:10px; }
 .arb-carpeta-body { border-left:2px solid var(--beige-suave); padding-left:10px; margin-left:4px; }
 
-/* ── REUNIONES REALIZADAS (desde la bitácora) ──
-   Dos colores de datos, y nada más: verde para las presentaciones de empresa,
-   azul para las reuniones técnicas. Están verificados contra el fondo crema
-   (banda de luminosidad, chroma, separación bajo daltonismo y contraste). El
-   resto de la tarjeta usa los grises de texto: el color solo lo lleva el dato. */
-:root { --dato-empresa:#0B8F66; --dato-tecnica:#4A63C8; --dato-alerta:#9C4238; }
-.rp-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
-.rp-anio-lbl { font-size:11.5px; font-weight:600; color:var(--gris-medio); }
-.rp-anio { font-size:12.5px; font-family:inherit; padding:6px 10px; border:1px solid var(--beige-suave); border-radius:8px; background:#fff; color:var(--navy); font-weight:600; }
-.rp-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:20px; }
-.rp-stat { background:var(--crema-fondo); border-radius:var(--radius-sm); padding:12px 14px; }
-.rp-stat-num { font-size:26px; font-weight:700; color:var(--navy); line-height:1.1; }
-.rp-stat-de { font-size:15px; font-weight:600; color:var(--gris-medio); }
-.rp-stat-lbl { font-size:11px; color:var(--gris-oscuro); margin-top:3px; line-height:1.35; }
+/* ── REUNIONES Y ROTACIÓN ──
+   Identidad Simpleza: Sora en todos los pesos, fondo crema, tinta gris oscuro
+   y UN solo acento. El verde de marca (verde menta) aparece en su paso oscuro
+   —el claro no llega al contraste que necesita una marca de datos— y solo lo
+   lleva el dato. Nada de sombras: la separación la hacen las líneas hairline. */
+:root {
+  --dato: #0B8F66;              /* verde menta, paso oscuro: el único acento */
+  --alerta: #9C4238;            /* terracota oscura, solo para lo pendiente */
+  --linea: rgba(97,106,107,0.14);
+  --linea-fuerte: #D9CCC1;
+}
+.rp-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+.rp-anio-lbl { font-size:10px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--gris-medio); }
+.rp-anio { font-size:12.5px; font-family:inherit; padding:6px 10px; border:1px solid var(--linea-fuerte); border-radius:8px; background:#fff; color:var(--navy); font-weight:600; }
 
-/* Ritmo del grupo: columnas apiladas por período */
-.rp-seccion { font-size:11px; font-weight:700; color:var(--gris-medio); text-transform:uppercase; letter-spacing:0.7px; margin-bottom:10px; }
-.rp-leyenda { display:flex; gap:14px; margin-bottom:8px; }
-.rp-leyenda span { display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--gris-oscuro); }
-.rp-leyenda i { width:10px; height:10px; border-radius:3px; display:inline-block; }
-.rp-chart { width:100%; height:auto; max-height:170px; display:block; }
-.rp-chart .col:hover rect { opacity:0.75; }
-.rp-chart text { font-size:10px; fill:var(--gris-medio); font-family:inherit; }
-.rp-chart .val { font-size:10.5px; font-weight:700; fill:var(--gris-oscuro); }
+/* Indicadores */
+.rp-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:1px; margin-bottom:26px; background:var(--linea); border:1px solid var(--linea); border-radius:var(--radius-sm); overflow:hidden; }
+.rp-stat { background:var(--crema-fondo); padding:14px 16px 15px; }
+.rp-stat-num { font-size:28px; font-weight:600; color:var(--navy); line-height:1.05; letter-spacing:-0.02em; }
+.rp-stat-txt { font-size:19px; font-weight:600; color:var(--navy); line-height:1.25; letter-spacing:-0.01em; }
+.rp-stat-de { font-size:14px; font-weight:500; color:var(--gris-medio); }
+.rp-stat-lbl { font-size:11px; font-weight:600; color:var(--gris-oscuro); margin-top:7px; line-height:1.35; }
+.rp-stat-sub { font-size:11px; color:var(--gris-medio); margin-top:3px; line-height:1.4; }
+.rp-stat.foco .rp-stat-num { color:var(--alerta); }
 
-/* Tabla de empresas: una fila por empresa, ordenada por quién hace más que no presenta */
-.rp-tabla { width:100%; border-collapse:collapse; margin-top:4px; }
+/* Ritmo */
+.rp-seccion { font-size:10px; font-weight:600; color:var(--gris-medio); text-transform:uppercase; letter-spacing:0.18em; margin-bottom:12px; }
+.rp-chart { width:100%; height:auto; max-height:160px; display:block; }
+.rp-chart .col:hover path { opacity:0.72; }
+.rp-chart text { font-size:10.5px; fill:var(--gris-medio); font-family:inherit; font-weight:500; }
+.rp-chart .val { font-size:11px; font-weight:600; fill:var(--gris-oscuro); }
+
+/* Tabla */
+.rp-tabla { width:100%; border-collapse:collapse; }
 .rp-tabla thead tr { background:transparent; color:inherit; }
-.rp-tabla th { font-size:10.5px; font-weight:700; color:var(--gris-medio); text-transform:uppercase; letter-spacing:0.6px; text-align:left; padding:0 8px 7px 0; border-bottom:1px solid #efeae3; }
-.rp-tabla th.num, .rp-tabla td.num { text-align:right; padding-right:22px; }
-.rp-tabla td { font-size:12.5px; color:#3a4a4b; padding:8px 8px 8px 0; border-bottom:1px solid #f4f0ea; vertical-align:middle; }
+.rp-tabla th { font-size:9.5px; font-weight:600; color:var(--gris-medio); text-transform:uppercase; letter-spacing:0.14em; text-align:left; padding:0 16px 9px 0; border-bottom:1px solid var(--linea-fuerte); white-space:nowrap; }
+.rp-tabla td { font-size:13px; color:var(--gris-oscuro); padding:11px 16px 11px 0; border-bottom:1px solid var(--linea); }
 .rp-tabla tr:last-child td { border-bottom:none; }
+.rp-tabla th.num, .rp-tabla td.num { text-align:right; padding-right:26px; }
+.rp-tabla td.num { font-weight:600; color:var(--navy); font-variant-numeric:tabular-nums; }
+.rp-emp-cel { width:38%; }
 .rp-emp { font-weight:600; color:var(--navy); cursor:pointer; }
 .rp-emp:hover { text-decoration:underline; }
-.rp-tabla td.num { font-weight:700; color:var(--gris-oscuro); }
-.rp-veces { cursor:pointer; border-bottom:1px dotted var(--beige-suave); }
-.rp-fechas { font-size:11.5px; color:var(--gris-medio); line-height:1.7; padding:2px 0 8px; }
-.rp-nunca { color:var(--gris-medio); }
-.rp-sub { font-size:11px; color:var(--gris-medio); }
-/* Estado de rotación: siempre con su palabra, el color solo refuerza */
-.rp-estado { font-size:11.5px; font-weight:600; white-space:nowrap; }
-.rp-estado.urgente { color:var(--dato-alerta); }
-.rp-estado.tranquila { color:var(--gris-medio); font-weight:500; }
-.rp-stat-sub { font-size:11px; color:var(--gris-medio); margin-top:4px; line-height:1.35; }
-.rp-stat-txt { font-size:17px; font-weight:700; color:var(--navy); line-height:1.2; }
-.rp-note { font-size:11px; color:var(--gris-medio); margin-top:14px; line-height:1.5; }
-.rp-pendientes { margin-top:12px; font-size:11.5px; color:var(--gris-oscuro); }
+.rp-tag { font-size:10px; font-weight:600; letter-spacing:0.04em; color:var(--gris-medio); background:var(--crema-fondo); border:1px solid var(--linea); border-radius:20px; padding:2px 8px; margin-left:9px; white-space:nowrap; }
+.rp-veces { cursor:pointer; border-bottom:1px dotted var(--gris-medio); }
+.rp-vacio { color:var(--gris-medio); }
+.rp-pendiente { color:var(--alerta); font-weight:600; }
+.rp-fila-fechas td { padding-top:0; border-bottom:1px solid var(--linea); }
+.rp-fechas { font-size:11.5px; color:var(--gris-medio); line-height:1.8; }
+.rp-note { font-size:11px; color:var(--gris-medio); margin-top:16px; line-height:1.6; }
+.rp-pendientes { margin-top:10px; font-size:11.5px; color:var(--gris-oscuro); }
 .rp-pendientes summary { cursor:pointer; color:var(--gris-medio); }
-.rp-pendientes div { margin-top:6px; line-height:1.6; }
+.rp-pendientes div { margin-top:6px; line-height:1.7; }
+
 
 .activity-item { display:flex; gap:10px; padding:9px 0; border-bottom:1px solid #f0ece6; align-items:flex-start; }
 .activity-item:last-child { border-bottom:none; }
@@ -1428,6 +1433,7 @@ function pintarReuniones() {
     const todas = x.reuniones.map(r => r.fecha).sort();   // sin filtrar: la rotación es continua
     return {
       empresa: x.empresa, fechas, n: fechas.length,
+      primera: fechas[0] || '',
       ultima: todas.at(-1) || '',
       proxima: proximaFechaDe(x.empresa.nombre, hoy),
       aviso: x.aviso, error: x.error, sinFecha: x.sinFecha || [],
@@ -1473,7 +1479,7 @@ function pintarReuniones() {
         <div class="rp-stat-lbl">Entre presentaciones de una misma empresa</div>
         <div class="rp-stat-sub">La regla del calendario dice cada ${semanasRegla}</div>
       </div>
-      <div class="rp-stat">
+      <div class="rp-stat${necesitanFecha.length ? ' foco' : ''}">
         <div class="rp-stat-num">${necesitanFecha.length}</div>
         <div class="rp-stat-lbl">Necesitan fecha</div>
         <div class="rp-stat-sub">${necesitanFecha.length
@@ -1488,7 +1494,7 @@ function pintarReuniones() {
     </div>
     ${ritmoHtml(filas, fechasTecnicas)}
     ${tablaRotacionHtml(filas, hoy, semanasRegla)}
-    <div class="rp-note">Las presentaciones salen de la bitácora de cada empresa; las fechas próximas, del Calendario. Hacé click en el número para ver las fechas leídas, o en el nombre para abrir el documento.</div>
+    <div class="rp-note">Las reuniones salen de la bitácora de cada empresa; la próxima fecha, del Calendario. Hacé click en el número de reuniones para ver las fechas leídas, o en el nombre de la empresa para abrir su bitácora.</div>
     ${pendientes.length ? avisosPendientesHtml(pendientes) : ''}
     ${sinFechar.length ? seccionesSinFechaHtml(sinFechar) : ''}`;
   aplicarVisibilidad();
@@ -1536,41 +1542,99 @@ function estadoDe(f, hoy, semanasRegla) {
   return { clave: 'necesita', texto: 'Necesita fecha', cls: 'urgente' };
 }
 
-// ── La tabla de rotación ──
-// Quién presentó por última vez, hace cuánto, cuándo le toca y qué hay que
-// hacer. Sin barras: el número de presentaciones no es la decisión, el orden
-// de la rotación sí.
-const ORDEN_ESTADO = { necesita: 0, agendada: 1, aldia: 2, sinDato: 3, fuera: 4 };
+// ── Ritmo del grupo ──
+// Una sola serie, en el verde de marca: cuántas reuniones tuvo el grupo en cada
+// período. La composición (empresa / técnicas) ya está en los indicadores, así
+// que el gráfico no necesita un segundo color y la marca queda con un acento.
+function ritmoHtml(filas, fechasTecnicas) {
+  const porAnio = REUNIONES_ANIO === 'todos';
+  const clave = f => porAnio ? f.slice(0, 4) : f.slice(5, 7);
+  const etiqueta = k => porAnio ? k : MESES_CORTOS[+k - 1];
 
+  const cubos = new Map();
+  const sumar = f => cubos.set(clave(f), (cubos.get(clave(f)) || 0) + 1);
+  filas.forEach(fi => fi.fechas.forEach(sumar));
+  fechasTecnicas.forEach(sumar);
+
+  // El eje del tiempo va corrido: un período sin reuniones se muestra vacío, no
+  // se saltea, porque justamente eso es parte del ritmo.
+  const conDatos = [...cubos.keys()].sort();
+  if (conDatos.length < 2) return '';
+  const claves = [];
+  for (let n = +conDatos[0]; n <= +conDatos.at(-1); n++) claves.push(porAnio ? String(n) : String(n).padStart(2, '0'));
+
+  const W = 800, BASE = 96, TOPE = 18, PIE = 18;
+  const paso = W / claves.length;
+  const ancho = Math.min(22, paso * 0.46);
+  const max = Math.max(...claves.map(k => cubos.get(k) || 0));
+
+  const cols = claves.map((k, i) => {
+    const n = cubos.get(k) || 0;
+    const x = paso * i + paso / 2;
+    const h = n ? Math.max(3, (n / max) * (BASE - TOPE)) : 0;
+    return `<g class="col">
+      <title>${esc(etiqueta(k))} · ${n} ${n === 1 ? 'reunión' : 'reuniones'}</title>
+      <rect x="${(x - paso / 2).toFixed(1)}" y="0" width="${paso.toFixed(1)}" height="${BASE + PIE}" fill="transparent"></rect>
+      ${h ? `<path d="${barra(x, BASE - h, ancho, h, 4)}" fill="var(--dato)"></path>` : ''}
+      ${n ? `<text class="val" x="${x.toFixed(1)}" y="${(BASE - h - 6).toFixed(1)}" text-anchor="middle">${n}</text>` : ''}
+      <text x="${x.toFixed(1)}" y="${BASE + 15}" text-anchor="middle">${esc(etiqueta(k))}</text>
+    </g>`;
+  }).join('');
+
+  return `<div class="rp-seccion">Ritmo del grupo · reuniones por ${porAnio ? 'año' : 'mes'}</div>
+    <svg class="rp-chart" viewBox="0 0 ${W} ${BASE + PIE + 6}" role="img"
+      aria-label="Reuniones por período: ${esc(claves.map(k => `${etiqueta(k)} ${cubos.get(k) || 0}`).join(', '))}">
+      <line x1="0" y1="${BASE}" x2="${W}" y2="${BASE}" stroke="var(--linea)" stroke-width="1"></line>
+      ${cols}
+    </svg>`;
+}
+
+// Una columna: esquinas redondeadas arriba, al ras en la base.
+function barra(cx, y, w, h, r) {
+  const x = cx - w / 2, rr = Math.min(r, w / 2, h);
+  return `M${x.toFixed(1)},${(y + h).toFixed(1)} L${x.toFixed(1)},${(y + rr).toFixed(1)} Q${x.toFixed(1)},${y.toFixed(1)} ${(x + rr).toFixed(1)},${y.toFixed(1)}` +
+    ` L${(x + w - rr).toFixed(1)},${y.toFixed(1)} Q${(x + w).toFixed(1)},${y.toFixed(1)} ${(x + w).toFixed(1)},${(y + rr).toFixed(1)}` +
+    ` L${(x + w).toFixed(1)},${(y + h).toFixed(1)} Z`;
+}
+
+// ── La tabla de rotación ──
+// Solo las empresas en rotación. Para cada una: cuántas veces presentó, desde
+// cuándo viene presentando, cuándo fue la última y cuándo le toca. Las tres
+// primeras salen de la bitácora; la próxima, del Calendario.
 function tablaRotacionHtml(filas, hoy, semanasRegla) {
-  const orden = filas.slice().sort((a, b) => {
-    const ea = estadoDe(a, hoy, semanasRegla), eb = estadoDe(b, hoy, semanasRegla);
-    if (ORDEN_ESTADO[ea.clave] !== ORDEN_ESTADO[eb.clave]) return ORDEN_ESTADO[ea.clave] - ORDEN_ESTADO[eb.clave];
-    if (!a.ultima) return -1;
-    if (!b.ultima) return 1;
+  const enRotacion = filas.filter(f => f.empresa.activa !== false);
+  if (!enRotacion.length) return '';
+  const orden = enRotacion.slice().sort((a, b) => {
+    if (!a.ultima && !b.ultima) return a.empresa.nombre.localeCompare(b.empresa.nombre);
+    if (!a.ultima) return 1;
+    if (!b.ultima) return -1;
     return a.ultima < b.ultima ? -1 : 1;
   });
 
   const cuerpo = orden.map((f, i) => {
-    const e = estadoDe(f, hoy, semanasRegla);
-    const sem = f.ultima ? semanasEntre(f.ultima, hoy) : null;
+    const leToca = f.ultima ? semanasEntre(f.ultima, hoy) >= semanasRegla : true;
+    const proxima = f.proxima
+      ? esc(fechaCorta(f.proxima))
+      : `<span class="${leToca && !f.aviso ? 'rp-pendiente' : 'rp-vacio'}">${leToca && !f.aviso ? 'Sin agendar' : '—'}</span>`;
     return `<tr>
-      <td><span class="rp-emp" onclick="abrirBitacora(${f.empresa.id})" title="Abrir la bitácora de ${esc(f.empresa.nombre)}">${esc(f.empresa.nombre)}</span></td>
-      <td>${f.ultima ? esc(fechaCorta(f.ultima)) : `<span class="rp-nunca">${f.aviso ? '—' : 'todavía no presentó'}</span>`}</td>
-      <td class="num">${sem === null ? '' : sem}</td>
-      <td>${f.proxima ? esc(fechaCorta(f.proxima)) : '<span class="rp-nunca">—</span>'}</td>
-      <td><span class="rp-estado ${e.cls}">${e.texto}</span></td>
-      <td class="num">${f.n ? `<span class="rp-veces" onclick="verFechas(${f.empresa.id},${i})" title="Ver las fechas leídas">${f.n}</span>` : '0'}</td>
+      <td class="rp-emp-cel"><span class="rp-emp" onclick="abrirBitacora(${f.empresa.id})" title="Abrir la bitácora de ${esc(f.empresa.nombre)}">${esc(f.empresa.nombre)}</span>${
+        f.aviso ? '<span class="rp-tag">sin bitácora</span>' : ''}</td>
+      <td class="num">${f.n
+        ? `<span class="rp-veces" onclick="verFechas(${i})" title="Ver las fechas leídas">${f.n}</span>`
+        : `<span class="rp-vacio">${f.aviso ? '—' : '0'}</span>`}</td>
+      <td>${f.primera ? esc(fechaCorta(f.primera)) : '<span class="rp-vacio">—</span>'}</td>
+      <td>${f.ultima ? esc(fechaCorta(f.ultima)) : '<span class="rp-vacio">—</span>'}</td>
+      <td>${proxima}</td>
     </tr>
-    <tr id="rp-fechas-${i}" style="display:none"><td colspan="6" class="rp-fechas">${
-      f.fechas.slice().reverse().map(x => esc(fechaCorta(x))).join(' · ')}</td></tr>`;
+    <tr class="rp-fila-fechas" id="rp-fechas-${i}" hidden><td colspan="5" class="rp-fechas">${
+      f.fechas.slice().reverse().map(x => esc(fechaCorta(x))).join(' · ') || '—'}</td></tr>`;
   }).join('');
 
-  return `<div class="rp-seccion" style="margin-top:22px">Rotación de presentaciones</div>
+  return `<div class="rp-seccion" style="margin-top:26px">Rotación de las empresas</div>
     <table class="rp-tabla">
       <thead><tr>
-        <th>Empresa</th><th>Última presentación</th><th class="num">Semanas sin<br>presentar</th>
-        <th>Próxima fecha</th><th>Estado</th><th class="num">Veces</th>
+        <th>Empresa</th><th class="num">Reuniones</th>
+        <th>Primera</th><th>Última</th><th>Próxima</th>
       </tr></thead>
       <tbody>${cuerpo}</tbody>
     </table>`;
@@ -1578,9 +1642,9 @@ function tablaRotacionHtml(filas, hoy, semanasRegla) {
 
 // Los números tienen que poder auditarse: al tocarlos se ven las fechas que el
 // sitio leyó de la bitácora, para poder comparar con el documento.
-function verFechas(empresaId, i) {
+function verFechas(i) {
   const fila = document.getElementById('rp-fechas-' + i);
-  if (fila) fila.style.display = fila.style.display === 'none' ? '' : 'none';
+  if (fila) fila.hidden = !fila.hidden;
 }
 
 // Secciones de una bitácora que parecen una reunión pero no tienen una fecha
@@ -1602,80 +1666,6 @@ function seccionesSinFechaHtml(filas) {
     <div>Estas secciones no se contaron porque no se les encontró la fecha. Se cuentan si el encabezado (o el renglón de abajo) incluye el día y el mes; por ejemplo, «09 de febrero – Primera presentación».<br>
     ${filas.map(f => `<strong>${esc(f.empresa.nombre)}</strong>: ${f.sinFecha.slice(0, 6).map(t => `«${esc(t)}»`).join(', ')}${f.sinFecha.length > 6 ? ` y ${f.sinFecha.length - 6} más` : ''}`).join('<br>')}</div>
   </details>`;
-}
-
-// ── Ritmo del grupo: columnas apiladas por período ──
-// Un año seleccionado se muestra por mes; «todos los años», por año. Dos series
-// (presentaciones y técnicas) con leyenda y una separación de 2px entre ellas.
-function ritmoHtml(filas, fechasTecnicas) {
-  const porAnio = REUNIONES_ANIO === 'todos';
-  const clave = f => porAnio ? f.slice(0, 4) : f.slice(5, 7);
-  const etiqueta = k => porAnio ? k : MESES_CORTOS[+k - 1];
-
-  const cubos = new Map();
-  const sumar = (f, campo) => {
-    const k = clave(f);
-    if (!cubos.has(k)) cubos.set(k, { empresa: 0, tecnica: 0 });
-    cubos.get(k)[campo]++;
-  };
-  filas.forEach(fi => fi.fechas.forEach(f => sumar(f, 'empresa')));
-  fechasTecnicas.forEach(f => sumar(f, 'tecnica'));
-
-  // El eje del tiempo va corrido: un período sin reuniones se muestra vacío, no
-  // se saltea, porque justamente eso es parte del ritmo.
-  const conDatos = [...cubos.keys()].sort();
-  if (conDatos.length < 2) return '';   // con un solo período no hay ritmo que mostrar
-  const desde = +conDatos[0], hasta = +conDatos.at(-1);
-  const claves = [];
-  for (let n = desde; n <= hasta; n++) claves.push(porAnio ? String(n) : String(n).padStart(2, '0'));
-  claves.forEach(k => { if (!cubos.has(k)) cubos.set(k, { empresa: 0, tecnica: 0 }); });
-
-  // Coordenadas fijas: el SVG escala entero, sin deformar el texto.
-  const W = 800, ALTO = 120, BASE = 96, TOPE = 16, PIE = 18;
-  const paso = W / claves.length;
-  const ancho = Math.min(22, paso * 0.5);
-  const max = Math.max(...claves.map(k => cubos.get(k).empresa + cubos.get(k).tecnica));
-  const alto = v => (v / max) * (BASE - TOPE);
-
-  const cols = claves.map((k, i) => {
-    const c = cubos.get(k), total = c.empresa + c.tecnica;
-    const x = paso * i + paso / 2;
-    const hTec = c.tecnica ? Math.max(2, alto(c.tecnica)) : 0;
-    const hEmp = c.empresa ? Math.max(2, alto(c.empresa)) : 0;
-    // 2 unidades de aire entre los dos tramos: lo que los separa es el fondo.
-    const yTec = BASE - hTec;
-    const yEmp = yTec - hEmp - (hTec ? 2 : 0);
-    const partes = [];
-    if (hTec) partes.push(`<path d="${barra(x, yTec, ancho, hTec, hEmp ? 0 : 4)}" fill="var(--dato-tecnica)"></path>`);
-    if (hEmp) partes.push(`<path d="${barra(x, yEmp, ancho, hEmp, 4)}" fill="var(--dato-empresa)"></path>`);
-    const cima = hEmp ? yEmp : yTec;
-    return `<g class="col">
-      <title>${esc(etiqueta(k))} · ${c.empresa} de empresa, ${c.tecnica} ${c.tecnica === 1 ? 'técnica' : 'técnicas'}</title>
-      <rect x="${(x - paso / 2).toFixed(1)}" y="0" width="${paso.toFixed(1)}" height="${BASE + PIE}" fill="transparent"></rect>
-      ${partes.join('')}
-      ${total ? `<text class="val" x="${x.toFixed(1)}" y="${(cima - 5).toFixed(1)}" text-anchor="middle">${total}</text>` : ''}
-      <text x="${x.toFixed(1)}" y="${BASE + 15}" text-anchor="middle">${esc(etiqueta(k))}</text>
-    </g>`;
-  }).join('');
-
-  return `<div class="rp-seccion">Ritmo del grupo${porAnio ? ', por año' : ', por mes'}</div>
-    <div class="rp-leyenda">
-      <span><i style="background:var(--dato-empresa)"></i>Presentaciones de empresa</span>
-      <span><i style="background:var(--dato-tecnica)"></i>Reuniones técnicas</span>
-    </div>
-    <svg class="rp-chart" viewBox="0 0 ${W} ${ALTO}" role="img"
-      aria-label="Reuniones por período: ${esc(claves.map(k => `${etiqueta(k)} ${cubos.get(k).empresa + cubos.get(k).tecnica}`).join(', '))}">
-      <line x1="0" y1="${BASE}" x2="${W}" y2="${BASE}" stroke="#e6e0d8" stroke-width="1"></line>
-      ${cols}
-    </svg>`;
-}
-
-// Una columna: esquinas redondeadas arriba, al ras en la base.
-function barra(cx, y, w, h, r) {
-  const x = cx - w / 2, rr = Math.min(r, w / 2, h);
-  return `M${x.toFixed(1)},${(y + h).toFixed(1)} L${x.toFixed(1)},${(y + rr).toFixed(1)} Q${x.toFixed(1)},${y.toFixed(1)} ${(x + rr).toFixed(1)},${y.toFixed(1)}` +
-    ` L${(x + w - rr).toFixed(1)},${y.toFixed(1)} Q${(x + w).toFixed(1)},${y.toFixed(1)} ${(x + w).toFixed(1)},${(y + rr).toFixed(1)}` +
-    ` L${(x + w).toFixed(1)},${(y + h).toFixed(1)} Z`;
 }
 
 // Etiquetas del eje del gráfico

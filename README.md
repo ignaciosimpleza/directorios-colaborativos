@@ -130,12 +130,24 @@ está pensado para **gestionar la rotación**, no para lucir números:
 | **Necesitan fecha** | Empresas que superaron el intervalo y no tienen fecha asignada |
 | Próxima presentación | Qué viene y de quién |
 
-Debajo, el **ritmo del grupo** (columnas apiladas por año, o por mes si se filtra
-un año, con el eje corrido: un período sin reuniones se muestra vacío) y la
-**tabla de rotación**: última presentación, semanas sin presentar, próxima fecha
-del calendario y estado (*Al día*, *Agendada*, *Necesita fecha*, *Sin bitácora*),
-ordenada por urgencia. El número de veces es clickeable y despliega las fechas que
-el sitio leyó, para poder auditarlas contra el documento.
+Debajo, el **ritmo del grupo** —una columna por período, con el eje corrido: un
+año sin reuniones se muestra vacío en vez de saltearse— y la **tabla de
+rotación**, solo con las empresas activas:
+
+| Empresa | Reuniones | Primera | Última | Próxima |
+|---|---|---|---|---|
+
+Las tres primeras columnas salen de la bitácora; la próxima, del Calendario. Si
+una empresa superó el intervalo y no tiene fecha, la celda dice «Sin agendar». El
+número de reuniones se despliega y muestra las fechas que el sitio leyó, para
+poder auditarlas contra el documento.
+
+**Identidad visual.** El bloque usa un solo color de dato: el verde de marca en
+su paso oscuro (`#0B8F66`), porque el verde menta claro no llega al contraste que
+necesita una marca de datos sobre el fondo crema. Todo lo demás son los grises de
+texto de la marca y líneas hairline; nada de sombras. La terracota oscura aparece
+solo para lo que está pendiente. Los colores están verificados contra el fondo
+crema: banda de luminosidad, chroma, separación bajo daltonismo y contraste.
 
 #### Dónde se le indica al sitio cuál es
 

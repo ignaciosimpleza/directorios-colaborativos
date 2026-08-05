@@ -19,13 +19,13 @@ await p.waitForTimeout(400);
 
 // ── Números por empresa desde la bitácora ──
 const leerTabla = () => p.evaluate(() =>
-  [...document.querySelectorAll('.rp-tabla tbody tr')].filter(r => !r.id).map(r => ({
-    empresa: r.children[0].textContent.trim(),
-    ultima: r.children[1].textContent.trim(),
-    semanas: r.children[2].textContent.trim(),
-    proxima: r.children[3].textContent.trim(),
-    estado: r.children[4].textContent.trim(),
-    n: +r.children[5].textContent.trim(),
+  [...document.querySelectorAll('.rp-tabla tbody tr')].filter(r => !r.hidden).map(r => ({
+    empresa: r.querySelector('.rp-emp').textContent.trim(),
+    sinBitacora: !!r.querySelector('.rp-tag'),
+    n: +r.children[1].textContent.trim() || 0,
+    primera: r.children[2].textContent.trim(),
+    ultima: r.children[3].textContent.trim(),
+    proxima: r.children[4].textContent.trim(),
   })));
 const barras = await leerTabla();
 console.log('tabla:', JSON.stringify(barras));
@@ -39,10 +39,13 @@ ok('dice cuándo presentó cada una por última vez',
   /3 ago 2026/.test(barras.find(x => /MACSA/.test(x.empresa))?.ultima || ''));
 ok('cruza la bitácora con el calendario: la próxima fecha de cada empresa',
   /14 ago 2026/.test(barras.find(x => /MACSA/.test(x.empresa))?.proxima || ''));
-ok('y dice qué hacer con cada una',
-  barras.every(x => /Al día|Agendada|Necesita fecha|Sin bitácora|Fuera de rotación/.test(x.estado)));
-ok('las que necesitan una fecha van primero, y las que no tienen bitácora al final',
-  barras.findIndex(x => /Tricampo/.test(x.empresa)) > barras.findIndex(x => /MACSA/.test(x.empresa)));
+ok('y desde cuándo viene presentando',
+  /29 sep 2022/.test(barras.find(x => /MACSA/.test(x.empresa))?.primera || ''));
+ok('las que hace más que no presentan van primero, y las que no tienen bitácora al final',
+  barras.findIndex(x => /Porvenir/.test(x.empresa)) < barras.findIndex(x => /MACSA/.test(x.empresa))
+  && barras.findIndex(x => /Tricampo/.test(x.empresa)) > barras.findIndex(x => /MACSA/.test(x.empresa)));
+ok('la empresa sin bitácora queda marcada, no en blanco',
+  barras.find(x => /Tricampo/.test(x.empresa))?.sinBitacora === true);
 
 // ── Vínculo automático empresa ↔ carpeta de Drive (CONFIG_DRIVE vacía) ──
 const vinculos = await p.evaluate(() => EMPRESAS.map(e => ({
@@ -70,10 +73,11 @@ ok('y cuál es la próxima presentación agendada',
 // ── El gráfico del ritmo del grupo ──
 const ritmo = await p.evaluate(() => [...document.querySelectorAll('.rp-chart .col title')].map(e => e.textContent));
 console.log('ritmo:', JSON.stringify(ritmo));
-ok('el gráfico apila presentaciones y técnicas por período', ritmo.length >= 5);
-ok('y no saltea un año sin reuniones', ritmo.some(t => /^2023 · 0 de empresa/.test(t)));
-ok('las dos series están identificadas con leyenda, no solo por color',
-  await p.evaluate(() => document.querySelectorAll('.rp-leyenda span').length === 2));
+ok('el gráfico muestra las reuniones de cada período', ritmo.length >= 5);
+ok('y no saltea un año sin reuniones', ritmo.some(t => /^2023 · 0 reuniones/.test(t)));
+ok('con un solo color de dato, el de la marca',
+  await p.evaluate(() => new Set([...document.querySelectorAll('.rp-chart path')]
+    .map(e => e.getAttribute('fill'))).size === 1));
 
 // ── Filtro por año ──
 const anios = await p.evaluate(() => [...document.querySelectorAll('.rp-anio option')].map(o => o.value));
