@@ -101,6 +101,40 @@ function armar(anio, mes, dia, aproximada) {
   return { fecha: `${anio}-${pad2(mes)}-${pad2(dia)}`, aproximada: !!aproximada };
 }
 
+// ── La frase de lo que se vio ──
+// No se interpreta ni se resume nada: se cita la primera frase de contenido que
+// el facilitador ya escribió debajo de la fecha. Se saltean las etiquetas
+// («Participantes:», «Duración:»), los títulos de sección numerados y los
+// encabezados sin punto, que son títulos y no frases.
+const ETIQUETA = /^[\wÁÉÍÓÚÑÜáéíóúñü/ ]{3,45}:\s*/;
+const NUMERACION = /^\d+([.)\\]|\.\d+)*\s*/;
+const LINEAS_ADELANTE = 30;
+const FRASE_MIN = 60;
+const FRASE_MAX = 240;
+
+function fraseDeContenido(lineas, desde) {
+  for (let j = desde + 1; j < lineas.length && j <= desde + LINEAS_ADELANTE; j++) {
+    if (lineas[j].nivel >= 1) break;               // empezó otra reunión
+    const t = String(lineas[j].texto || '').replace(/^[^\p{L}\d¿¡«"]+/u, '').trim();
+    if (!t || t.length < FRASE_MIN) continue;
+    if (ETIQUETA.test(t) && t.length < 260) continue;
+    if (NUMERACION.test(t) && t.replace(NUMERACION, '').length < 90) continue;
+    if (!t.includes('.')) continue;                // un título de sección no lleva punto
+    if (t.split(/\s+/).length < 10) continue;
+    return recortar(t, FRASE_MAX);
+  }
+  return '';
+}
+
+// Corta en el punto o el espacio más cercano, para no dejar la frase por la mitad
+function recortar(t, max) {
+  if (t.length <= max) return t;
+  const punto = t.lastIndexOf('. ', max);
+  if (punto > max * 0.5) return t.slice(0, punto + 1);
+  const espacio = t.lastIndexOf(' ', max);
+  return t.slice(0, espacio > 0 ? espacio : max).trim() + '…';
+}
+
 // Deja el título sin la fecha ni la basura de separadores, para mostrarlo lindo.
 export function tituloLimpio(texto) {
   let t = String(texto || '')
@@ -239,9 +273,15 @@ export function desdeLineas(lineas) {
     fechaAproximada: grupo.some(m => m.aproximada),
     anioDeducido: grupo.every(m => m.anioDeducido),
     titulo: tituloDe(grupo),
+    // La frase se busca desde el último renglón que menciona esta fecha: el
+    // índice del documento está arriba y no tiene contenido debajo.
+    frase: fraseDeContenido(norm, grupo.at(-1).i),
     encabezado: grupo[0].texto,
   }));
   reuniones.sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
+  // Se numeran desde la más vieja: «reunión 7» es la séptima de esa empresa.
+  const total = reuniones.length;
+  reuniones.forEach((r, i) => { r.numero = total - i; });
 
   // Una sección se reporta «sin fecha» solo si NO hay ninguna reunión adentro,
   // entre ese encabezado y el siguiente del mismo nivel. Un encabezado repetido

@@ -86,10 +86,30 @@ ok('resuelve «El Porvenir / Beheran Sarciat S.A.» → «Beheran Sarciat SA»',
 
 // ── Actividad reciente = últimas reuniones con fecha y tema ──
 const act = await p.evaluate(() =>
-  [...document.querySelectorAll('#actividad-reciente .activity-item')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
-console.log('actividad:', JSON.stringify(act.slice(0, 3)));
-ok('la actividad reciente muestra reuniones con su tema', act.length > 0 && /MACSA.*Crecimiento/.test(act[0]));
-ok('y la más nueva va primero', /3 ago 2026/.test(act[0]));
+  [...document.querySelectorAll('#actividad-reciente .act-item')].map(e => ({
+    fecha: e.querySelector('.act-fecha').textContent.trim(),
+    empresa: e.querySelector('.act-emp').textContent.trim(),
+    nro: (e.querySelector('.act-nro') || {}).textContent || '',
+    frase: e.querySelector('.act-frase').textContent.trim(),
+  })));
+console.log('actividad:', JSON.stringify(act.slice(0, 2)));
+ok('la actividad reciente lista las últimas reuniones', act.length === 8);
+ok('y la más nueva va primero', act[0].fecha === '3 ago 2026' && /MACSA/.test(act[0].empresa));
+ok('cada paso dice qué número de reunión es de esa empresa', /Reunión 7/.test(act[0].nro));
+ok('y trae la frase textual de la bitácora, sin resumirla',
+  /plan de inversiones para la campaña que viene/.test(act[0].frase));
+ok('cuando la bitácora no trae frase, no se inventa ninguna',
+  await p.evaluate(() => [...document.querySelectorAll('.act-frase.vacia')].length > 0));
+
+// Cada paso lleva a donde se profundiza
+await p.evaluate(() => document.querySelector('.act-emp').click());
+await p.waitForTimeout(500);
+ok('el nombre de la empresa lleva a su ficha',
+  await p.evaluate(() => currentSection === 'empresa-detalle'));
+await p.evaluate(() => navigate('dashboard'));
+await p.waitForTimeout(600);
+ok('la tarjeta del tablero también lleva a la ficha, a la bitácora y al calendario',
+  await p.evaluate(() => document.querySelectorAll('.rp-card:not(.apagada) .rp-card-pie a').length >= 3));
 
 await p.screenshot({ path: SHOT + '/20-dashboard.png', fullPage: true });
 

@@ -36,15 +36,18 @@ arranca pidiéndole al mock un `_reset`. Si se corren en paralelo, se pisan.
 - **check-auth.mjs** — el circuito completo de acceso: registro → pendiente →
   autorización → ingreso → sesión que sobrevive al reload → salida, y que la API
   no entregue datos sin sesión cuando el portero está prendido.
-- **check-config.mjs** — que se pueda configurar todo el grupo desde el sitio:
+- **check-config.mjs** — la pestaña de Instrucciones (pasos en orden, obligatorio
+  vs. opcional, y que no nombre a ningún grupo en particular) y que se pueda
+  configurar todo el grupo desde el sitio:
   importar una planilla, editar textos, agregar y desactivar empresas, validar
   «cuándo no puede presentar», que la agenda salga con esas reglas, que las
   fechas libres se completen respetando la proporción de ronda y técnica, y que
   al pegar el enlace de un documento de bitácora el sitio lo lea.
 - **check-dashboard.mjs** — lo que el grupo pidió ver: el número de reuniones de
   cada empresa sacado de su bitácora, el gráfico, el filtro por año, la actividad
-  reciente con fecha y tema, las reuniones técnicas visibles en Recursos, la
-  autodetección de carpetas y el logo como imagen.
+  reciente (fecha, empresa, número de reunión y la frase citada de la bitácora),
+  las reuniones técnicas visibles en Recursos, la autodetección de carpetas y el
+  logo como imagen.
 
 Aparte, sin navegador:
 

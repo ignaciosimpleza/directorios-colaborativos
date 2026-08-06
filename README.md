@@ -13,10 +13,11 @@ la gaceta. Eso el sitio lo lee, no lo administra.
 Para armar otro grupo: se entra a Configuración y se carga. Si el grupo ya tenía
 sus datos en una planilla, se importa de una vez y después se edita en el sitio.
 
-### Configuración, en tres pestañas
+### Configuración, en cuatro pestañas
 
 | Pestaña | Qué se carga |
 | --- | --- |
+| **Instrucciones** | Cómo se estructura Drive, qué datos hacen falta y en qué orden se completa. Sirve para cualquier grupo |
 | **El grupo** | Identidad, principios, equipo, empresas, hitos, ejes, eventos y marco conceptual |
 | **Archivos** | Las carpetas y archivos de Drive (documentos, bitácoras, logo) |
 | **El sitio** | Qué secciones se muestran y quién puede entrar |
@@ -116,7 +117,18 @@ Reglas del parser (`api/_bitacora.js`):
   en el tablero, con su texto, para poder corregir el documento.
 
 `api/bitacora.js` abre el documento (Google Doc o `.docx`, también si es un acceso
-directo) y devuelve `{ reuniones, sinFecha }`.
+directo) y devuelve `{ reuniones, sinFecha }`. Cada reunión trae `fecha`, `numero`
+(la enésima de esa empresa, contando desde la primera), `titulo` y `frase`.
+
+#### La frase de lo que se vio
+
+Debajo de la fecha, el facilitador ya escribe el contenido. El sitio **cita** la
+primera frase de ese contenido: no interpreta ni resume nada, y no interviene
+ningún modelo de lenguaje. Para encontrarla saltea las etiquetas
+(`Participantes:`, `Duración:`), los títulos de sección numerados y los
+encabezados sin punto —que son títulos, no frases—, y toma el primer párrafo de
+diez palabras o más. Si no hay ninguno, la frase queda vacía y el sitio no
+muestra nada inventado.
 
 #### Qué muestra el tablero
 
@@ -142,9 +154,25 @@ La que no tiene fecha dice «Sin agendar» en vez de quedar en blanco.
 La empresa sin bitácora conectada tiene su propia tarjeta, con borde punteado y
 el link directo a donde se indica el documento. El número de reuniones se toca y
 despliega las fechas que el sitio leyó, para poder auditarlas contra el documento.
+Al pie, cada tarjeta lleva a la **ficha** de la empresa, a su **bitácora** en
+Drive y al **Calendario**.
 
 El selector de período recorta los tres datos de la bitácora a un año; la próxima
 fecha siempre es la que viene.
+
+#### Actividad reciente
+
+Las últimas ocho reuniones del grupo, una línea por reunión:
+
+```
+3 AGO 2026   MACSA Agro   (Reunión 7)
+La reunión se centró en el plan de inversiones para la campaña que viene…
+```
+
+Fecha, empresa, número de reunión y la frase citada de la bitácora. El nombre de
+la empresa lleva a su ficha; la frase, al documento donde está escrita. Cuando la
+bitácora no trae una frase de contenido, se muestra el título de la reunión en
+gris: el sitio no completa el hueco con texto propio.
 
 **Identidad visual.** Fondo crema, tinta gris oscuro, Sora en todos los pesos y un
 solo acento (verde menta). Sin sombras: separan las líneas hairline. La grilla es

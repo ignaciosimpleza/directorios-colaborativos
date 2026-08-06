@@ -22,7 +22,7 @@ const dash = await p.evaluate(() => {
 
     porEmpresa: [...document.querySelectorAll('.rp-card')].map(e => e.textContent.replace(/\s+/g, ' ').trim().slice(0, 60)),
     anios: [...document.querySelectorAll('.rp-anio option')].map(o => o.value),
-    actividad: document.querySelectorAll('#actividad-reciente .activity-item').length,
+    actividad: document.querySelectorAll('#actividad-reciente .act-item').length,
     proximas: document.querySelectorAll('#proximas-reuniones .historial-item').length,
     novedadesVisible: vis('card-novedades'),
     novedadesSub: t('novedades-sub'),

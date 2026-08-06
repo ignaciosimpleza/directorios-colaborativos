@@ -31,7 +31,29 @@ ok('las reglas de la agenda las carga el navegador desde el mismo archivo que la
 
 await entrarAConfig();
 const tabs = await p.evaluate(() => [...document.querySelectorAll('.cfg-tab')].map(e => e.textContent));
-ok('Configuración está separada en pestañas', tabs.join('|') === 'El grupo|Archivos|El sitio');
+ok('Configuración está separada en pestañas', tabs.join('|') === 'Instrucciones|El grupo|Archivos|El sitio');
+
+// ── Instrucciones: sirven para cualquier grupo, no solo para éste ──
+await p.evaluate(() => configPestana('instrucciones'));
+await p.waitForTimeout(600);
+const ins = await p.evaluate(() => ({
+  pasos: [...document.querySelectorAll('.ins-paso-tit')].map(e => e.textContent.trim()),
+  arboles: document.querySelectorAll('.ins-arbol').length,
+  obligatorias: document.querySelectorAll('.ins-obl').length,
+  opcionales: document.querySelectorAll('.ins-opc').length,
+  atajos: document.querySelectorAll('.ins-ir').length,
+  texto: document.getElementById('config-sources').textContent,
+}));
+console.log('instrucciones:', JSON.stringify(ins.pasos));
+ok('hay una pestaña de instrucciones con los pasos en orden', ins.pasos.length === 7);
+ok('muestra cómo se estructura Drive y cómo se escribe la bitácora', ins.arboles === 2);
+ok('distingue lo obligatorio de lo opcional', ins.obligatorias >= 3 && ins.opcionales >= 4);
+ok('cada paso lleva a donde se completa', ins.atajos >= 5);
+ok('no nombra a ningún grupo en particular: sirve para cualquiera',
+  !/El Faro|MACSA|Cecilia/.test(ins.texto));
+ok('dice la cuenta de servicio con la que hay que compartir', /gserviceaccount\.com/.test(ins.texto));
+await p.evaluate(() => configPestana('contenido'));
+await p.waitForTimeout(500);
 
 // ── Importar lo que ya existía en una planilla ──
 await p.evaluate(() => importarDesdePlanilla());

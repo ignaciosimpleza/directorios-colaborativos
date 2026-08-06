@@ -446,7 +446,7 @@ textarea.cfg-input { resize:vertical; line-height:1.5; }
 .rp-card.apagada { background:transparent; border-style:dashed; display:flex; flex-direction:column; gap:7px; }
 
 .rp-card-emp { font-size:13.5px; font-weight:600; color:var(--navy); line-height:1.3; cursor:pointer; min-height:35px; }
-.rp-card.apagada .rp-card-emp { cursor:default; color:var(--gris-oscuro); min-height:0; }
+.rp-card.apagada .rp-card-emp { color:var(--gris-oscuro); min-height:0; }
 .rp-card-emp:not(.apagada .rp-card-emp):hover { text-decoration:underline; }
 
 .rp-card-num { display:flex; align-items:baseline; gap:7px; margin:6px 0 14px; }
@@ -465,6 +465,9 @@ textarea.cfg-input { resize:vertical; line-height:1.5; }
 .rp-card-falta { font-size:12px; color:var(--gris-medio); }
 .rp-card-link { font-size:11.5px; font-weight:600; color:var(--azul-pizarra); cursor:pointer; }
 .rp-card-link:hover { text-decoration:underline; }
+.rp-card-pie { display:flex; gap:14px; margin-top:13px; padding-top:11px; border-top:1px solid var(--linea); }
+.rp-card-pie a { font-size:11px; font-weight:600; color:var(--azul-pizarra); cursor:pointer; }
+.rp-card-pie a:hover { color:var(--acento-hondo); text-decoration:underline; }
 .rp-card-fechas { margin-top:11px; padding-top:10px; border-top:1px solid var(--linea); font-size:11px; color:var(--gris-medio); line-height:1.8; }
 
 .rp-note { font-size:11px; color:var(--gris-medio); margin-top:16px; line-height:1.6; }
@@ -472,11 +475,39 @@ textarea.cfg-input { resize:vertical; line-height:1.5; }
 .rp-pendientes summary { cursor:pointer; color:var(--gris-medio); }
 .rp-pendientes div { margin-top:6px; line-height:1.7; }
 
-.activity-item { display:flex; gap:10px; padding:9px 0; border-bottom:1px solid #f0ece6; align-items:flex-start; }
-.activity-item:last-child { border-bottom:none; }
-.act-icon { width:30px; height:30px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
-.act-text { font-size:12.5px; color:#3a4a4b; line-height:1.5; }
-.act-time { font-size:11px; color:var(--gris-medio); margin-top:1px; }
+/* ── Instrucciones ── */
+.ins-pasos { list-style:none; display:grid; gap:2px; margin-top:4px; }
+.ins-paso { display:flex; gap:13px; align-items:flex-start; padding:11px 0; border-bottom:1px solid var(--linea); }
+.ins-paso:last-child { border-bottom:none; }
+.ins-n { flex:0 0 24px; height:24px; border-radius:50%; background:var(--navy); color:#fff; font-size:11.5px; font-weight:600; display:flex; align-items:center; justify-content:center; }
+.ins-paso-tit { font-size:13px; font-weight:600; color:var(--navy); }
+.ins-paso-txt { font-size:12px; color:var(--gris-oscuro); line-height:1.55; margin-top:2px; }
+.ins-ir { display:inline-block; font-size:11px; font-weight:600; color:var(--azul-pizarra); cursor:pointer; margin-top:4px; }
+.ins-ir:hover { color:var(--acento-hondo); text-decoration:underline; }
+.ins-arbol { font-family:inherit; font-size:12px; line-height:1.75; color:var(--gris-oscuro); background:var(--crema-fondo); border:1px solid var(--linea); border-radius:var(--radius-sm); padding:14px 16px; margin:12px 0; overflow-x:auto; white-space:pre; }
+.ins-tabla { display:grid; gap:0; }
+.ins-fila { display:grid; grid-template-columns:minmax(150px,240px) 1fr; gap:16px; padding:9px 0; border-bottom:1px solid var(--linea); align-items:baseline; }
+.ins-fila:last-child { border-bottom:none; }
+.ins-nom { font-size:12.5px; font-weight:600; color:var(--navy); }
+.ins-nom code { font-family:inherit; }
+.ins-nom em { display:inline-block; font-style:normal; font-size:9px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; margin-left:8px; padding:2px 7px; border-radius:20px; vertical-align:middle; }
+.ins-obl { color:var(--alerta); background:rgba(156,66,56,0.08); }
+.ins-opc { color:var(--gris-medio); background:var(--crema-fondo); border:1px solid var(--linea); }
+.ins-det { font-size:12px; color:var(--gris-oscuro); line-height:1.55; }
+.ins-det code, .ins-arbol code { font-family:inherit; font-weight:600; }
+@media (max-width:640px) { .ins-fila { grid-template-columns:1fr; gap:3px; } }
+
+.act-item { padding:13px 0; border-bottom:1px solid var(--linea); }
+.act-item:first-child { padding-top:0; }
+.act-item:last-child { border-bottom:none; padding-bottom:0; }
+.act-cab { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:5px; }
+.act-fecha { font-size:10px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--gris-medio); font-variant-numeric:tabular-nums; }
+.act-emp { font-size:13px; font-weight:600; color:var(--navy); cursor:pointer; }
+.act-emp:hover { text-decoration:underline; }
+.act-nro { font-size:10px; font-weight:600; color:var(--gris-medio); background:var(--crema-fondo); border:1px solid var(--linea); border-radius:20px; padding:2px 8px; }
+.act-frase { font-size:12.5px; color:var(--gris-oscuro); line-height:1.6; cursor:pointer; }
+.act-frase:hover { color:var(--navy); }
+.act-frase.vacia { color:var(--gris-medio); }
 
 /* ── PROX BANNER ── */
 .proxima-banner { background:linear-gradient(135deg,#1E2A2E 0%,#2d4047 100%); border-radius:var(--radius); padding:18px 22px; color:#fff; margin-bottom:20px; display:flex; align-items:center; gap:18px; }
@@ -1252,6 +1283,7 @@ async function renderActividadReciente() {
 
   const ultimas = [];
   REUNIONES_DATA.porEmpresa.forEach(x => {
+    if (x.empresa.activa === false) return;
     x.reuniones.slice(0, 4).forEach(r => ultimas.push({ ...r, empresa: x.empresa }));
   });
   ultimas.sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
@@ -1262,14 +1294,21 @@ async function renderActividadReciente() {
     return;
   }
 
-  el.innerHTML = ultimas.slice(0, 8).map(r => {
-    const color = r.empresa.color || '#6C868C';
-    return `<div class="activity-item" style="cursor:pointer" onclick="abrirBitacora(${r.empresa.id})">
-      <div class="act-icon" style="background:${color}22">📓</div>
-      <div><div class="act-text"><strong>${esc(r.empresa.nombre)}</strong>${r.titulo ? ' · ' + esc(r.titulo) : ''}</div>
-      <div class="act-time">${esc(fechaCorta(r.fecha))}</div></div>
-    </div>`;
-  }).join('');
+  // Fecha · empresa · nº de reunión · la frase que escribió el facilitador.
+  // Nada de esto lo redacta el sitio: la frase es una cita del documento. La
+  // empresa lleva a su ficha y la frase, a la bitácora donde está escrita.
+  el.innerHTML = ultimas.slice(0, 8).map(r => `
+    <article class="act-item">
+      <div class="act-cab">
+        <span class="act-fecha">${esc(fechaCorta(r.fecha))}</span>
+        <span class="act-emp" onclick="openEmpresa(${r.empresa.id})" title="Ver la ficha de ${esc(r.empresa.nombre)}">${esc(r.empresa.nombre)}</span>
+        ${r.numero ? `<span class="act-nro">Reunión ${r.numero}</span>` : ''}
+      </div>
+      ${r.frase
+        ? `<p class="act-frase" onclick="abrirBitacora(${r.empresa.id})" title="Abrir la bitácora">${esc(r.frase)}</p>`
+        : `<p class="act-frase vacia" onclick="abrirBitacora(${r.empresa.id})" title="Abrir la bitácora">${
+            r.titulo ? esc(r.titulo) : 'La bitácora no trae una frase de contenido debajo de esta fecha.'}</p>`}
+    </article>`).join('');
   aplicarVisibilidad();
 }
 
@@ -1487,7 +1526,7 @@ function proximaFechaDe(nombre, hoy) {
 function tarjetaEmpresaHtml(f, i) {
   if (f.aviso) {
     return `<article class="rp-card apagada">
-      <div class="rp-card-emp">${esc(f.empresa.nombre)}</div>
+      <div class="rp-card-emp" onclick="openEmpresa(${f.empresa.id})" title="Ver la ficha de ${esc(f.empresa.nombre)}">${esc(f.empresa.nombre)}</div>
       <div class="rp-card-falta">Sin bitácora conectada</div>
       <a class="rp-card-link" onclick="navigate('config'); configPestana('contenido')">Indicar su documento →</a>
     </article>`;
@@ -1497,7 +1536,7 @@ function tarjetaEmpresaHtml(f, i) {
     <span class="rp-dato-val${cls ? ' ' + cls : ''}">${valor}</span>
   </div>`;
   return `<article class="rp-card${f.proxima ? ' agendada' : ''}">
-    <div class="rp-card-emp" onclick="abrirBitacora(${f.empresa.id})" title="Abrir la bitácora de ${esc(f.empresa.nombre)}">${esc(f.empresa.nombre)}</div>
+    <div class="rp-card-emp" onclick="openEmpresa(${f.empresa.id})" title="Ver la ficha de ${esc(f.empresa.nombre)}">${esc(f.empresa.nombre)}</div>
     <div class="rp-card-num">
       <span class="rp-card-n"${f.n ? ` onclick="verFechas(${i})" title="Ver las fechas leídas"` : ''}>${f.n}</span>
       <span class="rp-card-n-lbl">${f.n === 1 ? 'reunión' : 'reuniones'}</span>
@@ -1509,6 +1548,11 @@ function tarjetaEmpresaHtml(f, i) {
     </div>
     <div class="rp-card-fechas" id="rp-fechas-${i}" hidden>${
       f.fechas.slice().reverse().map(x => esc(fechaCorta(x))).join(' · ')}</div>
+    <div class="rp-card-pie">
+      <a onclick="openEmpresa(${f.empresa.id})">Ficha</a>
+      <a onclick="abrirBitacora(${f.empresa.id})">Bitácora ↗</a>
+      <a onclick="navigate('calendario')">Calendario</a>
+    </div>
   </article>`;
 }
 
@@ -3212,6 +3256,7 @@ function extractDriveId(v) {
 // Configuración se organiza en pestañas, para que cada cosa esté en un solo
 // lugar y no haya que scrollear una página infinita.
 const CONFIG_PESTANAS = [
+  { id: 'instrucciones', titulo: 'Instrucciones', desc: 'Cómo se estructura Drive, qué datos hacen falta y en qué orden se completa.' },
   { id: 'contenido', titulo: 'El grupo',   desc: 'Datos institucionales del grupo y contenidos del sitio.' },
   { id: 'archivos',  titulo: 'Archivos',   desc: 'Carpetas y archivos de Drive que alimentan documentos y bitácoras.' },
   { id: 'sitio',     titulo: 'El sitio',   desc: 'Secciones visibles y control de acceso.' },
@@ -3250,6 +3295,11 @@ async function renderConfig() {
     return;
   }
 
+  if (CONFIG_PESTANA === 'instrucciones') {
+    cont.innerHTML = configInstruccionesHtml(await getServiceAccountEmail());
+    return;
+  }
+
   if (CONFIG_PESTANA === 'contenido') {
     const ids = BLOQUES_POR_PESTANA.contenido;
     cont.innerHTML = configImportarHtml() + configRevisionHtml() +
@@ -3270,6 +3320,106 @@ async function renderConfig() {
     cont.innerHTML = configMapaHtml() + configVisibilidadHtml();
     renderAccesos();
   }
+}
+
+// ── Instrucciones ──
+// Sirve para cualquier grupo: cómo se arma Drive, qué es obligatorio y qué es
+// opcional, y en qué orden se completa. Esquemática y sin vueltas.
+const PASOS_PUESTA = [
+  { n: 1, titulo: 'Armar las carpetas en Drive', detalle: 'Con la estructura de acá abajo. Los documentos se quedan en Drive: el sitio los lee, no los administra.', ir: null },
+  { n: 2, titulo: 'Compartir con la cuenta de servicio', detalle: 'Cada carpeta y archivo, con rol <strong>Lector</strong>. Sin esto el sitio no ve nada.', ir: 'archivos' },
+  { n: 3, titulo: 'Cargar el grupo y las empresas', detalle: 'Nombre del grupo, equipo y la lista de empresas. Se puede escribir a mano o importar de una planilla.', ir: 'contenido' },
+  { n: 4, titulo: 'Conectar las carpetas de Drive', detalle: 'Pegar el enlace de cada carpeta. El sitio comprueba en el momento que puede abrirla y dice qué encontró.', ir: 'archivos' },
+  { n: 5, titulo: 'Indicar la bitácora de cada empresa', detalle: 'Si el sitio no la encuentra sola, se pega el enlace del documento en El grupo → Empresas → Más datos.', ir: 'contenido' },
+  { n: 6, titulo: 'Configurar la agenda', detalle: 'Día de reunión, cada cuánto le toca a una empresa y en qué proporción se completan las fechas libres. Se administra en el Calendario.', ir: null, irCal: true },
+  { n: 7, titulo: 'Decidir qué se ve y quién entra', detalle: 'Secciones visibles y, si corresponde, exigir cuenta para entrar.', ir: 'sitio' },
+];
+
+const CARPETAS_ESPERADAS = [
+  { nombre: 'Empresas', obligatoria: true, detalle: 'Una subcarpeta por empresa, con el nombre de la empresa. Adentro de cada una: <code>Presentaciones</code> y <code>Proceso</code>.' },
+  { nombre: 'Material técnico', obligatoria: false, detalle: 'Lo que se ve en Recursos → Reuniones técnicas. Admite subcarpetas (por año, por tema).' },
+  { nombre: 'Novedades', obligatoria: false, detalle: 'La gaceta o pieza periódica. El sitio muestra la última.' },
+  { nombre: 'Herramientas', obligatoria: false, detalle: 'Se muestra embebida, así que además tiene que estar compartida como «Cualquiera con el enlace · Lector».' },
+  { nombre: 'Logo', obligatoria: false, detalle: 'Una imagen. Se sube a Drive y se conecta; no se pega una URL externa.' },
+];
+
+const DATOS_MINIMOS = [
+  { que: 'Nombre del grupo', obligatorio: true, donde: 'El grupo → Identidad' },
+  { que: 'Lista de empresas', obligatorio: true, donde: 'El grupo → Empresas' },
+  { que: 'Carpeta de las empresas en Drive', obligatorio: true, donde: 'Archivos' },
+  { que: 'Día de reunión y cadencia', obligatorio: true, donde: 'Calendario' },
+  { que: 'Equipo, principios, hitos, ejes, eventos', obligatorio: false, donde: 'El grupo' },
+  { que: 'Marco conceptual', obligatorio: false, donde: 'El grupo → Marco conceptual' },
+  { que: 'Logo, material técnico, novedades, herramientas', obligatorio: false, donde: 'Archivos' },
+  { que: 'Emails habilitados a crear cuenta', obligatorio: false, donde: 'Planilla base, pestaña ACCESOS' },
+];
+
+function configInstruccionesHtml(email) {
+  const pasos = PASOS_PUESTA.map(p => `<li class="ins-paso">
+    <span class="ins-n">${p.n}</span>
+    <div>
+      <div class="ins-paso-tit">${esc(p.titulo)}</div>
+      <div class="ins-paso-txt">${p.detalle}</div>
+      ${p.ir ? `<a class="ins-ir" onclick="configPestana('${p.ir}')">Ir a ${esc((CONFIG_PESTANAS.find(t => t.id === p.ir) || {}).titulo || '')} →</a>` : ''}
+      ${p.irCal ? `<a class="ins-ir" onclick="navigate('calendario')">Ir al Calendario →</a>` : ''}
+    </div>
+  </li>`).join('');
+
+  const carpetas = CARPETAS_ESPERADAS.map(c => `<div class="ins-fila">
+    <span class="ins-nom"><code>${esc(c.nombre)}</code>${c.obligatoria ? '<em class="ins-obl">obligatoria</em>' : '<em class="ins-opc">opcional</em>'}</span>
+    <span class="ins-det">${c.detalle}</span>
+  </div>`).join('');
+
+  const datos = DATOS_MINIMOS.map(d => `<div class="ins-fila">
+    <span class="ins-nom">${esc(d.que)}${d.obligatorio ? '<em class="ins-obl">obligatorio</em>' : '<em class="ins-opc">opcional</em>'}</span>
+    <span class="ins-det">${esc(d.donde)}</span>
+  </div>`).join('');
+
+  return `
+  <div class="card">
+    <div class="card-title">Pasos para poner el sitio en marcha</div>
+    <div class="src-estructura">En este orden. Cada paso lleva a donde se completa.</div>
+    <ol class="ins-pasos">${pasos}</ol>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Cómo se estructura Drive</div>
+    <div class="src-estructura">Una carpeta del grupo, y adentro estas. Los nombres pueden variar: lo que importa es indicar cada una en <a onclick="configPestana('archivos')">Archivos</a>.</div>
+    <pre class="ins-arbol">Carpeta del grupo
+├── Empresas
+│   └── «Nombre de la empresa»
+│       ├── Presentaciones      ← lo que muestra la ficha
+│       └── Proceso             ← acá va la bitácora
+├── Material técnico
+├── Novedades
+├── Herramientas
+└── Logo.png</pre>
+    <div class="ins-tabla">${carpetas}</div>
+    <div class="cfg-ayuda" style="margin-top:12px">Compartí todo, con rol <strong>Lector</strong>, con la cuenta de servicio del sitio:${
+      email ? ` <strong>${esc(email)}</strong>` : ' (todavía no se pudo obtener)'}</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Cómo se escribe la bitácora</div>
+    <div class="src-estructura">Un documento por empresa (Google Doc o .docx) donde cada reunión arranca en un renglón con su fecha. De ahí salen las reuniones del tablero y la actividad reciente.</div>
+    <pre class="ins-arbol">13 de abril de 2026 — Avance de líneas estratégicas
+Participantes: …
+La reunión se centró en revisar el trabajo del último trimestre…</pre>
+    <div class="ins-tabla">
+      <div class="ins-fila"><span class="ins-nom">La fecha<em class="ins-obl">obligatoria</em></span>
+        <span class="ins-det">En un renglón corto, sola o con el título. Vale «13 de abril de 2026», «13/04/26» o «Reunión 13/04/26».</span></div>
+      <div class="ins-fila"><span class="ins-nom">La frase de contenido<em class="ins-opc">opcional</em></span>
+        <span class="ins-det">El primer párrafo que sigue a la fecha se muestra en Actividad reciente, citado textual. El sitio no interpreta ni resume: si no hay párrafo, no muestra nada.</span></div>
+      <div class="ins-fila"><span class="ins-nom">Un documento por empresa<em class="ins-obl">obligatorio</em></span>
+        <span class="ins-det">Todas las reuniones en el mismo archivo, no uno por reunión. Se ubica solo si está en la subcarpeta <code>Proceso</code>.</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Qué datos hacen falta</div>
+    <div class="ins-tabla">${datos}</div>
+    <div class="cfg-ayuda" style="margin-top:12px">Lo opcional que quede vacío no rompe nada: la sección simplemente no se muestra. En <a onclick="configPestana('sitio')">El sitio</a> se elige qué ocultar y qué mostrar aunque esté vacío.</div>
+  </div>`;
 }
 
 // Traer lo que ya está cargado en una planilla, una sola vez

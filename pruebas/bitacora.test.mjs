@@ -165,3 +165,64 @@ test('la prosa de la reunión no aporta fechas', () => {
   const { reuniones } = desdeLineas([{ nivel: 1, texto: 'Análisis interno' }, { nivel: 0, texto: largo }]);
   assert.equal(reuniones.length, 0, 'un renglón largo es prosa, no una línea de fecha');
 });
+
+// ── La frase de lo que se vio ──
+// Se cita lo que ya está escrito debajo de la fecha. No se resume ni se
+// interpreta: si no hay párrafo de contenido, la frase queda vacía.
+test('trae la frase de contenido que sigue a la fecha, textual', () => {
+  const { reuniones } = desdeLineas([
+    { nivel: 0, texto: 'Reunión El Motivo – Lunes 29 de Junio de 2026' },
+    { nivel: 0, texto: 'Fecha: 29 de junio de 2026' },
+    { nivel: 0, texto: 'Empresa: El Motivo S.A.' },
+    { nivel: 0, texto: 'Presentan: Esteban Vissio.' },
+    { nivel: 0, texto: '1. RESUMEN' },
+    { nivel: 0, texto: 'La reunión estuvo centrada en revisar el trabajo realizado luego de la presentación del proyecto inmobiliario y en analizar cómo avanzar en el ordenamiento patrimonial.' },
+  ]);
+  assert.equal(reuniones.length, 1);
+  assert.match(reuniones[0].frase, /^La reunión estuvo centrada en revisar/);
+});
+
+test('saltea las etiquetas y los títulos de sección, que no son frases', () => {
+  const { reuniones } = desdeLineas([
+    { nivel: 0, texto: '15 de septiembre de 2025 — Avances del proceso' },
+    { nivel: 0, texto: 'Duración: 67 minutos' },
+    { nivel: 0, texto: 'Participantes: Adriana Ponzio, Alejandro Stoppa, Carlos Vidal, Cecilia Panizzo y Esteban Vissio' },
+    { nivel: 0, texto: '🧭 Resumen de la Presentación – "Nueva Visión y Proyecto Inmobiliario"' },
+    { nivel: 0, texto: 'Adriana, Esteban y Federico presentaron la revisión de la visión de la empresa, planteando la necesidad de actualizarla.' },
+  ]);
+  assert.match(reuniones[0].frase, /^Adriana, Esteban y Federico presentaron/);
+});
+
+test('si no hay párrafo de contenido, la frase queda vacía: no se inventa', () => {
+  const { reuniones } = desdeLineas([
+    { nivel: 0, texto: '4 de agosto de 2022' },
+    { nivel: 0, texto: 'Participantes: Adriana, Esteban.' },
+    { nivel: 0, texto: '9 de junio de 2022' },
+  ]);
+  assert.equal(reuniones.find(r => r.fecha === '2022-08-04').frase, '');
+});
+
+test('numera las reuniones desde la primera de esa empresa', () => {
+  const { reuniones } = desdeLineas([
+    { nivel: 0, texto: 'Reunión 3 de agosto de 2026' },
+    { nivel: 0, texto: 'Reunión 13 de abril de 2026' },
+    { nivel: 0, texto: 'Reunión 6 de julio de 2021' },
+  ]);
+  assert.deepEqual(reuniones.map(r => `${r.numero}:${r.fecha}`),
+    ['3:2026-08-03', '2:2026-04-13', '1:2021-07-06']);
+});
+
+test('la frase larga se corta en un punto, no en la mitad de una palabra', () => {
+  const largo = 'La reunión estuvo centrada en la gobernanza de la empresa familiar. '
+    + 'El grupo aportó sobre la necesidad de ordenar la comunicación hacia los accionistas, '
+    + 'la diferencia entre información operativa y decisiones estratégicas, y la construcción '
+    + 'de confianza como base para habilitar decisiones de crecimiento en el mediano plazo.';
+  const { reuniones } = desdeLineas([
+    { nivel: 0, texto: '4 de agosto de 2022' },
+    { nivel: 0, texto: largo },
+  ]);
+  const f = reuniones[0].frase;
+  assert.ok(f.length <= 241, `no se pasa del largo máximo (dio ${f.length})`);
+  assert.ok(/[.…]$/.test(f), 'termina en punto o en puntos suspensivos');
+  assert.ok(largo.startsWith(f.replace(/…$/, '')), 'es una cita textual, sin agregarle nada');
+});
