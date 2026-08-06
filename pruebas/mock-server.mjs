@@ -140,7 +140,7 @@ const DB = {
 const json = (res, obj, code = 200) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); };
 
 // ── mock de /api/auth (en memoria) ──
-const AUTH = { requireLogin: false, users: [], sessions: {}, log: [] };
+const AUTH = { requireLogin: false, correo: false, users: [], sessions: {}, log: [] };
 const HABILITADOS = { 'macsa@ejemplo.com': { empresa: 'MACSA Agro', nombre: 'Juanchi' }, 'elsueno@ejemplo.com': { empresa: 'El Sueño SA', nombre: 'Ana' } };
 const EDIT_PASSWORD = 'faro26';
 
@@ -168,13 +168,25 @@ function authHandler(req, res, body, token) {
       return json(res, { token: t, usuario: { email: u.email, nombre: u.nombre, empresa: u.empresa } });
     }
     case 'logout': { delete AUTH.sessions[token]; return json(res, { ok: true }); }
-    case 'adminLogin': return admin() ? json(res, { ok: true }) : json(res, { error: 'No autorizado' }, 401);
+    case 'adminLogin': {
+      if (!admin()) return json(res, { error: 'No autorizado' }, 401);
+      const token = 'sesion-coordinacion';
+      AUTH.sessions[token] = { email: '*coordinación*', nombre: 'Coordinación', empresa: '' };
+      return json(res, { ok: true, token, usuario: AUTH.sessions[token] });
+    }
     case 'usuarios': return admin() ? json(res, { listaAccesos: { activa: true, habilitados: Object.keys(HABILITADOS).length }, usuarios: AUTH.users.map(u => ({ ...u, reset: false, resetToken: '' })) }) : json(res, { error: 'No autorizado' }, 401);
     case 'accesos': return admin() ? json(res, { accesos: AUTH.log.slice(-30).reverse() }) : json(res, { error: 'No autorizado' }, 401);
     case 'estado': {
       if (!admin()) return json(res, { error: 'No autorizado' }, 401);
       const u = find(p.email); if (u) u.estado = p.estado;
       return json(res, { ok: true });
+    }
+    case 'enlaceReset': {
+      if (!admin()) return json(res, { error: 'No autorizado' }, 401);
+      const u = AUTH.users.find(x => x.email === String(p.email).toLowerCase());
+      if (!u) return json(res, { error: 'No hay ninguna cuenta con esa dirección.' }, 404);
+      u.reset_token = 'a1b2c3d4e5f60718';
+      return json(res, { ok: true, token: u.reset_token, horas: 24 });
     }
     case 'borrar': {
       if (!admin()) return json(res, { error: 'No autorizado' }, 401);
@@ -210,7 +222,7 @@ http.createServer((req, res) => {
     if (req.method === 'GET') {
       const email = AUTH.sessions[tokenDe(req)];
       const us = AUTH.users.find(x => x.email === email);
-      return json(res, { requireLogin: AUTH.requireLogin, usuario: us ? { email: us.email, nombre: us.nombre, empresa: us.empresa } : null });
+      return json(res, { requireLogin: AUTH.requireLogin, correo: AUTH.correo, usuario: us ? { email: us.email, nombre: us.nombre, empresa: us.empresa } : null });
     }
     let b = ''; req.on('data', c => b += c);
     req.on('end', () => authHandler(req, res, b, tokenDe(req)));

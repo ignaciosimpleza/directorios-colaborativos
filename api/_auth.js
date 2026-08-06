@@ -118,9 +118,19 @@ export async function sesionDe(req) {
     await db.execute({ sql: 'DELETE FROM sessions WHERE token = ?', args: [token] });
     return null;
   }
+  // La sesión de coordinación no tiene fila en users: se identifica por su email
+  // reservado, que no es una dirección válida y por eso nadie puede registrarlo.
+  if (row.email === EMAIL_COORDINACION) {
+    return { email: row.email, groupId: row.group_id, nombre: 'Coordinación', empresa: '', coordinacion: true };
+  }
   if (row.estado !== 'autorizado') return null;
   return { email: row.email, groupId: row.group_id, nombre: row.nombre, empresa: row.empresa };
 }
+
+// La coordinación entra con la clave de edición, sin cuenta de usuario. Sin
+// esto, el primero que llega a un sitio con el portero prendido queda afuera y
+// no puede ni llegar al panel para autorizarse: nadie entra nunca.
+export const EMAIL_COORDINACION = '*coordinación*';
 
 export const esAdmin = password =>
   !!process.env.EDIT_PASSWORD && password === process.env.EDIT_PASSWORD;

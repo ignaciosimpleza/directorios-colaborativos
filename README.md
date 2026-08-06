@@ -40,6 +40,7 @@ una empresa no puede presentar).
 | `api/db.js` | Turso (libSQL): calendario y configuración |
 | `api/auth.js` | Registro, ingreso, autorización de cuentas y log de accesos |
 | `api/_auth.js` | Sesiones y portero compartido por las funciones de lectura |
+| `api/_mail.js` | Envío de correo por Resend. Si no está configurado, el sitio funciona igual |
 | `reglas.js` | Las reglas de la agenda. Lo importan el navegador **y** las funciones de `/api` |
 | `plantillas/` | Planillas para importar de una vez + `generar_plantillas.py` |
 | `pruebas/` | Pruebas en navegador (ver `pruebas/LEEME.md`) |
@@ -68,6 +69,7 @@ completar.
 | Recursos · Reuniones técnicas | Carpeta de Drive de material técnico (con subcarpetas) |
 | Recursos · Herramientas | Carpeta de Drive embebida + URL del facilitador |
 | Quién puede crear cuenta | Planilla base: pestaña `ACCESOS` (no se edita en el sitio: son emails) |
+| A quién avisar de cuentas nuevas | Configuración → El grupo → Equipo (columna Email). Si nadie tiene, la variable `AVISOS_A` |
 | Reglas de la agenda | Calendario (en modo edición) |
 | Semanas sin reunión | Calendario (en modo edición) |
 | Cuándo no puede presentar cada empresa | Calendario → Disponibilidad de las empresas |
@@ -359,3 +361,48 @@ iframe, que se carga con la sesión de quien mira el sitio.
 Ver `pruebas/LEEME.md`. Incluye una prueba que corre el sitio **como un grupo
 nuevo sin nada conectado** y falla si aparece contenido de algún grupo concreto:
 es la que sostiene la regla de que en el código no hay contenido.
+
+## Cómo entra la coordinación
+
+Con el portero prendido, la pantalla de acceso ofrece **«Ingresar como
+coordinación»**: se entra con la clave de edición (`EDIT_PASSWORD`), sin cuenta de
+usuario, y el sitio abre directamente en modo edición.
+
+Sin esto un sitio recién configurado queda cerrado para todos: quien lo
+administra todavía no tiene cuenta, y el panel para autorizar la primera está
+detrás del mismo portero. La sesión de coordinación dura 24 horas y se registra
+en el log de accesos como cualquier otro ingreso.
+
+## Acceso sin correo
+
+En **Configuración → El sitio → Cuentas**, cada cuenta tiene el botón **«Enlace de
+acceso»**: genera un enlace de un solo uso, válido 24 horas, y lo copia al
+portapapeles. La coordinación se lo pasa a la persona por donde quiera y con eso
+elige su contraseña y entra. Es el mismo enlace que manda el correo, así que sirve
+igual cuando el envío de correo todavía no está configurado.
+
+El enlace lo arma el navegador con su propia dirección, así que no depende de que
+`SITIO_URL` esté cargada.
+
+## Correo
+
+Opcional. Sin configurarlo el sitio funciona igual, pero no puede restablecer
+contraseñas ni avisar de cuentas nuevas. Se envía con **Resend**; los pasos están
+dentro de la herramienta, en **Configuración → Instrucciones → Correo del sitio**,
+que además muestra si está configurado o no.
+
+| Variable en Vercel | |
+|---|---|
+| `RESEND_API_KEY` | obligatoria |
+| `MAIL_FROM` | obligatoria. `Nombre del grupo <no-responder@dominio.com>`. No hace falta que la casilla exista: alcanza con el dominio verificado |
+| `MAIL_REPLY_TO` | opcional. A dónde va la respuesta si alguien contesta. Conviene cargarla cuando el remitente no es una casilla real |
+| `SITIO_URL` | obligatoria. La dirección pública, sin barra final: hace falta para armar el enlace de reset, y el sitio no puede deducirla porque va embebido |
+| `AVISOS_A` | opcional. Solo se usa si el equipo del grupo no tiene emails cargados |
+
+Manda tres correos y ninguno más: el enlace para restablecer contraseña (vale 24
+horas), el aviso a la coordinación de que hay una cuenta esperando autorización, y
+el aviso a la persona de que ya fue autorizada. Sin imágenes ni rastreadores.
+
+Todo lo que sale de afuera se escapa antes de armar el HTML, y un fallo de envío
+se registra pero nunca corta la operación: una cuenta se crea aunque el aviso no
+salga.
