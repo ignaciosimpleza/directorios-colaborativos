@@ -8,6 +8,7 @@
 // El token de Turso vive solo en el servidor, nunca llega al navegador.
 
 import { createClient } from '@libsql/client/web';
+import { bloqueaPorLogin } from './_auth.js';
 
 const client = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -61,7 +62,12 @@ function ensureSchema() {
 
 function requireAuth(password) {
   const expected = process.env.EDIT_PASSWORD;
-  if (expected && password !== expected) {
+  if (!expected) {
+    const err = new Error('Falta configurar EDIT_PASSWORD en Vercel: sin esa clave nadie puede editar.');
+    err.status = 500;
+    throw err;
+  }
+  if (password !== expected) {
     const err = new Error('No autorizado');
     err.status = 401;
     throw err;
@@ -108,6 +114,8 @@ export default async function handler(req, res) {
     // ---------- LECTURA ----------
     if (req.method === 'GET') {
       const groupId = req.query.group_id || 'default';
+      // Si el grupo exige login, el calendario tampoco se sirve sin sesión
+      if (await bloqueaPorLogin(req, res, groupId)) return;
       const [cfg, cos, mtg, cnt] = await Promise.all([
         client.execute({ sql: 'SELECT * FROM config WHERE group_id = ?', args: [groupId] }),
         client.execute({ sql: 'SELECT * FROM companies WHERE group_id = ? ORDER BY sort_order ASC', args: [groupId] }),
@@ -119,6 +127,9 @@ export default async function handler(req, res) {
         try { content[r.key] = JSON.parse(r.data); } catch { content[r.key] = null; }
       }
       return res.status(200).json({
+        // Valores que puede traer el entorno de Vercel, para no tener ningún id
+        // escrito en el HTML. Lo que se guarda en Configuración tiene prioridad.
+        env: { baseFileId: process.env.BASE_FILE_ID || '' },
         config: cfg.rows[0] || null,
         companies: cos.rows.map(r => ({
           id: r.id, name: r.name, color: r.color, active: !!r.active,

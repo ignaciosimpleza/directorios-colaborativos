@@ -1,188 +1,361 @@
-# Grupo El Faro — Dashboard
+# Sitio de Directorio Colaborativo
 
-Sitio del Grupo El Faro desplegado en Vercel. Es una única app (`index.html`)
-con todo integrado. Estructura:
+Plantilla de sitio para un grupo de directorio colaborativo, desplegada en
+Vercel. Es una sola app (`index.html`) más funciones serverless.
 
-- **`index.html`** → todo el sitio: portada, El Grupo, empresas, procesos,
-  **calendario**, eventos y recursos. El calendario es nativo.
-- **`api/db.js`** → función serverless que conecta a **Turso** (libSQL) usando las
-  **variables de entorno de Vercel**. Guarda el calendario y las fuentes de datos.
-  El token de Turso vive solo en el servidor y nunca se expone en el navegador.
-- **`api/base.js` / `api/drive.js`** → lectura de Google Drive con una cuenta de
-  servicio: la planilla base del grupo y las carpetas de cada empresa.
-- **`plantillas/`** → plantillas de las planillas de Drive (base y marco conceptual).
-- **`assets/simpleza-logo.png`** → imagotipo de Simpleza (blanco, transparente).
+**El grupo se configura en el sitio, en Configuración.** En el código no hay
+contenido ni reglas: ni nombres, ni empresas, ni hitos, ni cada cuánto se reúnen.
+Todo eso se carga desde el sitio y se guarda en la base.
 
-La **edición** se desbloquea con un único login (botón "Modo edición" en la barra
-superior, clave `faro26`). Habilita el Calendario y la Configuración, y muestra en
-cada sección de dónde sale su contenido. **No hay formularios de carga**: el
-contenido se edita en Drive.
+**Drive queda para los documentos**: presentaciones, bitácoras, material técnico,
+la gaceta. Eso el sitio lo lee, no lo administra.
 
-## Empresas y calendario (unificados)
+Para armar otro grupo: se entra a Configuración y se carga. Si el grupo ya tenía
+sus datos en una planilla, se importa de una vez y después se edita en el sitio.
 
-Hay **una sola lista de empresas** (la de la planilla base). Esa misma lista
-alimenta el **calendario**: cada reunión se asigna a una empresa del grupo o a un
-tipo especial.
+### Configuración, en cuatro pestañas
 
-- El calendario permite: agregar/editar/eliminar reuniones, asignar la empresa,
-  fijar una reunión (📌, no se re-genera) y **Generar futuras** (reuniones
-  semanales rotando las empresas activas por mayor tiempo sin presentar,
-  respetando fijadas y feriados). Se guarda en las tablas `meetings` / `config`.
-- Además de las empresas, una reunión puede asignarse a un tipo especial: **Ronda
-  de novedades**, **Técnica**, **Flexible** (reuniones internas o especiales del
-  grupo), **Feriado** o **Sin reunión**. Las marcadas como *Flexible* se respetan
-  al generar futuras, igual que las fijadas.
-
-## De dónde sale cada cosa (no hay formularios)
-
-El contenido del sitio **no se carga a mano**: sale de Google Drive. Turso guarda
-solamente el **calendario** y las **fuentes de datos** (los ids de Drive). En modo
-edición, cada sección muestra un aviso 📄 que explica qué archivo o carpeta hay
-que tocar, con el link directo.
-
-| Sección del sitio | De dónde sale |
+| Pestaña | Qué se carga |
 | --- | --- |
-| Dashboard · Actividad reciente | Últimos archivos subidos a las **carpetas de Drive de las empresas** |
-| Dashboard · Próximas / realizadas | El **Calendario** del sitio |
-| El Grupo | Planilla base: pestañas `GRUPO`, `HITOS`, `EJES_2026` |
-| Empresas | Planilla base: pestaña `EMPRESAS` (👤 = columna `participantes`, 📍 = `zona`) |
-| Procesos | Archivos de la carpeta de Drive de cada empresa (subcarpeta `Presentaciones`) |
-| Eventos e Hitos | Planilla base: pestañas `HITOS` y `EVENTOS` |
-| Recursos · Marco conceptual | Archivo **Marco Conceptual** de Drive (pestaña `CONCEPTOS`) |
-| Recursos · Herramientas | Carpeta de Drive vinculada + link al sitio de Simpleza |
-| Calendario | Se edita en el sitio (controles inline) y se guarda en Turso |
+| **Instrucciones** | Cómo se estructura Drive, qué datos hacen falta y en qué orden se completa. Sirve para cualquier grupo |
+| **El grupo** | Identidad, principios, equipo, empresas, hitos, ejes, eventos y marco conceptual |
+| **Archivos** | Las carpetas y archivos de Drive (documentos, bitácoras, logo) |
+| **El sitio** | Qué secciones se muestran y quién puede entrar |
 
-Los ids de la planilla base, del Marco Conceptual y de la carpeta de herramientas
-se cargan en **Configuración · Fuentes de datos**. El id de la carpeta de cada
-empresa va en la pestaña `CONFIG_DRIVE` de la planilla base (columna
-`id_carpeta_empresa`): de ahí salen la actividad reciente, los Procesos y la
-Bitácora. Para agregar una novedad al sitio, alcanza con **subir el archivo a la
-carpeta de Drive que corresponda**.
+Las reglas de la agenda no están acá: se administran en el **Calendario**, que es
+donde se ven sus efectos.
 
-### Actividad reciente
+Se guarda solo mientras se escribe. Cada campo dice para qué sirve y dónde se ve,
+y lo que no se entiende se avisa en el momento (por ejemplo, al escribir cuándo
+una empresa no puede presentar).
 
-Se arma con una sola llamada, `GET /api/drive?op=actividad&folderIds=…`, que trae
-los archivos de las carpetas de todas las empresas (y sus subcarpetas) ordenados
-por fecha de modificación. Se muestran los 8 últimos, con la empresa, la
-subcarpeta y la fecha; el click abre el archivo en Drive. La misma respuesta
-alimenta la sección **Procesos**, así que es una sola lectura por visita
-(además cacheada 5 minutos en el borde de Vercel).
+## Estructura
 
-### Agenda de eventos (Eventos e Hitos)
+| Archivo | Rol |
+| --- | --- |
+| `index.html` | Todo el front (secciones, sin build) |
+| `api/base.js` | Lee la planilla base del grupo desde Drive y la parsea |
+| `api/bitacora.js` | Lee la bitácora de cada empresa y saca de ahí sus reuniones |
+| `api/drive.js` | Lee carpetas de Drive (archivos, árboles, actividad, bitácora) |
+| `api/db.js` | Turso (libSQL): calendario y configuración |
+| `api/auth.js` | Registro, ingreso, autorización de cuentas y log de accesos |
+| `api/_auth.js` | Sesiones y portero compartido por las funciones de lectura |
+| `reglas.js` | Las reglas de la agenda. Lo importan el navegador **y** las funciones de `/api` |
+| `plantillas/` | Planillas para importar de una vez + `generar_plantillas.py` |
+| `pruebas/` | Pruebas en navegador (ver `pruebas/LEEME.md`) |
 
-Sale de la pestaña `EVENTOS` de la planilla base (columnas `fecha`, `titulo`,
-`descripcion`, `lugar`, `mostrar_en_web`). La fecha es **texto libre** y se
-muestra tal cual: `4-5-6/8` → *Congreso Aapresid*, `23 y 24/10` → *Viaje Grupo El
-Faro: Laboulaye – Buenos Aires*. Las presentaciones semanales de las empresas no
-van acá: viven en el Calendario.
+## De dónde sale cada cosa
 
-## Procesos → Bitácora
+En el sitio esto está a la vista: **Configuración → «Qué se ve y de dónde sale»**
+muestra, sección por sección, qué la alimenta y cómo está esa fuente hoy
+(conectada, sin conectar o fallando), con un link directo al campo que hay que
+completar.
 
-En **Procesos Estratégicos**, el botón **📓 Bitácora** abre directamente el
-documento del proceso de esa empresa; ya no navega a la ficha completa. El sitio
-busca, dentro de la carpeta de Drive de la empresa, la subcarpeta **Proceso**
-(también vale *Bitácora* o *Minutas*) y de ahí el archivo cuyo nombre contenga
-«bitácora»; si no hay ninguno, abre el más reciente, y si la carpeta está vacía,
-abre la carpeta. Lo resuelve `GET /api/drive?op=bitacora&folderId=…`.
+| Lo que se ve | De dónde sale |
+| --- | --- |
+| Nombre del grupo, bajada y equipo del menú | Configuración → El grupo |
+| Logo del grupo | Una imagen subida a Drive, conectada en Configuración → Archivos |
+| El Grupo (identidad, objetivos, principios) | Configuración → El grupo |
+| Hitos · Ejes · Eventos · Marco conceptual | Configuración → El grupo |
+| Empresas | Configuración → El grupo → Empresas |
+| Carpeta de Drive de cada empresa | Se vincula sola por nombre dentro de la «Carpeta de las empresas». Se puede fijar a mano en Configuración → El grupo → Empresas → Más datos |
+| Procesos y documentos de cada ficha | Carpeta de la empresa (subcarpetas `Presentaciones` y `Proceso`) |
+| Dashboard · Reuniones y rotación | **Bitácora** de cada empresa (reuniones, primera y última) + Calendario (la próxima) |
+| Dashboard · Actividad reciente | Las últimas reuniones de las bitácoras, con su fecha y su tema |
+| Dashboard · Próximas reuniones | El Calendario del sitio. La empresa asignada lleva a su ficha; el horario sale de las reglas del Calendario |
+| Dashboard · Ronda de novedades | Carpeta de Drive de novedades (última pieza subida) |
+| Recursos · Marco conceptual | Configuración → El grupo → Marco conceptual |
+| Recursos · Reuniones técnicas | Carpeta de Drive de material técnico (con subcarpetas) |
+| Recursos · Herramientas | Carpeta de Drive embebida + URL del facilitador |
+| Quién puede crear cuenta | Planilla base: pestaña `ACCESOS` (no se edita en el sitio: son emails) |
+| Reglas de la agenda | Calendario (en modo edición) |
+| Semanas sin reunión | Calendario (en modo edición) |
+| Cuándo no puede presentar cada empresa | Calendario → Disponibilidad de las empresas |
+| Qué empresas rotan | Configuración → El grupo → Empresas («Activa») |
+| Las reuniones ya agendadas | Se editan en el Calendario del sitio y se guardan en Turso |
 
-## Recursos del grupo
+Para agregar un documento, se sube a la carpeta de Drive que corresponda: el
+sitio lo toma solo. Para cambiar un texto o una regla, se entra a Configuración.
 
-La sección tiene tres bloques:
+### Reuniones realizadas
 
-1. **Marco conceptual** — los conceptos metodológicos (antes estaban en *Eventos
-   e Hitos*). Se editan en el sitio; si además se carga el archivo *Marco
-   Conceptual* en Configuración, aparece el link para abrirlo en Drive.
-2. **Herramientas de Simpleza** — link al sitio de Simpleza. La URL exacta se
-   configura en *Configuración → Herramientas de Simpleza (web)*; por defecto
-   apunta a `https://www.simpleza.com.ar/`.
-3. **Herramientas del grupo** — la carpeta de Drive embebida como iframe
-   (`embeddedfolderview`): lo que se sube a la carpeta aparece solo en el sitio.
-   El id de la carpeta se carga en *Configuración → Herramientas del grupo*.
-   Para que el iframe se vea desde cualquier navegador, esa carpeta tiene que
-   estar compartida como **«Cualquiera con el enlace · Lector»** (compartirla con
-   la cuenta de servicio alcanza para el resto de las lecturas, pero no para el
-   iframe, que se carga con la sesión de quien mira el sitio).
+Salen de la **bitácora**: un documento por empresa. Lo que se cuenta no es el
+documento ni los archivos, es **cada fecha de reunión que aparece adentro**.
 
-## Logo de Simpleza
+Las bitácoras del grupo no están escritas todas igual, y casi ninguna usa
+encabezados de Word: pedirlos era el modelo equivocado. En `Proceso | El Motivo`
+hay once reuniones y un solo encabezado. Cuenta como reunión un **renglón corto
+con una fecha** que además:
 
-El imagotipo está en `assets/simpleza-logo.png` (blanco, fondo transparente) y se
-muestra en el sidebar (fondo oscuro), que es donde un logo blanco se ve bien. Si
-el archivo no existe, el sitio simplemente no lo muestra.
+```
+4 de agosto de 2022                                          ← arranca con la fecha
+15 de septiembre de 2025 — Avances: nueva visión
+🗓️ 09 de Febrero - Primera presentación de la empresa
+
+Reunión El Motivo – Lunes 29 de Junio de 2026                ← nombra el encuentro
+🗂 Avance en LE: Minuta de Reunión – 22 de diciembre de 2025
+Presentación de la empresa | 26 de agosto de 2021
+Fecha: 29 de junio de 2026
+
+# Lunes 3 Agosto de 2026 Reunión MACSA — Crecimiento          ← o es un encabezado
+# FECHA Y TÍTULO: 1 DE JUNIO – Reunión de Accionistas junio 2026
+```
+
+Reglas del parser (`api/_bitacora.js`):
+
+- Un renglón de más de 160 caracteres es prosa, no una fecha de reunión: los años
+  que aparecen ahí («la empresa creció desde 2010») no cuentan.
+- «Fecha» solo cuenta como etiqueta (`Fecha:`), no suelta en una oración («se
+  acordó con fecha 5 de mayo»).
+- Un encabezado de Word alcanza con que tenga la fecha, en cualquier parte.
+- Si la fecha no trae año, se toma el de la reunión fechada más cercana del mismo
+  documento, eligiendo el año que deja las dos fechas más juntas. Sirve igual si
+  el documento va de la más nueva a la más vieja o al revés.
+- **Dos renglones con la misma fecha son una sola reunión**, así que el índice del
+  documento no duplica lo que ya está en el cuerpo.
+- Una sección de primer nivel sin ninguna fecha adentro **no se cuenta y se lista**
+  en el tablero, con su texto, para poder corregir el documento.
+
+`api/bitacora.js` abre el documento (Google Doc o `.docx`, también si es un acceso
+directo) y devuelve `{ reuniones, sinFecha }`. Cada reunión trae `fecha`, `numero`
+(la enésima de esa empresa, contando desde la primera), `titulo` y `frase`.
+
+#### La frase de lo que se vio
+
+Debajo de la fecha, el facilitador ya escribe el contenido. El sitio **cita** la
+primera frase de ese contenido: no interpreta ni resume nada, y no interviene
+ningún modelo de lenguaje. Para encontrarla saltea las etiquetas
+(`Participantes:`, `Duración:`), los títulos de sección numerados y los
+encabezados sin punto —que son títulos, no frases—, y toma el primer párrafo de
+diez palabras o más. Si no hay ninguno, la frase queda vacía y el sitio no
+muestra nada inventado.
+
+#### Qué muestra el tablero
+
+**Una tarjeta por empresa en rotación**, y nada más. Sin barras, sin tabla y sin
+indicadores agregados: los que había (total de reuniones, promedio de semanas
+entre presentaciones, cuántas «necesitan fecha») dependían de qué tan cargada
+estuviera la agenda y no decían nada útil cuando faltaba algo.
+
+Cada tarjeta tiene los cuatro datos que sirven para seguir a una empresa:
+
+| Dato | De dónde sale |
+|---|---|
+| Cantidad de reuniones | Su bitácora |
+| Primera reunión | Su bitácora |
+| Última reunión | Su bitácora |
+| Próxima reunión | El Calendario |
+
+Las tarjetas se ordenan por quién hace más tiempo que no presenta. La empresa que
+ya tiene su próxima fecha lleva el verde de marca arriba y la fecha en verde
+oscuro: es el único lugar del bloque donde aparece el acento, y significa algo.
+La que no tiene fecha dice «Sin agendar» en vez de quedar en blanco.
+
+La empresa sin bitácora conectada tiene su propia tarjeta, con borde punteado y
+el link directo a donde se indica el documento. El número de reuniones se toca y
+despliega las fechas que el sitio leyó, para poder auditarlas contra el documento.
+Al pie, cada tarjeta lleva a la **ficha** de la empresa, a su **bitácora** en
+Drive y al **Calendario**.
+
+El selector de período recorta los tres datos de la bitácora a un año; la próxima
+fecha siempre es la que viene.
+
+#### Actividad reciente
+
+Las últimas ocho reuniones del grupo, una línea por reunión:
+
+```
+3 AGO 2026   MACSA Agro   (Reunión 7)
+La reunión se centró en el plan de inversiones para la campaña que viene…
+```
+
+Fecha, empresa, número de reunión y la frase citada de la bitácora. El nombre de
+la empresa lleva a su ficha; la frase, al documento donde está escrita. Cuando la
+bitácora no trae una frase de contenido, se muestra el título de la reunión en
+gris: el sitio no completa el hueco con texto propio.
+
+**Identidad visual.** Fondo crema, tinta gris oscuro, Sora en todos los pesos y un
+solo acento (verde menta). Sin sombras: separan las líneas hairline. La grilla es
+responsive: de cuatro columnas a una, sin scroll horizontal.
+
+#### Dónde se le indica al sitio cuál es
+
+En **Configuración → El grupo → Empresas → Más datos** cada empresa tiene tres
+campos de Drive, separados y opcionales. En cualquiera de los tres se puede pegar
+el enlace completo copiado del navegador: el sitio se queda con el identificador.
+
+| Campo | Qué se indica | Si queda vacío |
+|---|---|---|
+| **Carpeta de la empresa** | La carpeta con todo el material de esa empresa | El sitio la busca por nombre dentro de la «Carpeta de las empresas» |
+| **Carpeta de presentaciones** | De dónde salen los documentos de la ficha | Se usa la subcarpeta `Presentaciones` de la carpeta de la empresa |
+| **Documento de bitácora** | El documento del que salen las reuniones | Se busca en la subcarpeta `Proceso`, `Bitácora` o `Minutas` de la carpeta de la empresa |
+
+El documento de bitácora es el camino directo y el más confiable: no depende de
+cómo esté nombrada la subcarpeta ni de que haya un solo documento adentro.
+
+Para que una reunión cuente tiene que arrancar con un **encabezado** (Título 1 a
+3), no con texto suelto. Si el documento no se puede leer, o si hay encabezados a
+los que no se les reconoció la fecha, el sitio lo dice con nombre y apellido de la
+empresa en vez de mostrar un cero sin explicación.
+
+El Calendario **no** interviene acá: de él salen solo las fechas próximas.
+
+### Cómo se arma la agenda
+
+El sitio genera las reuniones con estas reglas, **en este orden**:
+
+1. Las reuniones fijadas (📌) y las marcadas **Flexible** no se tocan nunca.
+2. Si cae feriado y `saltar_feriados` = TRUE → **Feriado**.
+3. Si cae dentro de un rango de `SIN_REUNION` → **Sin reunión**.
+4. Presenta la empresa **activa** que hace más tiempo que no presenta, siempre
+   que haya superado `semanas_entre_presentaciones` y esté **disponible** esa
+   fecha.
+5. Si ninguna empresa corresponde, la fecha se completa con **Ronda de
+   novedades** o **Técnica**, según `proporcion_ronda_novedades` y
+   `proporcion_tecnica`.
+6. Si las dos proporciones son 0, la fecha queda **Flexible** y el sitio avisa
+   por qué.
+
+`semanas_entre_presentaciones` es el mínimo que tiene que pasar entre dos
+presentaciones de la misma empresa: define cada cuánto le vuelve a tocar. Con
+26, cada empresa presenta unas dos veces al año y las fechas que sobran son las
+que se completan con ronda y técnica. Si el número es chico y hay muchas
+empresas activas, no sobra ninguna fecha y no se programa relleno.
+
+Las proporciones se leen como una razón, no como una cantidad: con `1` y `2`, de
+cada tres fechas libres una es ronda y dos son técnicas. Con `0` y `1`, todas son
+técnicas.
+
+`activa` y `no_disponible` son dos cosas distintas:
+
+- **`activa` = FALSE** → la empresa dejó de participar. Sale de la rotación y de
+  los números del tablero, pero conserva su ficha, su carpeta y su historial.
+- **`no_disponible`** → la empresa participa, pero hay fechas en las que no puede
+  presentar. Se escribe en criollo, separando con comas: `enero`,
+  `diciembre a febrero`, `julio 2026`, `6/7/2026`, `1/9/2026 a 20/9/2026`. Lo que
+  no se entienda, el sitio lo lista en *Configuración → Revisión de la planilla*
+  en vez de ignorarlo en silencio.
+
+Las reglas se cargan en *Configuración → Agenda* y se ven en el Calendario. Las
+mismas reglas las aplican el navegador y las funciones del servidor porque
+las dos importan **el mismo archivo**, `reglas.js`: no hay dos versiones.
+
+### Qué se muestra
+
+Un bloque sin datos se oculta solo, pero eso es **opcional**: en
+*Configuración → Qué se muestra* se puede apagar el ocultamiento automático y
+además prender o apagar cada bloque a mano. Si una sección entera queda vacía, el
+sitio explica qué fuente le falta en vez de mostrar una página en blanco.
+
+## Acceso al sitio
+
+Pensado para que adentro pueda haber información privada de las empresas:
+
+1. **Quién puede registrarse** sale de la pestaña `ACCESOS` de la planilla
+   (columnas `email`, `empresa`, `nombre`). Si esa pestaña tiene filas, **solo
+   esos emails pueden crear cuenta**: cualquier otro rebota al registrarse. Si la
+   pestaña no está, el registro queda abierto (y el sitio lo avisa en
+   Configuración).
+2. **Una cuenta por empresa**, que la empresa comparte con su equipo.
+3. **Autorización manual**: toda cuenta nace `pendiente` y no ve nada hasta que
+   la coordinación la autoriza en *Configuración → Quién puede entrar*.
+4. **Registro de accesos**: quién entró y cuándo.
+5. El **portero** (pedir cuenta para entrar) se prende y apaga desde
+   Configuración. Con el portero prendido, `/api/db`, `/api/base` y `/api/drive`
+   dejan de responder sin sesión.
+
+El token de sesión viaja en `Authorization: Bearer`, no en cookie, porque el
+sitio se embebe en un iframe y las cookies de terceros no son confiables ahí.
+
+> El reset de contraseña **no manda mail**: no hay proveedor de correo
+> configurado. El pedido queda registrado y desde el panel se copia el link de
+> reset para pasárselo a la persona.
 
 ## Puesta en marcha
 
-### 1. Crear la base en Turso
+### 1. Base en Turso
 
 ```bash
-# instalar la CLI de Turso (si no la tenés)
 curl -sSfL https://get.tur.so/install.sh | bash
-
 turso auth login
-turso db create grupoelfaro          # o el nombre que prefieras
-
-# URL de la base (empieza con libsql://)
-turso db show grupoelfaro --url
-
-# token de acceso
-turso db tokens create grupoelfaro
+turso db create migrupo
+turso db show migrupo --url          # TURSO_DATABASE_URL
+turso db tokens create migrupo       # TURSO_AUTH_TOKEN
 ```
 
-Las tablas se crean solas la primera vez que se usa la app. Si querés crearlas a
-mano, corré `schema.sql`:
+Las tablas se crean solas. `schema.sql` está como referencia.
 
-```bash
-turso db shell grupoelfaro < schema.sql
-```
+### 2. Variables en Vercel
 
-### 2. Configurar las variables en Vercel
+| Variable | Para qué |
+| --- | --- |
+| `TURSO_DATABASE_URL` | base de datos |
+| `TURSO_AUTH_TOKEN` | token de la base |
+| `EDIT_PASSWORD` | clave de edición del sitio. **Sin esto nadie puede editar** |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | JSON de la cuenta de servicio de Google |
+| `BASE_FILE_ID` | *(opcional)* id de la planilla base, si no se carga desde Configuración |
 
-En el proyecto de Vercel → **Settings → Environment Variables**, agregá:
-
-| Variable              | Valor                                             |
-| --------------------- | ------------------------------------------------- |
-| `TURSO_DATABASE_URL`  | la URL `libsql://...` de `turso db show`           |
-| `TURSO_AUTH_TOKEN`    | el token de `turso db tokens create`               |
-| `EDIT_PASSWORD`       | (opcional) `A1234b` — protege las escrituras       |
-
-> Si seteás `EDIT_PASSWORD`, tiene que coincidir con la constante `EDIT_PASSWORD`
-> del `index.html` (hoy `A1234b`). Si no la seteás, la API acepta escrituras sin
-> validar contraseña (útil para probar rápido).
-
-Después de agregar las variables, hacé un **Redeploy** para que tomen efecto.
+La clave de edición **no está en el HTML**: el sitio la valida contra el
+servidor. Cambiar `EDIT_PASSWORD` en Vercel alcanza.
 
 ### 3. Conectar Drive
 
-1. Creá una **cuenta de servicio** de Google y pegá su JSON en la variable
-   `GOOGLE_SERVICE_ACCOUNT_JSON` de Vercel (o `GOOGLE_SERVICE_ACCOUNT_B64`).
-2. En el sitio, entrá en **Modo edición → Configuración**: ahí figura el email de
-   la cuenta de servicio. Compartí con ese email (rol **Lector**) la planilla
-   base, el archivo del Marco Conceptual y la carpeta del grupo.
-3. Pegá los ids en Configuración y usá **Probar conexión**.
-4. En la pestaña `CONFIG_DRIVE` de la planilla base, cargá el id de la carpeta de
-   cada empresa. Cada carpeta debería tener las subcarpetas **Presentaciones** y
-   **Proceso**.
-5. En el Calendario, con el modo edición activo, usá **Generar futuras** para
-   armar la agenda de reuniones.
+**Atajo:** pegá en Configuración la **carpeta del grupo** (la carpeta madre) y
+tocá **Detectar contenido**. El sitio mira adentro y completa solo la planilla,
+el material técnico, las novedades, las herramientas y el logo. Después revisás.
 
-## Cómo funciona
+A mano, paso por paso:
 
-- `index.html` → frontend. Le habla a `/api/db`, `/api/base` y `/api/drive` con
-  `fetch` (nunca directo a la base ni a Google).
-- `api/db.js` → función serverless de Vercel. Conecta a Turso con
-  `@libsql/client`. Guarda **calendario** y **fuentes de datos** solamente.
-- `api/base.js` → lee la planilla base de Drive y devuelve
-  `{ grupo, hitos, ejes, empresas, eventos, conceptos }`. El mismo parser lee el
-  archivo del Marco Conceptual (`conceptos`).
-- `api/drive.js` → lectura de Drive con la cuenta de servicio:
+1. Descargá `plantillas/Plantilla_Base_Grupo.xlsx`, completala y subila a Drive.
+   La primera pestaña (`LEEME`) explica qué alimenta cada una y cuáles son las
+   reglas. Las plantillas se regeneran con
+   `python3 plantillas/generar_plantillas.py`.
+2. Entrá al sitio con **Modo edición → Configuración**. Ahí figura el email de la
+   cuenta de servicio: compartí con ese email (rol **Lector**) la planilla y las
+   carpetas del grupo.
+3. Pegá el id de la planilla y usá **Probar conexión**.
+4. Conectá la **carpeta de las empresas** (la que tiene una subcarpeta por
+   empresa). El sitio las vincula solas comparando el nombre de la carpeta con
+   el de la empresa en la planilla, así que **no hace falta pegar un id por
+   empresa**. En *Configuración → Qué se ve y de dónde sale* se ve qué empresa
+   quedó con qué carpeta. Si alguna no matchea, cargá su id en `CONFIG_DRIVE`:
+   eso siempre tiene prioridad. Cada carpeta de empresa debería tener adentro
+   `Presentaciones` y `Proceso`.
+5. Conectá las carpetas opcionales (técnicas, novedades, herramientas) y el
+   archivo del Marco Conceptual.
+6. En el Calendario, usá **Generar futuras** para armar la agenda.
+
+La carpeta de **Herramientas del grupo** se muestra embebida (iframe), así que
+además tiene que estar compartida como *«Cualquiera con el enlace · Lector»*:
+compartirla con la cuenta de servicio alcanza para todo lo demás, pero no para el
+iframe, que se carga con la sesión de quien mira el sitio.
+
+## API
+
+- `GET /api/base?fileId=…` → `{ grupo, hitos, ejes, empresas, eventos, conceptos }`.
+  La lista de accesos se parsea pero **nunca** se devuelve al navegador.
+- `GET /api/drive`
   - `?op=whoami` → email de la cuenta de servicio
   - `?op=list&folderId=…` → archivos de una carpeta
-  - `?op=empresa&folderId=…` → `{ presentaciones, minutas }` de una empresa
-  - `?op=bitacora&folderId=…` → el documento de Bitácora de la carpeta *Proceso*
-  - `?op=actividad&folderIds=a,b,c` → archivos de varias empresas por fecha
-- `GET /api/db?group_id=grupo4` → devuelve `{ content, config, meetings }`.
-- `POST /api/db` con `{ action, group_id, password, ... }` → escrituras
-  (`saveConfig`, `saveMeeting`, `saveAllMeetings`, `deleteAllMeetings`,
-  `saveContent`).
+  - `?op=arbol&folderId=…&depth=n` → árbol anidado de carpetas y archivos
+  - `?op=empresa&folderId=…` → `{ presentaciones, minutas }`
+  - `?op=actividad&folderIds=a,b,c&depth=n` → archivos de varias carpetas por fecha
+  - `?op=imagen&fileId=…` → sirve una imagen de Drive sin que tenga que ser pública
+  - `?op=descubrir&folderId=…` → detecta subcarpetas conocidas por su nombre
+- `GET /api/bitacora` → `{ reuniones, aviso }`, las reuniones con fecha y tema
+  - `?fileId=…` → lee ese documento (Google Doc, `.docx` o acceso directo)
+  - `?folderId=…` → busca el documento en la subcarpeta `Proceso`/`Bitácora`/`Minutas`
+- `GET /api/db?group_id=…` → `{ env, config, companies, meetings, content }`
+- `POST /api/db` → escrituras del calendario y la configuración (requiere la clave)
+- `GET /api/auth` → `{ requireLogin, grupo, usuario }`
+- `POST /api/auth` → `registro`, `login`, `logout`, `yo`, `pedirReset`,
+  `resetear` y, con la clave de edición, `adminLogin`, `usuarios`, `estado`,
+  `borrar`, `accesos`, `requerirLogin`
 
-El campo `group_id` (`grupo4` por defecto en el HTML) permite tener varios grupos
-en la misma base.
+`group_id` (por defecto `grupo4`) permite tener varios grupos en la misma base.
+
+## Pruebas
+
+Ver `pruebas/LEEME.md`. Incluye una prueba que corre el sitio **como un grupo
+nuevo sin nada conectado** y falla si aparece contenido de algún grupo concreto:
+es la que sostiene la regla de que en el código no hay contenido.
