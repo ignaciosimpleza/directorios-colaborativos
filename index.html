@@ -497,6 +497,10 @@ textarea.cfg-input { resize:vertical; line-height:1.5; }
 .ins-opc { color:var(--gris-medio); background:var(--crema-fondo); border:1px solid var(--linea); }
 .ins-det { font-size:12px; color:var(--gris-oscuro); line-height:1.55; }
 .ins-det code, .ins-arbol code { font-family:inherit; font-weight:600; }
+.ins-sub { font-size:12.5px; font-weight:600; color:var(--navy); margin:20px 0 4px; }
+.ins-estado { display:inline-block; font-size:12px; font-weight:600; padding:7px 13px; border-radius:8px; margin-top:10px; }
+.ins-estado.listo { color:var(--acento-hondo); background:rgba(11,143,102,0.08); }
+.ins-estado.falta { color:var(--gris-oscuro); background:var(--crema-fondo); border:1px solid var(--linea); }
 @media (max-width:640px) { .ins-fila { grid-template-columns:1fr; gap:3px; } }
 
 .act-item { padding:13px 0; border-bottom:1px solid var(--linea); }
@@ -2632,6 +2636,8 @@ const ESQUEMA_CONFIG = [
     cols: [
       { k: 'nombre', label: 'Nombre', tipo: 'texto' },
       { k: 'rol', label: 'Rol', tipo: 'texto', ph: 'Coordinación del grupo' },
+      { k: 'email', label: 'Email', tipo: 'texto', ph: 'coordinacion@…',
+        ayuda: 'Opcional. A esta dirección llegan los avisos de cuentas nuevas esperando autorización. No se muestra en el sitio.' },
     ],
   },
   {
@@ -3360,6 +3366,7 @@ const PASOS_PUESTA = [
   { n: 5, titulo: 'Indicar la bitácora de cada empresa', detalle: 'Si el sitio no la encuentra sola, se pega el enlace del documento en El grupo → Empresas → Más datos.', ir: 'contenido' },
   { n: 6, titulo: 'Configurar la agenda', detalle: 'Día de reunión, cada cuánto le toca a una empresa y en qué proporción se completan las fechas libres. Se administra en el Calendario.', ir: null, irCal: true },
   { n: 7, titulo: 'Decidir qué se ve y quién entra', detalle: 'Secciones visibles y, si corresponde, exigir cuenta para entrar.', ir: 'sitio' },
+  { n: 8, titulo: 'Configurar el correo', detalle: 'Opcional, pero necesario para que el sitio pueda restablecer contraseñas y avisar de cuentas nuevas. Los pasos están más abajo.', ir: null },
 ];
 
 const CARPETAS_ESPERADAS = [
@@ -3402,6 +3409,7 @@ function configInstruccionesHtml(email) {
     <span class="ins-det">${esc(d.donde)}</span>
   </div>`).join('');
 
+  const correo = ESTADO_CORREO;
   return `
   <div class="card">
     <div class="card-title">Pasos para poner el sitio en marcha</div>
@@ -3440,6 +3448,53 @@ La reunión se centró en revisar el trabajo del último trimestre…</pre>
       <div class="ins-fila"><span class="ins-nom">Un documento por empresa<em class="ins-obl">obligatorio</em></span>
         <span class="ins-det">Todas las reuniones en el mismo archivo, no uno por reunión. Se ubica solo si está en la subcarpeta <code>Proceso</code>.</span></div>
     </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Correo del sitio</div>
+    <div class="src-estructura">Sin esto el sitio funciona igual, pero no puede mandar ningún correo: quien olvide su contraseña tiene que pedirle a la coordinación que la restablezca a mano.</div>
+    <div class="ins-estado ${correo.listo ? 'listo' : 'falta'}">${correo.listo
+      ? '✓ El correo está configurado: el sitio puede enviar.'
+      : '○ Todavía no está configurado. El sitio no envía correo.'}</div>
+    <div class="ins-tabla" style="margin-top:12px">
+      <div class="ins-fila"><span class="ins-nom">Restablecer contraseña</span>
+        <span class="ins-det">Quien la olvida pide el enlace desde la pantalla de acceso y le llega por correo. Vale 24 horas.</span></div>
+      <div class="ins-fila"><span class="ins-nom">Aviso de cuenta nueva</span>
+        <span class="ins-det">Cuando alguien se registra, se avisa a los emails cargados en <a onclick="configPestana('contenido')">El grupo → Equipo</a>. Si nadie tiene email, no se avisa.</span></div>
+      <div class="ins-fila"><span class="ins-nom">Aviso de cuenta habilitada</span>
+        <span class="ins-det">Cuando la coordinación autoriza una cuenta, la persona recibe el aviso y ya puede entrar.</span></div>
+    </div>
+    <div class="ins-sub">Cómo se configura, una sola vez por sitio</div>
+    <ol class="ins-pasos">
+      <li class="ins-paso"><span class="ins-n">1</span><div>
+        <div class="ins-paso-tit">Crear una cuenta en resend.com</div>
+        <div class="ins-paso-txt">Es el servicio que envía los correos. Gratis hasta 3.000 por mes; un grupo manda decenas.</div></div></li>
+      <li class="ins-paso"><span class="ins-n">2</span><div>
+        <div class="ins-paso-tit">Generar una API key</div>
+        <div class="ins-paso-txt">En «API Keys» → «Create». Se copia una sola vez: guardala apenas la generes.</div></div></li>
+      <li class="ins-paso"><span class="ins-n">3</span><div>
+        <div class="ins-paso-tit">Verificar el dominio</div>
+        <div class="ins-paso-txt">En «Domains», agregá el dominio del que van a salir los correos. Resend da tres registros que hay que cargar donde esté administrado el dominio. Sin este paso los correos salen igual, pero desde una dirección que no es de ustedes y es más probable que caigan en correo no deseado.</div></div></li>
+      <li class="ins-paso"><span class="ins-n">4</span><div>
+        <div class="ins-paso-tit">Cargar tres variables en Vercel</div>
+        <div class="ins-paso-txt">En Settings → Environment Variables del proyecto, y volver a desplegar para que tomen efecto.</div>
+        <div class="ins-tabla" style="margin-top:8px">
+          <div class="ins-fila"><span class="ins-nom"><code>RESEND_API_KEY</code><em class="ins-obl">obligatoria</em></span>
+            <span class="ins-det">La clave del paso 2.</span></div>
+          <div class="ins-fila"><span class="ins-nom"><code>MAIL_FROM</code><em class="ins-obl">obligatoria</em></span>
+            <span class="ins-det">El remitente, con el dominio verificado. Por ejemplo: <code>Nombre del grupo &lt;no-responder@tu-dominio.com&gt;</code></span></div>
+          <div class="ins-fila"><span class="ins-nom"><code>SITIO_URL</code><em class="ins-obl">obligatoria</em></span>
+            <span class="ins-det">La dirección pública del sitio, sin barra final. Hace falta para armar el enlace de restablecer contraseña: como el sitio va embebido, no puede deducirla solo.</span></div>
+          <div class="ins-fila"><span class="ins-nom"><code>AVISOS_A</code><em class="ins-opc">opcional</em></span>
+            <span class="ins-det">Una o varias direcciones separadas por coma. Solo se usan si el equipo del grupo no tiene emails cargados.</span></div>
+        </div></div></li>
+      <li class="ins-paso"><span class="ins-n">5</span><div>
+        <div class="ins-paso-tit">Cargar el email de quien coordina</div>
+        <div class="ins-paso-txt">En <a onclick="configPestana('contenido')">El grupo → Equipo</a>. Ahí llegan los avisos de cuentas esperando autorización.</div></div></li>
+      <li class="ins-paso"><span class="ins-n">6</span><div>
+        <div class="ins-paso-tit">Probarlo</div>
+        <div class="ins-paso-txt">Desde la pantalla de acceso, «Olvidé mi contraseña» con una dirección que ya tenga cuenta. Si no llega, revisá el correo no deseado y el registro de envíos en Resend.</div></div></li>
+    </ol>
   </div>
 
   <div class="card">
@@ -3842,6 +3897,8 @@ const leerToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ''; } 
 let AUTH_TOKEN = leerToken();
 let AUTH_REQUIRED = false;
 let AUTH_USER = null;
+// Si el sitio puede enviar correo. Lo dice la API; acá solo se muestra.
+let ESTADO_CORREO = { listo: false };
 
 // Todas las llamadas a /api/* llevan el token si hay sesión
 const _fetch = window.fetch.bind(window);
@@ -3871,6 +3928,7 @@ async function initAuth() {
     const j = await r.json().catch(() => ({}));
     AUTH_REQUIRED = !!j.requireLogin;
     AUTH_USER = j.usuario || null;
+    ESTADO_CORREO = { listo: !!j.correo };
     if (!AUTH_USER && AUTH_TOKEN) { AUTH_TOKEN = ''; guardarToken(''); }
     // El nombre del grupo en la pantalla de acceso sale de la base, no del HTML
     const gg = document.getElementById('gate-grupo');
@@ -3948,8 +4006,10 @@ async function gatePedirReset() {
   const email = (document.getElementById('gate-email').value || '').trim();
   if (!email) return gateMsg('Ingresá tu dirección de correo y volvé a seleccionar «Olvidé mi contraseña».', 'err');
   try {
-    await authPost('pedirReset', { email });
-    gateMsg('Se notificó a la coordinación del grupo para restablecer la contraseña.', 'ok');
+    const r = await authPost('pedirReset', { email });
+    gateMsg(r && r.correo
+      ? 'Si esa dirección tiene una cuenta, va a recibir un correo con el enlace para elegir una contraseña nueva. Revisá también el correo no deseado.'
+      : 'El envío de correo todavía no está configurado en este sitio. Pedile a la coordinación del grupo que restablezca tu contraseña.', 'ok');
   } catch (e) { gateMsg(esc(e.message), 'err'); }
 }
 

@@ -140,7 +140,7 @@ const DB = {
 const json = (res, obj, code = 200) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); };
 
 // ── mock de /api/auth (en memoria) ──
-const AUTH = { requireLogin: false, users: [], sessions: {}, log: [] };
+const AUTH = { requireLogin: false, correo: false, users: [], sessions: {}, log: [] };
 const HABILITADOS = { 'macsa@ejemplo.com': { empresa: 'MACSA Agro', nombre: 'Juanchi' }, 'elsueno@ejemplo.com': { empresa: 'El Sueño SA', nombre: 'Ana' } };
 const EDIT_PASSWORD = 'faro26';
 
@@ -210,7 +210,7 @@ http.createServer((req, res) => {
     if (req.method === 'GET') {
       const email = AUTH.sessions[tokenDe(req)];
       const us = AUTH.users.find(x => x.email === email);
-      return json(res, { requireLogin: AUTH.requireLogin, usuario: us ? { email: us.email, nombre: us.nombre, empresa: us.empresa } : null });
+      return json(res, { requireLogin: AUTH.requireLogin, correo: AUTH.correo, usuario: us ? { email: us.email, nombre: us.nombre, empresa: us.empresa } : null });
     }
     let b = ''; req.on('data', c => b += c);
     req.on('end', () => authHandler(req, res, b, tokenDe(req)));

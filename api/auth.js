@@ -23,6 +23,7 @@ import {
   tokenDeRequest, sesionDe, esAdmin, invalidarCacheAcceso, requiereLogin,
 } from './_auth.js';
 import { leerBase } from './base.js';
+import { enviarMail, correoConfigurado, urlDelSitio } from './_mail.js';
 
 const DIAS_SESION = 30;
 
@@ -65,6 +66,30 @@ async function listaHabilitados(groupId) {
 
 const enDias = n => new Date(Date.now() + n * 86400000).toISOString();
 
+// ── A quién avisar ──
+// A los emails del equipo cargado en Configuración → El grupo → Equipo. Así
+// cada grupo avisa a su propio coordinador sin tocar variables de entorno. Si
+// nadie tiene email cargado, se usa AVISOS_A como red de seguridad.
+async function datosDelGrupo(groupId) {
+  try {
+    const r = await db.execute({
+      sql: `SELECT data FROM content WHERE group_id = ? AND key = 'config_grupo'`,
+      args: [groupId],
+    });
+    const cfg = r.rows[0] ? JSON.parse(r.rows[0].data || '{}') : {};
+    const equipo = (cfg.equipo || []).map(p => String(p.email || '').trim()).filter(x => x.includes('@'));
+    return { nombre: (cfg.grupo || {}).nombre || 'el grupo', equipo };
+  } catch {
+    return { nombre: 'el grupo', equipo: [] };
+  }
+}
+
+function aQuienAvisar(grupo) {
+  if (grupo.equipo.length) return grupo.equipo;
+  const suelto = String(process.env.AVISOS_A || '').split(/[,;\s]+/).filter(x => x.includes('@'));
+  return suelto;
+}
+
 async function registrarAcceso(groupId, email, evento, req) {
   try {
     await db.execute({
@@ -104,6 +129,8 @@ export default async function handler(req, res) {
       return res.status(200).json({
         requireLogin: await requiereLogin(groupId),
         grupo,
+        // Solo si el sitio puede enviar correo. No se expone ninguna credencial.
+        correo: correoConfigurado() && !!urlDelSitio(),
         usuario: s ? { email: s.email, nombre: s.nombre, empresa: s.empresa } : null,
       });
     }
@@ -151,6 +178,18 @@ export default async function handler(req, res) {
           args: [groupId, email, nombre, empresa, hash, salt, ahora()],
         });
         await registrarAcceso(groupId, email, 'registro', req);
+        // Aviso a la coordinación: si no sale, la cuenta queda pendiente igual
+        const grupo = await datosDelGrupo(groupId);
+        const base = urlDelSitio();
+        await enviarMail({
+          para: aQuienAvisar(grupo),
+          asunto: `Hay una cuenta esperando autorización · ${grupo.nombre}`,
+          titulo: 'Una cuenta nueva espera autorización',
+          texto: `${nombre || email} (${email})${empresa ? ` · ${empresa}` : ''} se registró en el sitio de ${grupo.nombre}. Hasta que la autorices no puede entrar.`,
+          boton: base ? 'Abrir el sitio' : '',
+          url: base || '',
+          pie: 'Se autoriza en Configuración → El sitio → Cuentas.',
+        });
         return res.status(200).json({ ok: true, pendiente: true });
       }
 
@@ -196,7 +235,22 @@ export default async function handler(req, res) {
           args: [token, enDias(1), groupId, email],
         });
         await registrarAcceso(groupId, email, 'pidió reset', req);
-        return res.status(200).json({ ok: true });
+        const grupo = await datosDelGrupo(groupId);
+        const base = urlDelSitio();
+        const envio = base
+          ? await enviarMail({
+              para: email,
+              asunto: `Restablecer tu contraseña · ${grupo.nombre}`,
+              titulo: 'Elegí una contraseña nueva',
+              texto: `Pediste restablecer la contraseña de tu cuenta en ${grupo.nombre}. El enlace vale por 24 horas.`,
+              boton: 'Elegir contraseña nueva',
+              url: `${base}/?reset=${encodeURIComponent(token)}`,
+              pie: 'Si no fuiste vos, ignorá este mensaje: tu contraseña actual sigue funcionando.',
+            })
+          : { enviado: false, motivo: 'sin_sitio_url' };
+        // Nunca se revela si la dirección existe: la respuesta es la misma para
+        // todas. Lo único que cambia es si el sitio puede mandar correo.
+        return res.status(200).json({ ok: true, correo: correoConfigurado() && !!base, enviado: envio.enviado });
       }
 
       case 'resetear': {
@@ -246,11 +300,25 @@ export default async function handler(req, res) {
         pedirAdmin(body);
         const email = normEmail(body.email);
         const estado = ['pendiente', 'autorizado', 'bloqueado'].includes(body.estado) ? body.estado : 'pendiente';
+        const yaEstaba = await db.execute({ sql: 'SELECT estado FROM users WHERE group_id = ? AND email = ?', args: [groupId, normEmail(body.email)] });
         await db.execute({ sql: 'UPDATE users SET estado = ? WHERE group_id = ? AND email = ?', args: [estado, groupId, email] });
         if (estado !== 'autorizado') {
           await db.execute({ sql: 'DELETE FROM sessions WHERE group_id = ? AND email = ?', args: [groupId, email] });
         }
         await registrarAcceso(groupId, email, 'cuenta ' + estado, req);
+        // Se avisa solo cuando pasa a autorizada, y solo la primera vez
+        if (estado === 'autorizado' && (yaEstaba.rows[0] || {}).estado !== 'autorizado') {
+          const grupo = await datosDelGrupo(groupId);
+          const base = urlDelSitio();
+          await enviarMail({
+            para: email,
+            asunto: `Tu cuenta ya está habilitada · ${grupo.nombre}`,
+            titulo: 'Tu cuenta ya está habilitada',
+            texto: `La coordinación autorizó tu cuenta en el sitio de ${grupo.nombre}. Ya podés entrar con tu email y la contraseña que elegiste al registrarte.`,
+            boton: base ? 'Entrar al sitio' : '',
+            url: base || '',
+          });
+        }
         return res.status(200).json({ ok: true });
       }
 

@@ -40,6 +40,7 @@ una empresa no puede presentar).
 | `api/db.js` | Turso (libSQL): calendario y configuración |
 | `api/auth.js` | Registro, ingreso, autorización de cuentas y log de accesos |
 | `api/_auth.js` | Sesiones y portero compartido por las funciones de lectura |
+| `api/_mail.js` | Envío de correo por Resend. Si no está configurado, el sitio funciona igual |
 | `reglas.js` | Las reglas de la agenda. Lo importan el navegador **y** las funciones de `/api` |
 | `plantillas/` | Planillas para importar de una vez + `generar_plantillas.py` |
 | `pruebas/` | Pruebas en navegador (ver `pruebas/LEEME.md`) |
@@ -68,6 +69,7 @@ completar.
 | Recursos · Reuniones técnicas | Carpeta de Drive de material técnico (con subcarpetas) |
 | Recursos · Herramientas | Carpeta de Drive embebida + URL del facilitador |
 | Quién puede crear cuenta | Planilla base: pestaña `ACCESOS` (no se edita en el sitio: son emails) |
+| A quién avisar de cuentas nuevas | Configuración → El grupo → Equipo (columna Email). Si nadie tiene, la variable `AVISOS_A` |
 | Reglas de la agenda | Calendario (en modo edición) |
 | Semanas sin reunión | Calendario (en modo edición) |
 | Cuándo no puede presentar cada empresa | Calendario → Disponibilidad de las empresas |
@@ -359,3 +361,25 @@ iframe, que se carga con la sesión de quien mira el sitio.
 Ver `pruebas/LEEME.md`. Incluye una prueba que corre el sitio **como un grupo
 nuevo sin nada conectado** y falla si aparece contenido de algún grupo concreto:
 es la que sostiene la regla de que en el código no hay contenido.
+
+## Correo
+
+Opcional. Sin configurarlo el sitio funciona igual, pero no puede restablecer
+contraseñas ni avisar de cuentas nuevas. Se envía con **Resend**; los pasos están
+dentro de la herramienta, en **Configuración → Instrucciones → Correo del sitio**,
+que además muestra si está configurado o no.
+
+| Variable en Vercel | |
+|---|---|
+| `RESEND_API_KEY` | obligatoria |
+| `MAIL_FROM` | obligatoria. `Nombre del grupo <no-responder@dominio.com>` |
+| `SITIO_URL` | obligatoria. La dirección pública, sin barra final: hace falta para armar el enlace de reset, y el sitio no puede deducirla porque va embebido |
+| `AVISOS_A` | opcional. Solo se usa si el equipo del grupo no tiene emails cargados |
+
+Manda tres correos y ninguno más: el enlace para restablecer contraseña (vale 24
+horas), el aviso a la coordinación de que hay una cuenta esperando autorización, y
+el aviso a la persona de que ya fue autorizada. Sin imágenes ni rastreadores.
+
+Todo lo que sale de afuera se escapa antes de armar el HTML, y un fallo de envío
+se registra pero nunca corta la operación: una cuenta se crea aunque el aviso no
+salga.

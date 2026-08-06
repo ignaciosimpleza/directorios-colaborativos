@@ -37,7 +37,8 @@ ok('Configuración está separada en pestañas', tabs.join('|') === 'Instruccion
 await p.evaluate(() => configPestana('instrucciones'));
 await p.waitForTimeout(600);
 const ins = await p.evaluate(() => ({
-  pasos: [...document.querySelectorAll('.ins-paso-tit')].map(e => e.textContent.trim()),
+  pasos: [...document.querySelectorAll('#config-sources .card:first-child .ins-paso-tit')].map(e => e.textContent.trim()),
+  pasosCorreo: [...document.querySelectorAll('.ins-paso-tit')].map(e => e.textContent.trim()),
   arboles: document.querySelectorAll('.ins-arbol').length,
   obligatorias: document.querySelectorAll('.ins-obl').length,
   opcionales: document.querySelectorAll('.ins-opc').length,
@@ -45,10 +46,17 @@ const ins = await p.evaluate(() => ({
   texto: document.getElementById('config-sources').textContent,
 }));
 console.log('instrucciones:', JSON.stringify(ins.pasos));
-ok('hay una pestaña de instrucciones con los pasos en orden', ins.pasos.length === 7);
+ok('hay una pestaña de instrucciones con los pasos en orden', ins.pasos.length === 8);
+ok('e incluye los pasos para configurar el correo', /Crear una cuenta en resend/.test(ins.pasosCorreo.join('|')));
+ok('el sitio dice si el correo está configurado o no',
+  await p.evaluate(() => /no está configurado/.test(document.querySelector('.ins-estado').textContent)));
+ok('y nombra las variables que hay que cargar',
+  /RESEND_API_KEY/.test(ins.texto) && /MAIL_FROM/.test(ins.texto) && /SITIO_URL/.test(ins.texto));
 ok('muestra cómo se estructura Drive y cómo se escribe la bitácora', ins.arboles === 2);
 ok('distingue lo obligatorio de lo opcional', ins.obligatorias >= 3 && ins.opcionales >= 4);
 ok('cada paso lleva a donde se completa', ins.atajos >= 5);
+ok('el equipo tiene dónde cargar el email al que llegan los avisos',
+  await p.evaluate(async () => { configPestana('contenido'); await new Promise(r => setTimeout(r, 600)); return !!document.getElementById('cfg-equipo-0-email'); }));
 ok('no nombra a ningún grupo en particular: sirve para cualquiera',
   !/El Faro|MACSA|Cecilia/.test(ins.texto));
 ok('dice la cuenta de servicio con la que hay que compartir', /gserviceaccount\.com/.test(ins.texto));
