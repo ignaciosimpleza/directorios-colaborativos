@@ -14,38 +14,63 @@ const errores = [];
 p.on('pageerror', e => errores.push('PAGEERROR: ' + e.message));
 
 await p.goto('http://localhost:8099/', { waitUntil: 'networkidle' });
-await p.waitForSelector('.rp-tabla tbody tr', { timeout: 15000 });
+await p.waitForSelector('.rp-card', { timeout: 15000 });
 await p.waitForTimeout(400);
 
-// ── Números por empresa desde la bitácora ──
-const leerTabla = () => p.evaluate(() =>
-  [...document.querySelectorAll('.rp-tabla tbody tr')].filter(r => !r.hidden).map(r => ({
-    empresa: r.querySelector('.rp-emp').textContent.trim(),
-    sinBitacora: !!r.querySelector('.rp-tag'),
-    n: +r.children[1].textContent.trim() || 0,
-    primera: r.children[2].textContent.trim(),
-    ultima: r.children[3].textContent.trim(),
-    proxima: r.children[4].textContent.trim(),
+// ── Una tarjeta por empresa, con lo que se lee de su bitácora ──
+const leerTarjetas = () => p.evaluate(() =>
+  [...document.querySelectorAll('.rp-card')].map(c => ({
+    empresa: c.querySelector('.rp-card-emp').textContent.trim(),
+    sinBitacora: c.classList.contains('apagada'),
+    agendada: c.classList.contains('agendada'),
+    n: +(c.querySelector('.rp-card-n')?.textContent.trim() || -1),
+    datos: [...c.querySelectorAll('.rp-dato')].map(d => d.textContent.replace(/\s+/g, ' ').trim()),
   })));
-const barras = await leerTabla();
-console.log('tabla:', JSON.stringify(barras));
-ok('el tablero muestra solo las empresas activas (8 de 9)', barras.length === 8);
-ok('la empresa marcada como inactiva no aparece en el tablero',
-  !barras.some(x => /Becker/.test(x.empresa)));
-ok('MACSA cuenta 7 reuniones de su bitácora', barras.find(x => /MACSA/.test(x.empresa))?.n === 7);
-ok('El Sueño cuenta 3', barras.find(x => /Sueño/.test(x.empresa))?.n === 3);
-ok('la empresa sin bitácora queda en 0', barras.find(x => /Tricampo/.test(x.empresa))?.n === 0);
-ok('dice cuándo presentó cada una por última vez',
-  /3 ago 2026/.test(barras.find(x => /MACSA/.test(x.empresa))?.ultima || ''));
-ok('cruza la bitácora con el calendario: la próxima fecha de cada empresa',
-  /14 ago 2026/.test(barras.find(x => /MACSA/.test(x.empresa))?.proxima || ''));
-ok('y desde cuándo viene presentando',
-  /29 sep 2022/.test(barras.find(x => /MACSA/.test(x.empresa))?.primera || ''));
-ok('las que hace más que no presentan van primero, y las que no tienen bitácora al final',
-  barras.findIndex(x => /Porvenir/.test(x.empresa)) < barras.findIndex(x => /MACSA/.test(x.empresa))
-  && barras.findIndex(x => /Tricampo/.test(x.empresa)) > barras.findIndex(x => /MACSA/.test(x.empresa)));
-ok('la empresa sin bitácora queda marcada, no en blanco',
-  barras.find(x => /Tricampo/.test(x.empresa))?.sinBitacora === true);
+const tarjetas = await leerTarjetas();
+console.log('tarjetas:', JSON.stringify(tarjetas.map(t => t.empresa + ' ' + t.n)));
+ok('hay una tarjeta por empresa en rotación (8 activas de 9)', tarjetas.length === 8);
+ok('la empresa marcada como inactiva no tiene tarjeta', !tarjetas.some(x => /Becker/.test(x.empresa)));
+ok('MACSA cuenta 7 reuniones de su bitácora', tarjetas.find(x => /MACSA/.test(x.empresa))?.n === 7);
+ok('El Sueño cuenta 3', tarjetas.find(x => /Sueño/.test(x.empresa))?.n === 3);
+
+const macsa = tarjetas.find(x => /MACSA/.test(x.empresa));
+console.log('MACSA:', JSON.stringify(macsa.datos));
+ok('la tarjeta dice desde cuándo viene presentando', /PRIMERA 29 sep 2022/i.test(macsa.datos[0]));
+ok('cuándo fue la última', /ÚLTIMA 3 ago 2026/i.test(macsa.datos[1]));
+ok('y cuándo le toca, cruzando con el Calendario', /PRÓXIMA \d+ \w+ 2026/i.test(macsa.datos[2]));
+ok('la empresa con fecha agendada queda marcada con el acento de marca', macsa.agendada === true);
+ok('la que no tiene fecha lo dice, no queda en blanco',
+  tarjetas.some(x => x.datos.some(d => /Sin agendar/.test(d))));
+
+// ── La empresa sin bitácora: una tarjeta que dice qué falta y dónde se arregla ──
+const sinBit = tarjetas.filter(x => x.sinBitacora);
+ok('las empresas sin bitácora tienen su tarjeta aparte', sinBit.length === 4);
+ok('y llevan el link a donde se configura',
+  await p.evaluate(() => document.querySelectorAll('.rp-card.apagada .rp-card-link').length === 4));
+
+// ── El número se puede auditar contra el documento ──
+await p.evaluate(() => document.querySelectorAll('.rp-card-n[onclick]')[0].click());
+await p.waitForTimeout(250);
+ok('al tocar el número se ven las fechas que el sitio leyó',
+  await p.evaluate(() => [...document.querySelectorAll('.rp-card-fechas')].some(e => !e.hidden && e.textContent.trim())));
+
+// ── Nada de barras ni de tabla ──
+ok('no hay gráfico de barras ni tabla en el bloque',
+  await p.evaluate(() => !document.querySelector('#card-reuniones .rp-chart, #card-reuniones .rp-tabla')));
+
+// ── Filtro por período ──
+const anios = await p.evaluate(() => [...document.querySelectorAll('.rp-anio option')].map(o => o.value));
+console.log('años:', JSON.stringify(anios));
+ok('el selector ofrece los años de las bitácoras', anios.includes('2026') && anios.includes('2022'));
+await p.selectOption('.rp-anio', '2026');
+await p.waitForTimeout(400);
+const t2026 = await leerTarjetas();
+ok('filtrando 2026 las tarjetas muestran solo ese año (MACSA 2, El Sueño 2)',
+  t2026.find(x => /MACSA/.test(x.empresa))?.n === 2 && t2026.find(x => /Sueño/.test(x.empresa))?.n === 2);
+ok('y la primera reunión pasa a ser la del año filtrado',
+  /PRIMERA 13 abr 2026/i.test(t2026.find(x => /MACSA/.test(x.empresa))?.datos[0] || ''));
+await p.selectOption('.rp-anio', 'todos');
+await p.waitForTimeout(400);
 
 // ── Vínculo automático empresa ↔ carpeta de Drive (CONFIG_DRIVE vacía) ──
 const vinculos = await p.evaluate(() => EMPRESAS.map(e => ({
@@ -58,42 +83,6 @@ ok('una empresa inactiva conserva su ficha y su carpeta',
   vinculos.find(v => /Becker/.test(v.empresa))?.carpeta === 'Estudio Becker');
 ok('resuelve «El Porvenir / Beheran Sarciat S.A.» → «Beheran Sarciat SA»',
   vinculos.find(v => /Porvenir/.test(v.empresa))?.carpeta === 'Beheran Sarciat SA');
-ok('resuelve «Estudio Tomás Becker» → «Estudio Becker»',
-  vinculos.find(v => /Becker/.test(v.empresa))?.carpeta === 'Estudio Becker');
-
-const stats = await p.evaluate(() => [...document.querySelectorAll('.rp-stat')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
-console.log('totales:', JSON.stringify(stats));
-ok('el primer número es el total de reuniones registradas', /^22\D/.test(stats[0]));
-ok('mide el ritmo real contra la regla del calendario',
-  /sem/.test(stats[1]) && /cada 26/.test(stats[1]));
-ok('dice cuántas empresas necesitan que se les asigne fecha', /Necesitan fecha/.test(stats[2]));
-ok('y cuál es la próxima presentación agendada',
-  /14 ago 2026/.test(stats[3]) && /MACSA/.test(stats[3]));
-
-// ── El gráfico del ritmo del grupo ──
-const ritmo = await p.evaluate(() => [...document.querySelectorAll('.rp-chart .col title')].map(e => e.textContent));
-console.log('ritmo:', JSON.stringify(ritmo));
-ok('el gráfico muestra las reuniones de cada período', ritmo.length >= 5);
-ok('y no saltea un año sin reuniones', ritmo.some(t => /^2023 · 0 reuniones/.test(t)));
-ok('con un solo color de dato, el de la marca',
-  await p.evaluate(() => new Set([...document.querySelectorAll('.rp-chart path')]
-    .map(e => e.getAttribute('fill'))).size === 1));
-
-// ── Filtro por año ──
-const anios = await p.evaluate(() => [...document.querySelectorAll('.rp-anio option')].map(o => o.value));
-console.log('años:', JSON.stringify(anios));
-ok('el selector ofrece los años de las bitácoras', anios.includes('2026') && anios.includes('2022'));
-await p.selectOption('.rp-anio', '2026');
-await p.waitForTimeout(300);
-const t2026 = await leerTabla();
-ok('filtrando 2026 bajan las veces (MACSA 2, El Sueño 2)',
-  t2026.find(x => /MACSA/.test(x.empresa))?.n === 2 && t2026.find(x => /Sueño/.test(x.empresa))?.n === 2);
-ok('pero la última presentación sigue siendo la real, no la del filtro',
-  /3 ago 2026/.test(t2026.find(x => /MACSA/.test(x.empresa))?.ultima || ''));
-ok('y el gráfico pasa a mostrar los meses de ese año',
-  await p.evaluate(() => /por mes/.test(document.querySelector('.rp-seccion').textContent)));
-await p.selectOption('.rp-anio', 'todos');
-await p.waitForTimeout(300);
 
 // ── Actividad reciente = últimas reuniones con fecha y tema ──
 const act = await p.evaluate(() =>

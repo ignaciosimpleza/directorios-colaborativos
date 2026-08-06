@@ -19,8 +19,8 @@ const dash = await p.evaluate(() => {
   const t = id => (document.getElementById(id) || {}).textContent || '';
   const vis = id => { const e = document.getElementById(id); return e ? getComputedStyle(e).display !== 'none' : null; };
   return {
-    stats: [...document.querySelectorAll('.rp-stat')].map(e => e.textContent.replace(/\s+/g, ' ').trim()),
-    porEmpresa: [...document.querySelectorAll('.rp-tabla tbody tr')].map(e => e.textContent.replace(/\s+/g, ' ').trim()),
+
+    porEmpresa: [...document.querySelectorAll('.rp-card')].map(e => e.textContent.replace(/\s+/g, ' ').trim().slice(0, 60)),
     anios: [...document.querySelectorAll('.rp-anio option')].map(o => o.value),
     actividad: document.querySelectorAll('#actividad-reciente .activity-item').length,
     proximas: document.querySelectorAll('#proximas-reuniones .historial-item').length,
@@ -36,10 +36,10 @@ await p.screenshot({ path: SHOT + '/01-dashboard.png', fullPage: true });
 // Filtro por año
 await p.selectOption('.rp-anio', '2025');
 await p.waitForTimeout(300);
-console.log('2025 →', await p.evaluate(() => [...document.querySelectorAll('.rp-stat-num')].map(e => e.textContent)));
+console.log('2025 →', await p.evaluate(() => [...document.querySelectorAll('.rp-card-n')].map(e => e.textContent)));
 await p.selectOption('.rp-anio', '2026');
 await p.waitForTimeout(300);
-console.log('2026 →', await p.evaluate(() => [...document.querySelectorAll('.rp-stat-num')].map(e => e.textContent)));
+console.log('2026 →', await p.evaluate(() => [...document.querySelectorAll('.rp-card-n')].map(e => e.textContent)));
 await p.selectOption('.rp-anio', 'todos');
 await p.waitForTimeout(200);
 

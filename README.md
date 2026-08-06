@@ -59,7 +59,7 @@ completar.
 | Empresas | Configuración → El grupo → Empresas |
 | Carpeta de Drive de cada empresa | Se vincula sola por nombre dentro de la «Carpeta de las empresas». Se puede fijar a mano en Configuración → El grupo → Empresas → Más datos |
 | Procesos y documentos de cada ficha | Carpeta de la empresa (subcarpetas `Presentaciones` y `Proceso`) |
-| Dashboard · Reuniones realizadas | **Bitácora** de cada empresa: cada encabezado con fecha es una reunión |
+| Dashboard · Reuniones y rotación | **Bitácora** de cada empresa (reuniones, primera y última) + Calendario (la próxima) |
 | Dashboard · Actividad reciente | Las últimas reuniones de las bitácoras, con su fecha y su tema |
 | Dashboard · Próximas reuniones | El Calendario del sitio |
 | Dashboard · Ronda de novedades | Carpeta de Drive de novedades (última pieza subida) |
@@ -120,34 +120,35 @@ directo) y devuelve `{ reuniones, sinFecha }`.
 
 #### Qué muestra el tablero
 
-El bloque cruza las bitácoras (lo que pasó) con el Calendario (lo que viene), y
-está pensado para **gestionar la rotación**, no para lucir números:
+**Una tarjeta por empresa en rotación**, y nada más. Sin barras, sin tabla y sin
+indicadores agregados: los que había (total de reuniones, promedio de semanas
+entre presentaciones, cuántas «necesitan fecha») dependían de qué tan cargada
+estuviera la agenda y no decían nada útil cuando faltaba algo.
 
-| Indicador | Para qué sirve |
+Cada tarjeta tiene los cuatro datos que sirven para seguir a una empresa:
+
+| Dato | De dónde sale |
 |---|---|
-| Reuniones registradas | El volumen del período, con su composición |
-| Semanas entre presentaciones de una misma empresa | El ritmo real, contra la regla del calendario |
-| **Necesitan fecha** | Empresas que superaron el intervalo y no tienen fecha asignada |
-| Próxima presentación | Qué viene y de quién |
+| Cantidad de reuniones | Su bitácora |
+| Primera reunión | Su bitácora |
+| Última reunión | Su bitácora |
+| Próxima reunión | El Calendario |
 
-Debajo, el **ritmo del grupo** —una columna por período, con el eje corrido: un
-año sin reuniones se muestra vacío en vez de saltearse— y la **tabla de
-rotación**, solo con las empresas activas:
+Las tarjetas se ordenan por quién hace más tiempo que no presenta. La empresa que
+ya tiene su próxima fecha lleva el verde de marca arriba y la fecha en verde
+oscuro: es el único lugar del bloque donde aparece el acento, y significa algo.
+La que no tiene fecha dice «Sin agendar» en vez de quedar en blanco.
 
-| Empresa | Reuniones | Primera | Última | Próxima |
-|---|---|---|---|---|
+La empresa sin bitácora conectada tiene su propia tarjeta, con borde punteado y
+el link directo a donde se indica el documento. El número de reuniones se toca y
+despliega las fechas que el sitio leyó, para poder auditarlas contra el documento.
 
-Las tres primeras columnas salen de la bitácora; la próxima, del Calendario. Si
-una empresa superó el intervalo y no tiene fecha, la celda dice «Sin agendar». El
-número de reuniones se despliega y muestra las fechas que el sitio leyó, para
-poder auditarlas contra el documento.
+El selector de período recorta los tres datos de la bitácora a un año; la próxima
+fecha siempre es la que viene.
 
-**Identidad visual.** El bloque usa un solo color de dato: el verde de marca en
-su paso oscuro (`#0B8F66`), porque el verde menta claro no llega al contraste que
-necesita una marca de datos sobre el fondo crema. Todo lo demás son los grises de
-texto de la marca y líneas hairline; nada de sombras. La terracota oscura aparece
-solo para lo que está pendiente. Los colores están verificados contra el fondo
-crema: banda de luminosidad, chroma, separación bajo daltonismo y contraste.
+**Identidad visual.** Fondo crema, tinta gris oscuro, Sora en todos los pesos y un
+solo acento (verde menta). Sin sombras: separan las líneas hairline. La grilla es
+responsive: de cuatro columnas a una, sin scroll horizontal.
 
 #### Dónde se le indica al sitio cuál es
 
