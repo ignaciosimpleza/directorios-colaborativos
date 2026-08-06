@@ -176,6 +176,13 @@ function authHandler(req, res, body, token) {
       const u = find(p.email); if (u) u.estado = p.estado;
       return json(res, { ok: true });
     }
+    case 'enlaceReset': {
+      if (!admin()) return json(res, { error: 'No autorizado' }, 401);
+      const u = AUTH.users.find(x => x.email === String(p.email).toLowerCase());
+      if (!u) return json(res, { error: 'No hay ninguna cuenta con esa dirección.' }, 404);
+      u.reset_token = 'a1b2c3d4e5f60718';
+      return json(res, { ok: true, token: u.reset_token, horas: 24 });
+    }
     case 'borrar': {
       if (!admin()) return json(res, { error: 'No autorizado' }, 401);
       AUTH.users = AUTH.users.filter(u => u.email !== String(p.email).toLowerCase());

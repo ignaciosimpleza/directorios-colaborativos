@@ -362,6 +362,17 @@ Ver `pruebas/LEEME.md`. Incluye una prueba que corre el sitio **como un grupo
 nuevo sin nada conectado** y falla si aparece contenido de algún grupo concreto:
 es la que sostiene la regla de que en el código no hay contenido.
 
+## Acceso sin correo
+
+En **Configuración → El sitio → Cuentas**, cada cuenta tiene el botón **«Enlace de
+acceso»**: genera un enlace de un solo uso, válido 24 horas, y lo copia al
+portapapeles. La coordinación se lo pasa a la persona por donde quiera y con eso
+elige su contraseña y entra. Es el mismo enlace que manda el correo, así que sirve
+igual cuando el envío de correo todavía no está configurado.
+
+El enlace lo arma el navegador con su propia dirección, así que no depende de que
+`SITIO_URL` esté cargada.
+
 ## Correo
 
 Opcional. Sin configurarlo el sitio funciona igual, pero no puede restablecer

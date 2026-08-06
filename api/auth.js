@@ -322,6 +322,25 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
+      // Enlace de acceso generado a mano por la coordinación. Sirve cuando el
+      // sitio todavía no manda correo: se copia y se le pasa a la persona por
+      // el medio que sea. Mismo token y misma validez que el del correo.
+      case 'enlaceReset': {
+        pedirAdmin(body);
+        const email = normEmail(body.email);
+        const r = await db.execute({ sql: 'SELECT email FROM users WHERE group_id = ? AND email = ?', args: [groupId, email] });
+        if (!r.rows[0]) return res.status(404).json({ error: 'No hay ninguna cuenta con esa dirección.' });
+        const token = nuevoToken();
+        await db.execute({
+          sql: 'UPDATE users SET reset_token = ?, reset_exp = ? WHERE group_id = ? AND email = ?',
+          args: [token, enDias(1), groupId, email],
+        });
+        await registrarAcceso(groupId, email, 'enlace de acceso generado', req);
+        // El link lo arma el navegador con su propia dirección: no depende de
+        // que SITIO_URL esté configurada.
+        return res.status(200).json({ ok: true, token, horas: 24 });
+      }
+
       case 'borrar': {
         pedirAdmin(body);
         const email = normEmail(body.email);

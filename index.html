@@ -473,6 +473,11 @@ textarea.cfg-input { resize:vertical; line-height:1.5; }
 .rp-card-fechas { margin-top:11px; padding-top:10px; border-top:1px solid var(--linea); font-size:11px; color:var(--gris-medio); line-height:1.8; }
 
 .rp-note { font-size:11px; color:var(--gris-medio); margin-top:16px; line-height:1.6; }
+.acc-enlace { grid-column:1/-1; margin-top:10px; padding:11px 13px; background:var(--crema-fondo); border:1px solid var(--linea); border-radius:var(--radius-sm); }
+.acc-enlace-tit { font-size:12px; font-weight:600; color:var(--acento-hondo); }
+.acc-enlace-tit.err { color:var(--alerta); }
+.acc-enlace-url { font-size:11.5px; color:var(--gris-oscuro); word-break:break-all; margin:6px 0; }
+.acc-enlace-pie { font-size:11px; color:var(--gris-medio); line-height:1.6; }
 .rp-pendientes { margin-top:10px; font-size:11.5px; color:var(--gris-oscuro); }
 .rp-pendientes summary { cursor:pointer; color:var(--gris-medio); }
 .rp-pendientes div { margin-top:6px; line-height:1.7; }
@@ -3458,7 +3463,7 @@ La reunión se centró en revisar el trabajo del último trimestre…</pre>
       : '○ Todavía no está configurado. El sitio no envía correo.'}</div>
     <div class="ins-tabla" style="margin-top:12px">
       <div class="ins-fila"><span class="ins-nom">Restablecer contraseña</span>
-        <span class="ins-det">Quien la olvida pide el enlace desde la pantalla de acceso y le llega por correo. Vale 24 horas.</span></div>
+        <span class="ins-det">Quien la olvida pide el enlace desde la pantalla de acceso y le llega por correo. Vale 24 horas. <strong>Sin correo configurado esto igual se resuelve</strong>: en <a onclick="configPestana('sitio')">El sitio → Cuentas</a>, el botón «Enlace de acceso» genera el mismo enlace para pasárselo a la persona a mano.</span></div>
       <div class="ins-fila"><span class="ins-nom">Aviso de cuenta nueva</span>
         <span class="ins-det">Cuando alguien se registra, se avisa a los emails cargados en <a onclick="configPestana('contenido')">El grupo → Equipo</a>. Si nadie tiene email, no se avisa.</span></div>
       <div class="ins-fila"><span class="ins-nom">Aviso de cuenta habilitada</span>
@@ -4046,9 +4051,7 @@ async function renderAccesos() {
         : `<div class="rec-empty" style="margin:10px 0"><strong>Registro abierto.</strong> Cualquier persona con la dirección del sitio puede crear una cuenta; queda pendiente y sin acceso hasta que se la autorice. Para restringirlo, cargá la pestaña <strong>ACCESOS</strong> de la planilla con las direcciones habilitadas.</div>`;
     const filas = usuarios.map(x => {
       const badge = x.estado === 'autorizado' ? 'badge-green' : x.estado === 'bloqueado' ? 'badge-gray' : 'badge-yellow';
-      const reset = x.reset
-        ? `<div class="acc-meta">Pidió reestablecer la contraseña · <a class="src-link" onclick="copiarTexto('${jsq(location.origin + location.pathname + '#reset=' + x.resetToken)}')">Copiar link de reset</a></div>`
-        : '';
+      const reset = x.reset ? '<div class="acc-meta">Pidió reestablecer la contraseña.</div>' : '';
       return `<div class="acc-row">
         <div>
           <div class="acc-mail">${esc(x.email)}</div>
@@ -4058,9 +4061,11 @@ async function renderAccesos() {
         <span class="badge ${badge}">${esc(x.estado)}</span>
         <div class="acc-actions">
           ${x.estado !== 'autorizado' ? `<button class="btn-cal-primary" onclick="cambiarEstadoUsuario('${jsq(x.email)}','autorizado')">Autorizar</button>` : ''}
+          <button class="btn-cal-add" onclick="generarEnlaceAcceso('${jsq(x.email)}')">Enlace de acceso</button>
           ${x.estado !== 'bloqueado' ? `<button class="btn-cal-add" onclick="cambiarEstadoUsuario('${jsq(x.email)}','bloqueado')">Bloquear</button>` : ''}
           <button class="btn-cal-danger" onclick="borrarUsuario('${jsq(x.email)}')">Borrar</button>
         </div>
+        <div class="acc-enlace" id="acc-enlace-${jsq(x.email)}" hidden></div>
       </div>`;
     }).join('') || '<div class="act-empty">Todavía no se registró nadie.</div>';
 
@@ -4090,6 +4095,27 @@ async function renderAccesos() {
 
 function copiarTexto(t) { try { navigator.clipboard.writeText(t); } catch (e) {} }
 
+// Enlace para que alguien elija su contraseña, generado a mano por la
+// coordinación. Sirve para entregarlo por el medio que sea, sin depender de que
+// el sitio pueda mandar correo. Vale 24 horas y anula el anterior.
+async function generarEnlaceAcceso(email) {
+  const caja = document.getElementById('acc-enlace-' + email);
+  if (!caja) return;
+  caja.hidden = false;
+  caja.textContent = 'Generando…';
+  try {
+    const r = await authPost('enlaceReset', { password: ADMIN_PASSWORD, email });
+    const url = `${location.origin}${location.pathname}?reset=${r.token}`;
+    copiarTexto(url);
+    caja.innerHTML = `<div class="acc-enlace-tit">Enlace copiado. Pasáselo a ${esc(email)} por donde te resulte cómodo.</div>
+      <div class="acc-enlace-url">${esc(url)}</div>
+      <div class="acc-enlace-pie">Vale ${r.horas} horas y sirve una sola vez. Con él, la persona elige su contraseña y entra.
+        <a class="src-link" onclick="copiarTexto('${jsq(url)}')">Copiar de nuevo</a></div>`;
+  } catch (e) {
+    caja.innerHTML = `<div class="acc-enlace-tit err">No se pudo generar: ${esc(e.message)}</div>`;
+  }
+}
+
 async function cambiarEstadoUsuario(email, estado) {
   try { await authPost('estado', { password: ADMIN_PASSWORD, email, estado }); await renderAccesos(); }
   catch (e) { alert('No se pudo cambiar el estado: ' + e.message); }
@@ -4111,7 +4137,7 @@ async function cambiarRequerirLogin(valor) {
 
 // Link de reset: index.html#reset=<token>
 function tokenDeResetEnUrl() {
-  const m = String(location.hash || '').match(/reset=([a-f0-9]{16,})/i);
+  const m = String(location.search + location.hash).match(/reset=([a-f0-9]{16,})/i);
   return m ? m[1] : '';
 }
 

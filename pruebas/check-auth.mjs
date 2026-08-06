@@ -88,6 +88,34 @@ ok('al salir vuelve la pantalla de acceso', await p.evaluate(() => document.getE
 
 // 10. Sin sesión, la API no entrega datos
 const status = await p.evaluate(async () => (await fetch('/api/db?group_id=grupo4')).status);
+// ── Enlace de acceso a mano: sirve aunque el sitio no pueda mandar correo ──
+await p.evaluate(() => { ADMIN_PASSWORD = 'faro26'; navigate('config'); });
+await p.waitForTimeout(500);
+await p.evaluate(() => configPestana('sitio'));
+await p.waitForTimeout(900);
+const hayBoton = await p.evaluate(() =>
+  [...document.querySelectorAll('.acc-actions button')].some(b => /Enlace de acceso/.test(b.textContent)));
+ok('cada cuenta tiene un botón para generar el enlace de acceso', hayBoton);
+
+await p.evaluate(() => {
+  const b = [...document.querySelectorAll('.acc-actions button')].find(x => /Enlace de acceso/.test(x.textContent));
+  b.click();
+});
+await p.waitForTimeout(900);
+const enlace = await p.evaluate(() => {
+  const c = [...document.querySelectorAll('.acc-enlace')].find(e => !e.hidden);
+  return c ? { texto: c.textContent, url: (c.querySelector('.acc-enlace-url') || {}).textContent || '' } : null;
+});
+console.log('enlace:', JSON.stringify(enlace && enlace.url));
+ok('el enlace se genera y queda a la vista para copiarlo', !!(enlace && /\?reset=[a-f0-9]{16,}/.test(enlace.url)));
+ok('y dice cuánto vale y para quién es', /24 horas/.test(enlace.texto) && /una sola vez/.test(enlace.texto));
+
+// El enlace tiene que abrir la pantalla de elegir contraseña
+await p.goto(enlace.url, { waitUntil: 'networkidle' });
+await p.waitForTimeout(1200);
+ok('al abrirlo, el sitio pide elegir una contraseña nueva',
+  /contraseña nueva/i.test(await p.textContent('#gate-msg') + await p.textContent('body')));
+
 ok('la API responde 401 sin sesión', status === 401);
 
 // restaurar el mock para las otras suites
