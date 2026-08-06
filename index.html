@@ -295,7 +295,9 @@ td { padding: 10px 14px; vertical-align: middle; }
 .historial-item { display:flex; gap:14px; padding:10px 0; border-bottom:1px solid var(--beige-suave); align-items:center; }
 .historial-item:last-child { border-bottom:none; }
 .hist-fecha { font-size:11.5px; font-weight:600; color:var(--gris-oscuro); min-width:66px; }
-.hist-empresa { font-size:13px; font-weight:600; color:var(--navy); }
+.hist-empresa { display:block; font-size:13px; font-weight:600; color:var(--navy); }
+.hist-empresa.link { cursor:pointer; }
+.hist-empresa.link:hover { text-decoration:underline; }
 .hist-tema { font-size:11.5px; color:var(--gris-medio); margin-top:1px; }
 .hist-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
 
@@ -1326,12 +1328,22 @@ function renderProximasReuniones() {
     aplicarVisibilidad();
     return;
   }
+  // El horario no está escrito en el código: sale de las reglas del Calendario.
+  const dia = CAL_DOWS[Number(CALCFG.diaSemana)] || '';
+  const cuando = [dia && dia[0].toUpperCase() + dia.slice(1), CALCFG.hora && `${CALCFG.hora} hs`]
+    .filter(Boolean).join(' · ');
+
   el.innerHTML = prox.map(m => {
     const color = calColorFor(m.assignment);
     const d = new Date(m.date + 'T12:00:00');
     const fecha = `${d.getDate()} ${CAL_MONTHS[d.getMonth()].slice(0, 3)}`;
-    const tema = m.topic ? esc(m.topic) : 'Lunes 8:00 hs · Zoom';
-    return `<div class="historial-item"><span class="hist-fecha">${fecha}</span><span class="hist-dot" style="background:${color}"></span><div><div class="hist-empresa">${esc(m.assignment)}</div><div class="hist-tema">${tema}</div></div></div>`;
+    const tema = m.topic ? esc(m.topic) : esc(cuando);
+    // Si la fecha la tiene asignada una empresa, su nombre lleva a la ficha.
+    const empresa = empresaDeAsignacion(m.assignment);
+    const nombre = empresa
+      ? `<span class="hist-empresa link" onclick="openEmpresa(${empresa.id})" title="Ver la ficha de ${esc(empresa.nombre)}">${esc(m.assignment)}</span>`
+      : `<span class="hist-empresa">${esc(m.assignment)}</span>`;
+    return `<div class="historial-item"><span class="hist-fecha">${fecha}</span><span class="hist-dot" style="background:${color}"></span><div>${nombre}<div class="hist-tema">${tema}</div></div></div>`;
   }).join('');
   aplicarVisibilidad();
 }
@@ -1658,6 +1670,21 @@ function parecido(empresa, carpeta) {
   const b = tokens(carpeta);
   if (!a.size || !b.length) return 0;
   return b.filter(t => a.has(t)).length;
+}
+
+// La empresa a la que corresponde un texto del calendario. Primero por nombre
+// exacto; si no, por parecido, porque una fecha puede haberse escrito a mano
+// («El Sueño SA» en vez de «Agropecuaria El Sueño»).
+function empresaDeAsignacion(texto) {
+  if (!texto) return null;
+  const exacta = EMPRESAS.find(e => e.nombre === texto);
+  if (exacta) return exacta;
+  let mejor = null, puntaje = 0;
+  EMPRESAS.forEach(e => {
+    const p = parecido(e, texto);
+    if (p > puntaje) { puntaje = p; mejor = e; }
+  });
+  return puntaje > 0 ? mejor : null;
 }
 
 // Vincula cada empresa con su carpeta de Drive comparando nombres. Así no hay

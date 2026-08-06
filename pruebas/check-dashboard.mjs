@@ -72,6 +72,26 @@ ok('y la primera reunión pasa a ser la del año filtrado',
 await p.selectOption('.rp-anio', 'todos');
 await p.waitForTimeout(400);
 
+// ── Próximas reuniones: la empresa asignada lleva a su ficha ──
+const prox = await p.evaluate(() => [...document.querySelectorAll('#proximas-reuniones .historial-item')].map(e => ({
+  texto: e.textContent.replace(/\s+/g, ' ').trim(),
+  linkeada: !!e.querySelector('.hist-empresa.link'),
+})));
+console.log('próximas:', JSON.stringify(prox.slice(0, 3)));
+ok('las próximas reuniones salen del calendario', prox.length > 0);
+ok('la empresa que presenta lleva a su ficha',
+  prox.some(x => x.linkeada && /MACSA/.test(x.texto)));
+ok('y lo que no es una empresa (técnica, ronda) no queda linkeado',
+  prox.filter(x => /Técnica|Ronda/.test(x.texto)).every(x => !x.linkeada));
+ok('el horario sale de las reglas del calendario, no del código',
+  prox.some(x => /Lunes · 08:00 hs/.test(x.texto)));
+await p.evaluate(() => document.querySelector('#proximas-reuniones .hist-empresa.link').click());
+await p.waitForTimeout(500);
+ok('al tocarla se abre la ficha de esa empresa',
+  await p.evaluate(() => currentSection === 'empresa-detalle'));
+await p.evaluate(() => navigate('dashboard'));
+await p.waitForTimeout(600);
+
 // ── Vínculo automático empresa ↔ carpeta de Drive (CONFIG_DRIVE vacía) ──
 const vinculos = await p.evaluate(() => EMPRESAS.map(e => ({
   empresa: e.nombre,

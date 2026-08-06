@@ -62,7 +62,7 @@ completar.
 | Procesos y documentos de cada ficha | Carpeta de la empresa (subcarpetas `Presentaciones` y `Proceso`) |
 | Dashboard · Reuniones y rotación | **Bitácora** de cada empresa (reuniones, primera y última) + Calendario (la próxima) |
 | Dashboard · Actividad reciente | Las últimas reuniones de las bitácoras, con su fecha y su tema |
-| Dashboard · Próximas reuniones | El Calendario del sitio |
+| Dashboard · Próximas reuniones | El Calendario del sitio. La empresa asignada lleva a su ficha; el horario sale de las reglas del Calendario |
 | Dashboard · Ronda de novedades | Carpeta de Drive de novedades (última pieza subida) |
 | Recursos · Marco conceptual | Configuración → El grupo → Marco conceptual |
 | Recursos · Reuniones técnicas | Carpeta de Drive de material técnico (con subcarpetas) |
