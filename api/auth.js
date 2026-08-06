@@ -21,6 +21,7 @@
 import {
   db, ensureAuthSchema, ahora, normEmail, hashPassword, passwordOk, nuevoToken,
   tokenDeRequest, sesionDe, esAdmin, invalidarCacheAcceso, requiereLogin,
+  EMAIL_COORDINACION,
 } from './_auth.js';
 import { leerBase } from './base.js';
 import { enviarMail, correoConfigurado, urlDelSitio } from './_mail.js';
@@ -272,9 +273,18 @@ export default async function handler(req, res) {
       // ───────── administración (clave de edición) ─────────
       // Valida la clave de edición contra la variable de Vercel, para que no
       // tenga que estar escrita en el HTML del sitio.
+      // La coordinación entra con la clave de edición y sin cuenta. Se le da una
+      // sesión igual que a cualquiera, para que las funciones de lectura la
+      // reconozcan; dura menos que una sesión común.
       case 'adminLogin': {
         pedirAdmin(body);
-        return res.status(200).json({ ok: true });
+        const token = nuevoToken();
+        await db.execute({
+          sql: 'INSERT INTO sessions (token, group_id, email, created_at, expires_at) VALUES (?, ?, ?, ?, ?)',
+          args: [token, groupId, EMAIL_COORDINACION, ahora(), enDias(1)],
+        });
+        await registrarAcceso(groupId, EMAIL_COORDINACION, 'ingreso de coordinación', req);
+        return res.status(200).json({ ok: true, token, usuario: { email: EMAIL_COORDINACION, nombre: 'Coordinación', empresa: '' } });
       }
 
       case 'usuarios': {

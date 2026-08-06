@@ -3,7 +3,8 @@ import { chromium } from 'playwright-core';
 const SHOT = new URL('.', import.meta.url).pathname + 'capturas';
 const ok = (n, c) => console.log((c ? '✅' : '❌') + ' ' + n);
 
-await fetch('http://localhost:8099/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: '_reset' }) });
+const AUTH_API = 'http://localhost:8099/api/auth';
+ await fetch(AUTH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: '_reset' }) });
 
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
 const p = await b.newPage({ viewport: { width: 1400, height: 1000 } });
@@ -121,4 +122,48 @@ ok('la API responde 401 sin sesión', status === 401);
 // restaurar el mock para las otras suites
 await p.evaluate(async () => { await authPost('requerirLogin', { password: 'faro26', valor: false }); });
 console.log('ERRORES JS:', errores.length ? errores : 'ninguno');
+
+// ── El primero que llega ──
+// Un sitio con el portero prendido y sin ninguna cuenta autorizada tiene que
+// dejar entrar a quien lo administra. Si no, nadie entra nunca: no se puede
+// llegar al panel para autorizar la primera cuenta.
+await fetch(AUTH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: '_reset' }) });
+await fetch(AUTH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ action: 'requerirLogin', password: 'faro26', valor: true }) });
+
+const pc = await b.newPage({ viewport: { width: 1200, height: 900 } });
+const errc = [];
+pc.on('pageerror', e => errc.push('PAGEERROR: ' + e.message));
+await pc.goto('http://localhost:8099/', { waitUntil: 'networkidle' });
+await pc.waitForTimeout(1200);
+
+ok('sin cuenta y con el portero prendido, aparece la pantalla de acceso',
+  await pc.evaluate(() => document.getElementById('gate').classList.contains('open')));
+ok('y ofrece entrar como coordinación',
+  await pc.evaluate(() => !!document.getElementById('gate-coord-link')));
+
+await pc.evaluate(() => gateCoordAbrir());
+await pc.fill('#gate-coord-pwd', 'clave-incorrecta');
+await pc.evaluate(() => gateCoordEntrar());
+await pc.waitForTimeout(600);
+ok('con la clave equivocada no entra',
+  await pc.evaluate(() => document.getElementById('gate').classList.contains('open')));
+
+await pc.fill('#gate-coord-pwd', 'faro26');
+await pc.evaluate(() => gateCoordEntrar());
+await pc.waitForTimeout(1800);
+ok('con la clave de coordinación entra, sin tener cuenta',
+  await pc.evaluate(() => !document.getElementById('gate').classList.contains('open')));
+ok('y entra en modo edición, para poder configurar y autorizar cuentas',
+  await pc.evaluate(() => dashEditing === true));
+ok('la API le contesta con sesión: los datos del grupo cargan',
+  await pc.evaluate(() => EMPRESAS.length > 0));
+
+await pc.evaluate(() => { navigate('config'); configPestana('sitio'); });
+await pc.waitForTimeout(1000);
+ok('y llega al panel de cuentas para autorizar al primero',
+  await pc.evaluate(() => !!document.getElementById('config-accesos') &&
+    !/Ingresá con la clave/.test(document.getElementById('config-accesos').textContent)));
+console.log('ERRORES JS (coordinación):', errc.length ? errc : 'ninguno');
+
 await b.close();

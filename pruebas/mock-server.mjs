@@ -168,7 +168,12 @@ function authHandler(req, res, body, token) {
       return json(res, { token: t, usuario: { email: u.email, nombre: u.nombre, empresa: u.empresa } });
     }
     case 'logout': { delete AUTH.sessions[token]; return json(res, { ok: true }); }
-    case 'adminLogin': return admin() ? json(res, { ok: true }) : json(res, { error: 'No autorizado' }, 401);
+    case 'adminLogin': {
+      if (!admin()) return json(res, { error: 'No autorizado' }, 401);
+      const token = 'sesion-coordinacion';
+      AUTH.sessions[token] = { email: '*coordinación*', nombre: 'Coordinación', empresa: '' };
+      return json(res, { ok: true, token, usuario: AUTH.sessions[token] });
+    }
     case 'usuarios': return admin() ? json(res, { listaAccesos: { activa: true, habilitados: Object.keys(HABILITADOS).length }, usuarios: AUTH.users.map(u => ({ ...u, reset: false, resetToken: '' })) }) : json(res, { error: 'No autorizado' }, 401);
     case 'accesos': return admin() ? json(res, { accesos: AUTH.log.slice(-30).reverse() }) : json(res, { error: 'No autorizado' }, 401);
     case 'estado': {

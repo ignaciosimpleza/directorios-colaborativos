@@ -362,6 +362,17 @@ Ver `pruebas/LEEME.md`. Incluye una prueba que corre el sitio **como un grupo
 nuevo sin nada conectado** y falla si aparece contenido de algún grupo concreto:
 es la que sostiene la regla de que en el código no hay contenido.
 
+## Cómo entra la coordinación
+
+Con el portero prendido, la pantalla de acceso ofrece **«Ingresar como
+coordinación»**: se entra con la clave de edición (`EDIT_PASSWORD`), sin cuenta de
+usuario, y el sitio abre directamente en modo edición.
+
+Sin esto un sitio recién configurado queda cerrado para todos: quien lo
+administra todavía no tiene cuenta, y el panel para autorizar la primera está
+detrás del mismo portero. La sesión de coordinación dura 24 horas y se registra
+en el log de accesos como cualquier otro ingreso.
+
 ## Acceso sin correo
 
 En **Configuración → El sitio → Cuentas**, cada cuenta tiene el botón **«Enlace de
