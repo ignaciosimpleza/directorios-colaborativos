@@ -10,8 +10,11 @@ Todo eso se carga desde el sitio y se guarda en la base.
 **Drive queda para los documentos**: presentaciones, bitácoras, material técnico,
 la gaceta. Eso el sitio lo lee, no lo administra.
 
-Para armar otro grupo: se entra a Configuración y se carga. Si el grupo ya tenía
-sus datos en una planilla, se importa de una vez y después se edita en el sitio.
+Para armar otro grupo: se despliega **el mismo repositorio** como un proyecto
+nuevo en Vercel con otro `GRUPO_ID`, y se carga todo desde Configuración. No se
+copia ni se bifurca el código, así una mejora llega a todos los grupos con solo
+volver a desplegar. Los pasos completos están en el sitio, en **Configuración →
+Instrucciones**, y resumidos más abajo.
 
 ### Configuración, en cuatro pestañas
 
@@ -28,6 +31,26 @@ donde se ven sus efectos.
 Se guarda solo mientras se escribe. Cada campo dice para qué sirve y dónde se ve,
 y lo que no se entiende se avisa en el momento (por ejemplo, al escribir cuándo
 una empresa no puede presentar).
+
+## Montar el sitio para otro grupo
+
+El código es idéntico para todos los grupos: **no hay nada del grupo escrito en
+él**, ni siquiera su identificador. El navegador se entera de a qué grupo
+pertenece el sitio en el primer pedido a `/api/auth`, que se lo informa desde su
+variable de entorno.
+
+| Variable | |
+|---|---|
+| `GRUPO_ID` | obligatoria. Identificador corto y único (`grupo7`). Separa los datos de un grupo de los de otro |
+| `EDIT_PASSWORD` | obligatoria. La clave de coordinación de ese grupo, distinta para cada uno |
+| `TURSO_DATABASE_URL` · `TURSO_AUTH_TOKEN` | pueden ser los mismos: todas las tablas están particionadas por `group_id` |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | la misma cuenta de servicio; lo que cambia es con qué carpetas de Drive se la comparte |
+| `SITIO_URL` | solo si se va a mandar correo |
+
+Después: armar las carpetas de Drive del grupo y compartirlas con la cuenta de
+servicio, entrar con **«Ingresar como coordinación»** y cargar todo desde
+Configuración. El sitio arranca vacío: nada de lo que se cargue en un grupo
+aparece en otro, aunque compartan la base y la cuenta de servicio.
 
 ## Estructura
 
@@ -354,7 +377,7 @@ iframe, que se carga con la sesión de quien mira el sitio.
   `resetear` y, con la clave de edición, `adminLogin`, `usuarios`, `estado`,
   `borrar`, `accesos`, `requerirLogin`
 
-`group_id` (por defecto `grupo4`) permite tener varios grupos en la misma base.
+`group_id` (por defecto, el `GRUPO_ID` del despliegue) permite tener varios grupos en la misma base.
 
 ## Pruebas
 

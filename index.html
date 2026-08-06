@@ -2059,7 +2059,10 @@ function arbolHtml(nodo, esRaiz) {
 // El contenido del sitio NO se guarda acá: sale de Drive (planilla base,
 // carpetas de las empresas y archivo del marco conceptual).
 const API_BASE = '/api/db';
-const GROUP_ID = 'grupo4';
+// Qué grupo es este sitio. NO está escrito acá: lo informa la API a partir de
+// su variable de entorno, en el primer pedido. Así el mismo código sirve para
+// cualquier grupo sin tocar una línea.
+let GROUP_ID = 'default';
 
 async function loadContentFromDB() {
   try {
@@ -3515,6 +3518,40 @@ La reunión se centró en revisar el trabajo del último trimestre…</pre>
   </div>
 
   <div class="card">
+    <div class="card-title">Montar el sitio para otro grupo</div>
+    <div class="src-estructura">El código es el mismo para todos los grupos: no hay que tocar ni una línea. Lo que cambia son las variables del despliegue y lo que se carga después desde acá.</div>
+    <ol class="ins-pasos">
+      <li class="ins-paso"><span class="ins-n">1</span><div>
+        <div class="ins-paso-tit">Crear un proyecto nuevo en Vercel, con el mismo repositorio</div>
+        <div class="ins-paso-txt">No se copia ni se bifurca el código: el mismo repositorio se despliega otra vez. Así una mejora llega a todos los grupos con solo volver a desplegar.</div></div></li>
+      <li class="ins-paso"><span class="ins-n">2</span><div>
+        <div class="ins-paso-tit">Cargar las variables del grupo nuevo</div>
+        <div class="ins-tabla" style="margin-top:8px">
+          <div class="ins-fila"><span class="ins-nom"><code>GRUPO_ID</code><em class="ins-obl">obligatoria</em></span>
+            <span class="ins-det">Un identificador corto y único, por ejemplo <code>grupo7</code>. Es lo que separa los datos de un grupo de los de otro.</span></div>
+          <div class="ins-fila"><span class="ins-nom"><code>EDIT_PASSWORD</code><em class="ins-obl">obligatoria</em></span>
+            <span class="ins-det">La clave de coordinación de ese grupo. Distinta para cada uno.</span></div>
+          <div class="ins-fila"><span class="ins-nom"><code>TURSO_DATABASE_URL</code><br><code>TURSO_AUTH_TOKEN</code><em class="ins-opc">se comparten</em></span>
+            <span class="ins-det">Puede ser la misma base que los demás grupos: todas las tablas están separadas por <code>GRUPO_ID</code>.</span></div>
+          <div class="ins-fila"><span class="ins-nom"><code>GOOGLE_SERVICE_ACCOUNT_JSON</code><em class="ins-opc">se comparte</em></span>
+            <span class="ins-det">La misma cuenta de servicio. Lo que cambia es con qué carpetas de Drive se la comparte.</span></div>
+          <div class="ins-fila"><span class="ins-nom"><code>SITIO_URL</code><em class="ins-opc">opcional</em></span>
+            <span class="ins-det">La dirección pública del sitio nuevo. Solo hace falta si se va a mandar correo.</span></div>
+        </div></div></li>
+      <li class="ins-paso"><span class="ins-n">3</span><div>
+        <div class="ins-paso-tit">Armar las carpetas de Drive del grupo nuevo</div>
+        <div class="ins-paso-txt">Con la estructura de más arriba, y compartidas con la misma cuenta de servicio.</div></div></li>
+      <li class="ins-paso"><span class="ins-n">4</span><div>
+        <div class="ins-paso-tit">Entrar con «Ingresar como coordinación»</div>
+        <div class="ins-paso-txt">Desde la pantalla de acceso, con la clave del paso 2. El sitio arranca vacío, sin ningún dato de otro grupo.</div></div></li>
+      <li class="ins-paso"><span class="ins-n">5</span><div>
+        <div class="ins-paso-tit">Cargar el grupo desde estas mismas pestañas</div>
+        <div class="ins-paso-txt">Los siete pasos del principio de esta página. Si el grupo ya tenía sus datos en una planilla, se importan de una vez y después se editan acá.</div></div></li>
+    </ol>
+    <div class="cfg-ayuda" style="margin-top:12px">Nada de lo que se cargue en un grupo aparece en otro, aunque compartan la base y la cuenta de servicio.</div>
+  </div>
+
+  <div class="card">
     <div class="card-title">Qué datos hacen falta</div>
     <div class="ins-tabla">${datos}</div>
     <div class="cfg-ayuda" style="margin-top:12px">Lo opcional que quede vacío no rompe nada: la sección simplemente no se muestra. En <a onclick="configPestana('sitio')">El sitio</a> se elige qué ocultar y qué mostrar aunque esté vacío.</div>
@@ -3941,8 +3978,10 @@ async function authPost(action, extra) {
 
 async function initAuth() {
   try {
-    const r = await fetch(`${API_AUTH}?group_id=${encodeURIComponent(GROUP_ID)}`);
+    // Sin group_id: es la API la que dice a qué grupo pertenece este despliegue
+    const r = await fetch(API_AUTH);
     const j = await r.json().catch(() => ({}));
+    if (j.groupId) GROUP_ID = j.groupId;
     AUTH_REQUIRED = !!j.requireLogin;
     AUTH_USER = j.usuario || null;
     ESTADO_CORREO = { listo: !!j.correo };
