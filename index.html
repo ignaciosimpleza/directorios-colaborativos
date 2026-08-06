@@ -3482,7 +3482,9 @@ La reunión se centró en revisar el trabajo del último trimestre…</pre>
           <div class="ins-fila"><span class="ins-nom"><code>RESEND_API_KEY</code><em class="ins-obl">obligatoria</em></span>
             <span class="ins-det">La clave del paso 2.</span></div>
           <div class="ins-fila"><span class="ins-nom"><code>MAIL_FROM</code><em class="ins-obl">obligatoria</em></span>
-            <span class="ins-det">El remitente, con el dominio verificado. Por ejemplo: <code>Nombre del grupo &lt;no-responder@tu-dominio.com&gt;</code></span></div>
+            <span class="ins-det">El remitente, con el dominio verificado. Por ejemplo: <code>Nombre del grupo &lt;no-responder@tu-dominio.com&gt;</code>. <strong>No hace falta que esa casilla exista</strong>: alcanza con que el dominio esté verificado.</span></div>
+          <div class="ins-fila"><span class="ins-nom"><code>MAIL_REPLY_TO</code><em class="ins-opc">opcional</em></span>
+            <span class="ins-det">A dónde va la respuesta si alguien contesta. Conviene cargarla cuando el remitente es una dirección que no existe, para que la respuesta no rebote.</span></div>
           <div class="ins-fila"><span class="ins-nom"><code>SITIO_URL</code><em class="ins-obl">obligatoria</em></span>
             <span class="ins-det">La dirección pública del sitio, sin barra final. Hace falta para armar el enlace de restablecer contraseña: como el sitio va embebido, no puede deducirla solo.</span></div>
           <div class="ins-fila"><span class="ins-nom"><code>AVISOS_A</code><em class="ins-opc">opcional</em></span>

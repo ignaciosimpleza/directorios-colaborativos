@@ -7,6 +7,11 @@
 // Variables de entorno en Vercel:
 //   RESEND_API_KEY   la clave de resend.com
 //   MAIL_FROM        el remitente. Ej: Grupo El Faro <no-responder@tu-dominio.com>
+//                    No hace falta que esa casilla exista: alcanza con que el
+//                    dominio esté verificado en Resend.
+//   MAIL_REPLY_TO    opcional. A dónde va la respuesta si alguien contesta.
+//                    Conviene ponerla cuando el remitente es una dirección que
+//                    no existe, para que la respuesta no rebote.
 //   SITIO_URL        la dirección pública del sitio, para armar el link de reset
 //   AVISOS_A         opcional. A quién avisar de cuentas pendientes si el equipo
 //                    cargado en Configuración no tiene emails.
@@ -38,6 +43,7 @@ export async function enviarMail({ para, asunto, titulo, texto, boton, url, pie 
       body: JSON.stringify({
         from: process.env.MAIL_FROM,
         to: destinos,
+        ...(process.env.MAIL_REPLY_TO ? { reply_to: process.env.MAIL_REPLY_TO } : {}),
         subject: asunto,
         html: cuerpoHtml({ titulo, texto, boton, url, pie }),
         text: cuerpoTexto({ titulo, texto, boton, url, pie }),

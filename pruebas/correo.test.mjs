@@ -100,3 +100,33 @@ test('el contenido que viene de afuera se escapa, no se interpola crudo', async 
   assert.ok(cuerpo.html.includes('&amp;'), 'los ampersands se escaparon');
   limpiar();
 });
+
+test('si hay MAIL_REPLY_TO, la respuesta se dirige a una casilla que existe', async () => {
+  process.env.RESEND_API_KEY = 'k';
+  process.env.MAIL_FROM = 'Grupo <no-responder@ejemplo.com>';
+  process.env.MAIL_REPLY_TO = 'info@ejemplo.com';
+  const m = await import('../api/_mail.js?' + Math.random().toString(36).slice(2));
+  const original = global.fetch;
+  let cuerpo = null;
+  global.fetch = async (_u, o) => { cuerpo = JSON.parse(o.body); return { ok: true, text: async () => '' }; };
+  await m.enviarMail({ para: 'a@b.com', asunto: 'x', titulo: 'x', texto: 'x' });
+  global.fetch = original;
+  assert.equal(cuerpo.reply_to, 'info@ejemplo.com');
+  delete process.env.MAIL_REPLY_TO;
+  delete process.env.RESEND_API_KEY;
+  delete process.env.MAIL_FROM;
+});
+
+test('sin MAIL_REPLY_TO no se manda el campo vacío', async () => {
+  process.env.RESEND_API_KEY = 'k';
+  process.env.MAIL_FROM = 'Grupo <no@x.com>';
+  const m = await import('../api/_mail.js?' + Math.random().toString(36).slice(2));
+  const original = global.fetch;
+  let cuerpo = null;
+  global.fetch = async (_u, o) => { cuerpo = JSON.parse(o.body); return { ok: true, text: async () => '' }; };
+  await m.enviarMail({ para: 'a@b.com', asunto: 'x', titulo: 'x', texto: 'x' });
+  global.fetch = original;
+  assert.ok(!('reply_to' in cuerpo));
+  delete process.env.RESEND_API_KEY;
+  delete process.env.MAIL_FROM;
+});

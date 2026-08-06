@@ -372,7 +372,8 @@ que además muestra si está configurado o no.
 | Variable en Vercel | |
 |---|---|
 | `RESEND_API_KEY` | obligatoria |
-| `MAIL_FROM` | obligatoria. `Nombre del grupo <no-responder@dominio.com>` |
+| `MAIL_FROM` | obligatoria. `Nombre del grupo <no-responder@dominio.com>`. No hace falta que la casilla exista: alcanza con el dominio verificado |
+| `MAIL_REPLY_TO` | opcional. A dónde va la respuesta si alguien contesta. Conviene cargarla cuando el remitente no es una casilla real |
 | `SITIO_URL` | obligatoria. La dirección pública, sin barra final: hace falta para armar el enlace de reset, y el sitio no puede deducirla porque va embebido |
 | `AVISOS_A` | opcional. Solo se usa si el equipo del grupo no tiene emails cargados |
 
