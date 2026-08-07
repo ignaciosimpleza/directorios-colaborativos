@@ -97,4 +97,33 @@ const rechazo = await p2.evaluate(async () => {
 ok('un email inventado no puede registrarse', rechazo.status === 403 && /no figura en la lista/i.test(rechazo.body.error));
 
 console.log('ERRORES JS (con planilla):', err2.length ? err2 : 'ninguno');
+
+// ── Sin GRUPO_ID cargada, el sitio avisa en vez de verse vacío ──
+// Esto pasó de verdad en producción: al no estar la variable, el sitio cayó en
+// otro grupo, se vio vacío y pareció que se habían borrado los datos.
+await fetch('http://localhost:8099/api/auth', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ action: '_faltaGrupoId', valor: true }),
+});
+const pg = await b.newPage({ viewport: { width: 1200, height: 900 } });
+await pg.goto('http://localhost:8099/', { waitUntil: 'networkidle' });
+await pg.waitForTimeout(1500);
+const aviso = await pg.evaluate(() => {
+  const e = document.getElementById('falta-grupo');
+  return e ? e.textContent.replace(/\s+/g, ' ').trim() : '';
+});
+console.log('aviso:', JSON.stringify(aviso.slice(0, 90)));
+ok('sin GRUPO_ID el sitio avisa qué falta, no se muestra vacío', /GRUPO_ID/.test(aviso));
+ok('y aclara que los datos no se perdieron', /no se perdieron/.test(aviso));
+
+await fetch('http://localhost:8099/api/auth', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ action: '_faltaGrupoId', valor: false }),
+});
+const pk = await b.newPage({ viewport: { width: 1200, height: 900 } });
+await pk.goto('http://localhost:8099/', { waitUntil: 'networkidle' });
+await pk.waitForTimeout(1200);
+ok('con GRUPO_ID cargada el aviso no aparece',
+  await pk.evaluate(() => !document.getElementById('falta-grupo')));
+
 await b.close();
