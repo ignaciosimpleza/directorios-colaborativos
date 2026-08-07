@@ -41,7 +41,7 @@ variable de entorno.
 
 | Variable | |
 |---|---|
-| `GRUPO_ID` | obligatoria. Identificador corto y único (`grupo7`). Separa los datos de un grupo de los de otro |
+| `GRUPO_ID` | **obligatoria, y hay que cargarla antes del primer despliegue.** Identificador corto y único (`grupo7`). Separa los datos de un grupo de los de otro. Si falta, el sitio no adivina: avisa en pantalla que no sabe a qué grupo pertenece, en vez de mostrarse vacío como si se hubieran borrado los datos |
 | `EDIT_PASSWORD` | obligatoria. La clave de coordinación de ese grupo, distinta para cada uno |
 | `TURSO_DATABASE_URL` · `TURSO_AUTH_TOKEN` | pueden ser los mismos: todas las tablas están particionadas por `group_id` |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | la misma cuenta de servicio; lo que cambia es con qué carpetas de Drive se la comparte |
