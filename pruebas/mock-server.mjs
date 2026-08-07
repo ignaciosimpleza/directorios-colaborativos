@@ -140,7 +140,7 @@ const DB = {
 const json = (res, obj, code = 200) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); };
 
 // ── mock de /api/auth (en memoria) ──
-const AUTH = { requireLogin: false, correo: false, users: [], sessions: {}, log: [] };
+const AUTH = { requireLogin: false, correo: false, faltaGrupoId: false, users: [], sessions: {}, log: [] };
 const HABILITADOS = { 'macsa@ejemplo.com': { empresa: 'MACSA Agro', nombre: 'Juanchi' }, 'elsueno@ejemplo.com': { empresa: 'El Sueño SA', nombre: 'Ana' } };
 const EDIT_PASSWORD = 'faro26';
 
@@ -181,6 +181,7 @@ function authHandler(req, res, body, token) {
       const u = find(p.email); if (u) u.estado = p.estado;
       return json(res, { ok: true });
     }
+    case '_faltaGrupoId': { AUTH.faltaGrupoId = !!p.valor; return json(res, { ok: true }); }
     case 'enlaceReset': {
       if (!admin()) return json(res, { error: 'No autorizado' }, 401);
       const u = AUTH.users.find(x => x.email === String(p.email).toLowerCase());
@@ -201,7 +202,7 @@ function authHandler(req, res, body, token) {
     case 'pedirReset': return json(res, { ok: true });
     // solo para las pruebas: deja el mock como recién arrancado
     case '_reset': {
-      AUTH.requireLogin = false; AUTH.users = []; AUTH.sessions = {}; AUTH.log = [];
+      AUTH.requireLogin = false; AUTH.users = []; AUTH.sessions = {}; AUTH.log = []; AUTH.faltaGrupoId = false;
       DB.content = { drive_config: { baseFileId: 'base', empresasFolderId: 'emp', tecnicasFolderId: 'tec', novedadesFolderId: 'nov', herramientasUrl: 'https://www.simpleza.com.ar/' } };
       return json(res, { ok: true });
     }
@@ -222,7 +223,7 @@ http.createServer((req, res) => {
     if (req.method === 'GET') {
       const email = AUTH.sessions[tokenDe(req)];
       const us = AUTH.users.find(x => x.email === email);
-      return json(res, { groupId: 'grupo4', requireLogin: AUTH.requireLogin, correo: AUTH.correo, usuario: us ? { email: us.email, nombre: us.nombre, empresa: us.empresa } : null });
+      return json(res, { groupId: AUTH.faltaGrupoId ? 'default' : 'grupo4', faltaGrupoId: AUTH.faltaGrupoId, requireLogin: AUTH.requireLogin, correo: AUTH.correo, usuario: us ? { email: us.email, nombre: us.nombre, empresa: us.empresa } : null });
     }
     let b = ''; req.on('data', c => b += c);
     req.on('end', () => authHandler(req, res, b, tokenDe(req)));

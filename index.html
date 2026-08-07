@@ -322,6 +322,8 @@ td { padding: 10px 14px; vertical-align: middle; }
 .gate-sub { font-size:11.5px; color:rgba(255,255,255,0.6); margin-top:2px; }
 .gate-card { background:#fff; border-radius:16px; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.3); }
 .gate-tabs { display:flex; gap:6px; margin-bottom:16px; }
+#falta-grupo { position:fixed; left:0; right:0; bottom:0; z-index:9999; background:#9C4238; color:#fff; font-size:12.5px; line-height:1.6; padding:14px 22px; }
+#falta-grupo code { background:rgba(255,255,255,0.18); padding:1px 6px; border-radius:4px; font-family:inherit; font-weight:600; }
 .gate-coord { margin-top:14px; padding-top:13px; border-top:1px solid rgba(97,106,107,0.14); text-align:center; }
 .gate-tab { flex:1; background:#f4f1ec; border:0; font-family:inherit; font-size:12.5px; font-weight:700; color:var(--gris-medio); padding:9px; border-radius:9px; cursor:pointer; }
 .gate-tab.active { background:var(--navy); color:#fff; }
@@ -3976,12 +3978,28 @@ async function authPost(action, extra) {
   return j;
 }
 
+// Falta la variable que dice qué grupo es este sitio. No se muestra un sitio
+// vacío como si no pasara nada: se dice qué falta y dónde se carga.
+function avisarFaltaGrupoId() {
+  if (document.getElementById('falta-grupo')) return;
+  const d = document.createElement('div');
+  d.id = 'falta-grupo';
+  d.innerHTML = `<strong>Falta configurar este sitio.</strong> No está cargada la variable
+    <code>GRUPO_ID</code>, así que el sitio no sabe a qué grupo pertenece y se ve vacío.
+    Los datos no se perdieron: están guardados bajo el identificador de ese grupo.
+    Cargá <code>GRUPO_ID</code> en las variables de entorno del proyecto y volvé a desplegar.`;
+  document.body.appendChild(d);
+}
+
 async function initAuth() {
   try {
     // Sin group_id: es la API la que dice a qué grupo pertenece este despliegue
     const r = await fetch(API_AUTH);
     const j = await r.json().catch(() => ({}));
     if (j.groupId) GROUP_ID = j.groupId;
+    // Sin GRUPO_ID cargada, el sitio estaría leyendo un grupo que no es el suyo
+    // y se vería vacío. Se avisa en pantalla en vez de disimularlo.
+    if (j.faltaGrupoId) avisarFaltaGrupoId();
     AUTH_REQUIRED = !!j.requireLogin;
     AUTH_USER = j.usuario || null;
     ESTADO_CORREO = { listo: !!j.correo };

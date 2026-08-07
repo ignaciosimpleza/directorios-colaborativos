@@ -21,7 +21,7 @@
 import {
   db, ensureAuthSchema, ahora, normEmail, hashPassword, passwordOk, nuevoToken,
   tokenDeRequest, sesionDe, esAdmin, invalidarCacheAcceso, requiereLogin,
-  EMAIL_COORDINACION, grupoPorDefecto,
+  EMAIL_COORDINACION, grupoPorDefecto, hayGrupoConfigurado,
 } from './_auth.js';
 import { leerBase } from './base.js';
 import { enviarMail, correoConfigurado, urlDelSitio } from './_mail.js';
@@ -129,6 +129,8 @@ export default async function handler(req, res) {
       } catch {}
       return res.status(200).json({
         groupId,
+        // El sitio necesita saberlo para avisar en vez de mostrarse vacío
+        faltaGrupoId: !hayGrupoConfigurado(),
         requireLogin: await requiereLogin(groupId),
         grupo,
         // Solo si el sitio puede enviar correo. No se expone ninguna credencial.

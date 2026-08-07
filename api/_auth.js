@@ -136,9 +136,12 @@ export const EMAIL_COORDINACION = '*coordinación*';
 // Sale de una variable de entorno, no del código: duplicar la herramienta para
 // otro grupo es crear otro proyecto con otro GRUPO_ID, sin tocar una línea. La
 // base puede ser la misma: todas las tablas están particionadas por group_id.
-// Un solo lugar para el valor por defecto, así ninguna función lee otro grupo
-// que el resto si el pedido viene sin el parámetro.
-export const grupoPorDefecto = () => process.env.GRUPO_ID || 'default';
+//
+// Si la variable NO está cargada no se inventa un grupo por defecto. Caer en uno
+// cualquiera es peor que fallar: el sitio se ve vacío, como si se hubieran
+// borrado los datos, cuando en realidad está leyendo el grupo equivocado. Pasó.
+export const hayGrupoConfigurado = () => !!String(process.env.GRUPO_ID || '').trim();
+export const grupoPorDefecto = () => String(process.env.GRUPO_ID || '').trim() || 'default';
 
 export const esAdmin = password =>
   !!process.env.EDIT_PASSWORD && password === process.env.EDIT_PASSWORD;
