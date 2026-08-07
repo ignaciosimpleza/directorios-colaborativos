@@ -21,7 +21,7 @@
 import {
   db, ensureAuthSchema, ahora, normEmail, hashPassword, passwordOk, nuevoToken,
   tokenDeRequest, sesionDe, esAdmin, invalidarCacheAcceso, requiereLogin,
-  EMAIL_COORDINACION,
+  EMAIL_COORDINACION, grupoPorDefecto,
 } from './_auth.js';
 import { leerBase } from './base.js';
 import { enviarMail, correoConfigurado, urlDelSitio } from './_mail.js';
@@ -118,7 +118,7 @@ export default async function handler(req, res) {
 
     // Estado del portero (lo consulta el sitio al arrancar)
     if (req.method === 'GET') {
-      const groupId = req.query.group_id || 'grupo4';
+      const groupId = req.query.group_id || grupoPorDefecto();
       const s = await sesionDe(req);
       // El nombre del grupo se muestra en la pantalla de acceso (antes de que
       // el sitio pueda leer la planilla de Drive), así que sale de la base.
@@ -128,6 +128,7 @@ export default async function handler(req, res) {
         grupo = (c.rows[0] && c.rows[0].group_name) || '';
       } catch {}
       return res.status(200).json({
+        groupId,
         requireLogin: await requiereLogin(groupId),
         grupo,
         // Solo si el sitio puede enviar correo. No se expone ninguna credencial.
@@ -142,7 +143,7 @@ export default async function handler(req, res) {
     }
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const groupId = body.group_id || 'grupo4';
+    const groupId = body.group_id || grupoPorDefecto();
     const action = body.action;
 
     switch (action) {

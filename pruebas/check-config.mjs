@@ -60,6 +60,15 @@ ok('el equipo tiene dónde cargar el email al que llegan los avisos',
 ok('no nombra a ningún grupo en particular: sirve para cualquiera',
   !/El Faro|MACSA|Cecilia/.test(ins.texto));
 ok('dice la cuenta de servicio con la que hay que compartir', /gserviceaccount\.com/.test(ins.texto));
+ok('explica cómo montar el sitio para otro grupo, sin tocar código',
+  /Montar el sitio para otro grupo/.test(ins.texto) && /GRUPO_ID/.test(ins.texto));
+ok('y aclara que la base y la cuenta de servicio se comparten',
+  /puede ser la misma base/i.test(ins.texto) && /Nada de lo que se cargue en un grupo aparece en otro/i.test(ins.texto));
+
+// El identificador del grupo no está escrito en el código: lo dice la API
+ok('el navegador no trae el grupo escrito: se lo informa la API',
+  await p.evaluate(() => GROUP_ID === 'grupo4') &&
+  !/const GROUP_ID = '/.test(await (await fetch('http://localhost:8099/index.html')).text()));
 await p.evaluate(() => configPestana('contenido'));
 await p.waitForTimeout(500);
 

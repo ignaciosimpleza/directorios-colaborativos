@@ -8,7 +8,7 @@
 // El token de Turso vive solo en el servidor, nunca llega al navegador.
 
 import { createClient } from '@libsql/client/web';
-import { bloqueaPorLogin } from './_auth.js';
+import { bloqueaPorLogin, grupoPorDefecto } from './_auth.js';
 
 const client = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -113,7 +113,7 @@ export default async function handler(req, res) {
 
     // ---------- LECTURA ----------
     if (req.method === 'GET') {
-      const groupId = req.query.group_id || 'default';
+      const groupId = req.query.group_id || grupoPorDefecto();
       // Si el grupo exige login, el calendario tampoco se sirve sin sesión
       if (await bloqueaPorLogin(req, res, groupId)) return;
       const [cfg, cos, mtg, cnt] = await Promise.all([

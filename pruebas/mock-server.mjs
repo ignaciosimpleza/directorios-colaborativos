@@ -222,7 +222,7 @@ http.createServer((req, res) => {
     if (req.method === 'GET') {
       const email = AUTH.sessions[tokenDe(req)];
       const us = AUTH.users.find(x => x.email === email);
-      return json(res, { requireLogin: AUTH.requireLogin, correo: AUTH.correo, usuario: us ? { email: us.email, nombre: us.nombre, empresa: us.empresa } : null });
+      return json(res, { groupId: 'grupo4', requireLogin: AUTH.requireLogin, correo: AUTH.correo, usuario: us ? { email: us.email, nombre: us.nombre, empresa: us.empresa } : null });
     }
     let b = ''; req.on('data', c => b += c);
     req.on('end', () => authHandler(req, res, b, tokenDe(req)));

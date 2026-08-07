@@ -132,6 +132,14 @@ export async function sesionDe(req) {
 // no puede ni llegar al panel para autorizarse: nadie entra nunca.
 export const EMAIL_COORDINACION = '*coordinación*';
 
+// ── Qué grupo sirve este despliegue ──
+// Sale de una variable de entorno, no del código: duplicar la herramienta para
+// otro grupo es crear otro proyecto con otro GRUPO_ID, sin tocar una línea. La
+// base puede ser la misma: todas las tablas están particionadas por group_id.
+// Un solo lugar para el valor por defecto, así ninguna función lee otro grupo
+// que el resto si el pedido viene sin el parámetro.
+export const grupoPorDefecto = () => process.env.GRUPO_ID || 'default';
+
 export const esAdmin = password =>
   !!process.env.EDIT_PASSWORD && password === process.env.EDIT_PASSWORD;
 
@@ -147,7 +155,7 @@ export async function requiereLogin(groupId) {
   try {
     const r = await db.execute({
       sql: `SELECT data FROM content WHERE group_id = ? AND key = 'auth_config'`,
-      args: [groupId || 'grupo4'],
+      args: [groupId || grupoPorDefecto()],
     });
     let val = false;
     if (r.rows[0]) { try { val = !!JSON.parse(r.rows[0].data).requireLogin; } catch {} }
