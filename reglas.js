@@ -172,3 +172,32 @@ export function tipoDeRelleno(rondasPrevias, tecnicasPrevias, proporcionRonda, p
   return (rondasPrevias / (pr / (pr + pt))) <= (tecnicasPrevias / (pt / (pr + pt)))
     ? 'Ronda de novedades' : 'Técnica';
 }
+
+// ── Cuánto pasó desde la vez anterior ──
+// «Sin reunión» y «Feriado» son huecos en la agenda, y «Flexible» es una fecha
+// todavía sin dueño: ninguno se repite como evento, así que no se miden.
+export const NO_SE_MIDEN = ['Sin reunión', 'Feriado', 'Flexible'];
+
+export function diasEntre(desdeISO, hastaISO) {
+  const enDias = f => Date.UTC(+f.slice(0, 4), +f.slice(5, 7) - 1, +f.slice(8, 10)) / 86400000;
+  return Math.round(enDias(hastaISO) - enDias(desdeISO));
+}
+
+// Para cada reunión, cuántos días pasaron desde la anterior de la MISMA empresa
+// o del mismo evento. Se mide sobre la agenda entera, nunca sobre lo que quedó
+// filtrado en pantalla: si no, el número cambiaría según el filtro elegido.
+// La primera vez de cada empresa no tiene intervalo, y eso no es un cero.
+// Devuelve un mapa por fecha, porque la agenda tiene una reunión por fecha.
+export function intervalos(reuniones) {
+  const ultima = {};
+  const out = {};
+  [...reuniones]
+    .filter(m => m && m.date && m.assignment && !NO_SE_MIDEN.includes(m.assignment))
+    .sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0)
+    .forEach(m => {
+      const previa = ultima[m.assignment];
+      if (previa) out[m.date] = { desde: previa, dias: diasEntre(previa, m.date) };
+      ultima[m.assignment] = m.date;
+    });
+  return out;
+}

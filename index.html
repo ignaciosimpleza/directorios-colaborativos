@@ -112,6 +112,9 @@ body.editing .edit-toggle { background:var(--verde-menta); color:#1E2A2E; }
 .cal-assign { flex:0 0 210px; font-size:13.5px; font-weight:700; color:var(--navy,#1E2A2E); }
 .cal-topic { flex:1; font-size:12.5px; color:var(--gris-medio); min-width:120px; }
 .cal-next-chip { background:#e8f8f2; color:#1a7a55; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; }
+.cal-gap { flex:0 0 auto; text-align:right; font-size:12px; font-weight:700; color:var(--gris-oscuro,#616A6B); line-height:1.25; white-space:nowrap; }
+.cal-gap em { display:block; font-size:9px; font-weight:600; font-style:normal; letter-spacing:.08em; text-transform:uppercase; color:var(--gris-medio); }
+.cal-gap.primera { font-weight:600; color:var(--gris-medio); }
 .cal-row .cal-input, .cal-row select, .cal-row input[type=text] { padding:6px 8px; font-size:13px; }
 .cal-assign-sel { flex:0 0 210px; }
 .cal-topic-inp { flex:1; min-width:120px; }
@@ -2204,16 +2207,30 @@ function renderCalendarLista() {
   const groups = {};
   filtered.forEach(m => { const k = m.date.slice(0,7); (groups[k] = groups[k] || []).push(m); });
 
+  // El intervalo se calcula sobre la agenda entera, antes de filtrar
+  const brechas = window.Reglas ? Reglas.intervalos(MEETINGS) : {};
+
   list.innerHTML = Object.keys(groups).sort().map(k => {
     const [y, mo] = k.split('-');
     const title = `${CAL_MONTHS[parseInt(mo)-1]} ${y}`;
     return `<div class="cal-month"><div class="cal-month-title">${title}</div>${
-      groups[k].map(m => calRowHtml(m, nextDate, todayStr)).join('')
+      groups[k].map(m => calRowHtml(m, nextDate, todayStr, brechas[m.date])).join('')
     }</div>`;
   }).join('');
 }
 
-function calRowHtml(m, nextDate, todayStr) {
+// Cuánto pasó desde la vez anterior de esa empresa o de ese evento. Es lo que
+// dice si la rotación se está cumpliendo: una fecha sola no lo dice.
+// Cuando es la primera vez en la agenda se aclara, en vez de dejar el hueco:
+// un espacio en blanco se lee como un dato que falta.
+function brechaHtml(b, assignment) {
+  if (!window.Reglas || !assignment || Reglas.NO_SE_MIDEN.includes(assignment)) return '';
+  if (!b) return '<span class="cal-gap primera"><em>intervalo</em>primera</span>';
+  return `<span class="cal-gap" title="La vez anterior fue el ${esc(fechaCorta(b.desde))}">
+    <em>intervalo</em>${b.dias === 1 ? '1 día' : b.dias + ' días'}</span>`;
+}
+
+function calRowHtml(m, nextDate, todayStr, brecha) {
   const d = new Date(m.date + 'T12:00:00');
   const dow = CAL_DOWS[d.getDay()];
   const color = calColorFor(m.assignment);
@@ -2244,6 +2261,7 @@ function calRowHtml(m, nextDate, todayStr) {
       <span class="cal-dot" style="background:${color}"></span>
       <select class="cal-input cal-assign-sel" onchange="calUpdateField('${m.date}','assignment',this.value)">${opts}</select>
       <input type="text" class="cal-input cal-topic-inp" value="${esc(m.topic)}" placeholder="Tema (opcional)" onchange="calUpdateField('${m.date}','topic',this.value)">
+      ${brechaHtml(brecha, m.assignment)}
       ${aviso}
       <div class="cal-row-actions">
         <button class="cal-pin ${m.fixed?'on':''}" title="Fijar (no se re-genera)" onclick="calTogglePin('${m.date}')">📌</button>
@@ -2256,6 +2274,7 @@ function calRowHtml(m, nextDate, todayStr) {
     <span class="cal-dot" style="background:${color}"></span>
     <span class="cal-assign">${esc(m.assignment)}</span>
     <span class="cal-topic">${esc(m.topic)}</span>
+    ${brechaHtml(brecha, m.assignment)}
     ${aviso}
     ${isNext?'<span class="cal-next-chip">próxima</span>':''}
   </div>`;
