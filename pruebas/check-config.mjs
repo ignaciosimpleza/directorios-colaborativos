@@ -171,6 +171,42 @@ ok('si se asigna una empresa a una fecha en la que no puede, la fila lo advierte
 ok('respeta las semanas sin reunión importadas',
   agenda.filter(a => a >= '2027-01-04' && a <= '2027-01-25').every(a => /Sin reunión/.test(a)));
 
+// ── Cada fila dice cuánto pasó desde la vez anterior ──
+const brechas = await p.evaluate(() => {
+  MEETINGS.length = 0;
+  MEETINGS.push(
+    { date: '2026-03-04', assignment: 'El Motivo S.A.', topic: '', obs: '', fixed: false },
+    { date: '2026-03-11', assignment: 'Técnica', topic: '', obs: '', fixed: false },
+    { date: '2026-03-18', assignment: 'Sin reunión', topic: '', obs: '', fixed: false },
+    { date: '2026-03-25', assignment: 'Sin reunión', topic: '', obs: '', fixed: false },
+    { date: '2026-04-29', assignment: 'El Motivo S.A.', topic: '', obs: '', fixed: false },
+    { date: '2026-04-30', assignment: 'Técnica', topic: '', obs: '', fixed: false },
+  );
+  const sel = document.getElementById('cal-year');
+  if (sel) sel.value = 'all';
+  renderCalendarLista();
+  return [...document.querySelectorAll('.cal-row')].map(r => {
+    const s = r.querySelector('.cal-assign-sel');
+    const g = r.querySelector('.cal-gap');
+    return {
+      quien: s ? s.value : (r.querySelector('.cal-assign') || {}).textContent,
+      gap: g ? g.textContent.replace(/\s+/g, ' ').trim() : null,
+      title: g ? g.getAttribute('title') : null,
+    };
+  });
+});
+console.log('intervalos:', JSON.stringify(brechas));
+ok('la fila dice cuántos días pasaron desde la vez anterior de esa empresa',
+  (brechas.find(b => b.quien === 'El Motivo S.A.' && /56/.test(b.gap || '')) || {}).gap === 'intervalo56 días');
+ok('y la vez anterior queda a la vista al pasar el mouse',
+  /4 mar 2026/.test((brechas.find(b => /56/.test(b.gap || '')) || {}).title || ''));
+ok('los eventos también se miden entre sí',
+  brechas.some(b => b.quien === 'Técnica' && /50 días/.test(b.gap || '')));
+ok('la primera vez de cada empresa lo dice, en vez de dejar el hueco en blanco',
+  brechas.filter(b => /primera/.test(b.gap || '')).length === 2);
+ok('«Sin reunión» no se mide: es un hueco de la agenda, no un evento',
+  brechas.filter(b => b.quien === 'Sin reunión').every(b => b.gap === null));
+
 await p.evaluate(() => navigate('config'));
 await p.waitForTimeout(900);
 await p.screenshot({ path: SHOT + '/31-config.png', fullPage: true });

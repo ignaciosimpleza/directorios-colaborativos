@@ -98,6 +98,7 @@ completar.
 | Cuándo no puede presentar cada empresa | Calendario → Disponibilidad de las empresas |
 | Qué empresas rotan | Configuración → El grupo → Empresas («Activa») |
 | Las reuniones ya agendadas | Se editan en el Calendario del sitio y se guardan en Turso |
+| Calendario · Intervalo de cada fila | Se calcula: días desde la vez anterior de esa misma empresa o evento, sobre la agenda entera. No se carga en ningún lado |
 
 Para agregar un documento, se sube a la carpeta de Drive que corresponda: el
 sitio lo toma solo. Para cambiar un texto o una regla, se entra a Configuración.

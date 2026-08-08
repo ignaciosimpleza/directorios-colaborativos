@@ -41,8 +41,10 @@ arranca pidiéndole al mock un `_reset`. Si se corren en paralelo, se pisan.
   configurar todo el grupo desde el sitio:
   importar una planilla, editar textos, agregar y desactivar empresas, validar
   «cuándo no puede presentar», que la agenda salga con esas reglas, que las
-  fechas libres se completen respetando la proporción de ronda y técnica, y que
-  al pegar el enlace de un documento de bitácora el sitio lo lea.
+  fechas libres se completen respetando la proporción de ronda y técnica, que
+  cada fila diga cuántos días pasaron desde la vez anterior de esa empresa o de
+  ese evento, y que al pegar el enlace de un documento de bitácora el sitio lo
+  lea.
 - **check-dashboard.mjs** — lo que el grupo pidió ver: el número de reuniones de
   cada empresa sacado de su bitácora, el gráfico, el filtro por año, la actividad
   reciente (fecha, empresa, número de reunión y la frase citada de la bitácora),
@@ -53,7 +55,7 @@ Aparte, sin navegador:
 
 ```bash
 node --test pruebas/bitacora.test.mjs    # el parser, contra encabezados reales
-node --test pruebas/calendario.test.mjs  # las reglas de la agenda
+node --test pruebas/calendario.test.mjs  # las reglas de la agenda y los intervalos entre reuniones
 node --test pruebas/plantilla.test.mjs   # la plantilla que se entrega, leída por el parser del sitio
 node --test pruebas/correo.test.mjs      # que sin configurar no rompa, y que el envío se arme bien
 ```

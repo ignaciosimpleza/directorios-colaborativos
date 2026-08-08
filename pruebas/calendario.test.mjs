@@ -122,3 +122,89 @@ test('si una proporción es 0, solo se programa el otro tipo', async () => {
   assert.equal(tipoDeRelleno(0, 0, 1, 0), 'Ronda de novedades');
   assert.equal(tipoDeRelleno(0, 0, 0, 0), '', 'sin proporciones no se rellena');
 });
+
+// ── Cuánto pasó desde la vez anterior ──
+
+test('cuenta los días entre dos fechas, sin que el horario de verano corra un día', async () => {
+  const { diasEntre } = await import('../reglas.js');
+  assert.equal(diasEntre('2026-03-02', '2026-03-09'), 7);
+  assert.equal(diasEntre('2026-03-02', '2026-04-27'), 56);
+  assert.equal(diasEntre('2026-03-02', '2026-03-02'), 0);
+  assert.equal(diasEntre('2025-12-29', '2026-01-05'), 7, 'cruzando el año');
+  assert.equal(diasEntre('2024-02-01', '2024-03-01'), 29, 'febrero bisiesto');
+});
+
+test('el intervalo se mide contra la vez anterior de la misma empresa', async () => {
+  const { intervalos } = await import('../reglas.js');
+  const r = intervalos([
+    { date: '2026-03-02', assignment: 'Alfa' },
+    { date: '2026-03-09', assignment: 'Beta' },
+    { date: '2026-04-27', assignment: 'Alfa' },
+    { date: '2026-05-04', assignment: 'Beta' },
+  ]);
+  assert.equal(r['2026-04-27'].dias, 56);
+  assert.equal(r['2026-04-27'].desde, '2026-03-02');
+  assert.equal(r['2026-05-04'].dias, 56);
+  assert.equal(r['2026-05-04'].desde, '2026-03-09');
+});
+
+test('la primera vez de cada empresa no tiene intervalo, y eso no es un cero', async () => {
+  const { intervalos } = await import('../reglas.js');
+  const r = intervalos([
+    { date: '2026-03-02', assignment: 'Alfa' },
+    { date: '2026-04-27', assignment: 'Alfa' },
+  ]);
+  assert.equal(r['2026-03-02'], undefined);
+  assert.equal(r['2026-04-27'].dias, 56);
+});
+
+test('los eventos también se miden entre sí', async () => {
+  const { intervalos } = await import('../reglas.js');
+  const r = intervalos([
+    { date: '2026-03-02', assignment: 'Técnica' },
+    { date: '2026-03-09', assignment: 'Ronda de novedades' },
+    { date: '2026-03-30', assignment: 'Técnica' },
+  ]);
+  assert.equal(r['2026-03-30'].dias, 28);
+  assert.equal(r['2026-03-09'], undefined, 'la primera ronda no tiene anterior');
+});
+
+test('los huecos de la agenda no se miden', async () => {
+  const { intervalos, NO_SE_MIDEN } = await import('../reglas.js');
+  const r = intervalos([
+    { date: '2026-03-02', assignment: 'Sin reunión' },
+    { date: '2026-03-09', assignment: 'Sin reunión' },
+    { date: '2026-03-16', assignment: 'Feriado' },
+    { date: '2026-03-23', assignment: 'Feriado' },
+    { date: '2026-03-30', assignment: 'Flexible' },
+    { date: '2026-04-06', assignment: 'Flexible' },
+  ]);
+  assert.deepEqual(r, {}, 'ninguno de estos se repite como evento');
+  assert.deepEqual(NO_SE_MIDEN, ['Sin reunión', 'Feriado', 'Flexible']);
+});
+
+test('el intervalo no depende del orden en que venga la agenda', async () => {
+  const { intervalos } = await import('../reglas.js');
+  const desordenada = [
+    { date: '2026-04-27', assignment: 'Alfa' },
+    { date: '2026-03-02', assignment: 'Alfa' },
+    { date: '2026-06-22', assignment: 'Alfa' },
+  ];
+  const r = intervalos(desordenada);
+  assert.equal(r['2026-04-27'].dias, 56);
+  assert.equal(r['2026-06-22'].dias, 56);
+  assert.equal(desordenada[0].date, '2026-04-27', 'no toca el arreglo que recibe');
+});
+
+test('una reunión sin empresa asignada no rompe ni arrastra el intervalo', async () => {
+  const { intervalos } = await import('../reglas.js');
+  const r = intervalos([
+    { date: '2026-03-02', assignment: 'Alfa' },
+    { date: '2026-03-09', assignment: '' },
+    { date: '2026-03-16' },
+    null,
+    { date: '2026-04-27', assignment: 'Alfa' },
+  ]);
+  assert.equal(Object.keys(r).length, 1);
+  assert.equal(r['2026-04-27'].dias, 56);
+});
