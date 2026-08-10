@@ -61,6 +61,8 @@ aparece en otro, aunque compartan la base y la cuenta de servicio.
 | `api/bitacora.js` | Lee la bitácora de cada empresa y saca de ahí sus reuniones |
 | `api/drive.js` | Lee carpetas de Drive (archivos, árboles, actividad, bitácora) |
 | `api/db.js` | Turso (libSQL): calendario y configuración |
+| `api/importar-calendario.js` | Trae el calendario de un sitio anterior del grupo |
+| `api/_importar.js` | La traducción de ese calendario (nombres y reglas), sin red ni base |
 | `api/auth.js` | Registro, ingreso, autorización de cuentas y log de accesos |
 | `api/_auth.js` | Sesiones y portero compartido por las funciones de lectura |
 | `api/_mail.js` | Envío de correo por Resend. Si no está configurado, el sitio funciona igual |
@@ -266,6 +268,32 @@ Las reglas se cargan en *Configuración → Agenda* y se ven en el Calendario. L
 mismas reglas las aplican el navegador y las funciones del servidor porque
 las dos importan **el mismo archivo**, `reglas.js`: no hay dos versiones.
 
+### Traer el calendario de un sitio anterior
+
+Si el grupo ya venía llevando sus reuniones en otro sitio, no hace falta
+cargarlas de nuevo: en *Calendario → Cómo se arma la agenda* (en modo edición)
+está el botón **«Traer el calendario anterior»**. Copia las fechas —con su
+empresa, su tema, sus observaciones y las que estaban fijadas 📌— y las reglas
+de la agenda.
+
+Lo hace `POST /api/importar-calendario`, del lado del servidor, porque el otro
+sitio está en otro dominio y el navegador no puede leerlo. Cuál es ese sitio no
+está escrito en el código: sale de la variable `CALENDARIO_ANTERIOR_URL` del
+proyecto en Vercel. Si falta, el botón lo dice con todas las letras.
+
+Dos detalles al traducir, que están probados en `pruebas/importar.test.mjs`:
+
+- **Los nombres de las empresas** casi nunca coinciden letra por letra
+  («Sacfil» / «SACFIL», «Berardo» / «Berardo Agropecuaria»), así que se comparan
+  sin mirar mayúsculas, tildes ni palabras como *S.A.* o *Agropecuaria*. Si un
+  nombre no corresponde a ninguna empresa del grupo, la fecha se copia igual con
+  ese texto y el sitio **lo avisa** en vez de asignársela a cualquiera.
+- **Las reglas** vienen en días y acá se miden en semanas: 42 días entre dos
+  presentaciones de la misma empresa son 6 semanas.
+
+Es una copia por fecha: pisa la reunión de ese día si ya existe acá y no borra
+nada más. Se puede repetir sin romper nada.
+
 ### Qué se muestra
 
 Un bloque sin datos se oculta solo, pero eso es **opcional**: en
@@ -320,6 +348,7 @@ Las tablas se crean solas. `schema.sql` está como referencia.
 | `EDIT_PASSWORD` | clave de edición del sitio. **Sin esto nadie puede editar** |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | JSON de la cuenta de servicio de Google |
 | `BASE_FILE_ID` | *(opcional)* id de la planilla base, si no se carga desde Configuración |
+| `CALENDARIO_ANTERIOR_URL` | *(opcional)* dirección del calendario anterior del grupo, para el botón **Traer el calendario anterior** |
 
 La clave de edición **no está en el HTML**: el sitio la valida contra el
 servidor. Cambiar `EDIT_PASSWORD` en Vercel alcanza.
@@ -373,6 +402,8 @@ iframe, que se carga con la sesión de quien mira el sitio.
   - `?folderId=…` → busca el documento en la subcarpeta `Proceso`/`Bitácora`/`Minutas`
 - `GET /api/db?group_id=…` → `{ env, config, companies, meetings, content }`
 - `POST /api/db` → escrituras del calendario y la configuración (requiere la clave)
+- `POST /api/importar-calendario` → copia el calendario de un sitio anterior del
+  grupo (requiere la clave). Devuelve `{ reuniones, sinEmpresa, reglas }`
 - `GET /api/auth` → `{ requireLogin, grupo, usuario }`
 - `POST /api/auth` → `registro`, `login`, `logout`, `yo`, `pedirReset`,
   `resetear` y, con la clave de edición, `adminLogin`, `usuarios`, `estado`,

@@ -774,6 +774,10 @@ canvas { display:block; }
         <button class="btn-cal-primary" onclick="calGenerate()">↻ Generar reuniones</button>
         <button class="btn-cal-danger" onclick="calResetAll()">Borrar todo</button>
       </div>
+      <div class="cal-config-actions" style="margin-top:10px">
+        <button class="btn-cal-add" onclick="calImportarAnterior()">⇩ Traer el calendario anterior</button>
+        <span class="cfg-pie" style="margin:0">Copia las fechas y las reglas del sitio anterior del grupo. Se puede repetir.</span>
+      </div>
     </div>
 
     <!-- Barra de filtros / acciones -->
@@ -2476,6 +2480,36 @@ async function calResetAll() {
   calStatus('Guardando…');
   try { await apiWrite({ action: 'deleteAllMeetings' }); calStatus('Guardado ✓'); }
   catch (e) { calStatus('Error: ' + e.message); }
+}
+
+// El grupo tenía sus reuniones en un sitio anterior. Traerlas es una copia por
+// fecha: pisa la reunión de ese día si ya existe acá y deja el resto como está.
+// El trabajo lo hace /api/importar-calendario, porque el otro sitio está en otro
+// dominio y el navegador no puede leerlo.
+async function calImportarAnterior() {
+  if (!confirm('Se van a traer las fechas y las reglas de la agenda del sitio anterior del grupo.\n\n' +
+               'Las reuniones que ya estén cargadas en esas mismas fechas se reemplazan. ¿Confirmás?')) return;
+  calStatus('Trayendo…');
+  try {
+    const r = await fetch('/api/importar-calendario', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ group_id: GROUP_ID, password: ADMIN_PASSWORD }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
+    await loadContentFromDB();
+    CALCFG = Object.assign({}, CALCFG, (CONFIG && CONFIG.calendario) || {});
+    renderCalendarNative();
+    renderReglasCalendario();
+    calStatus(`Listo ✓ · ${j.reuniones} reunion${j.reuniones === 1 ? '' : 'es'}`);
+    if ((j.sinEmpresa || []).length) {
+      alert('Se copió todo, pero estos nombres del calendario anterior no coinciden con ninguna empresa del grupo:\n\n' +
+            j.sinEmpresa.join('\n') +
+            '\n\nLas fechas quedaron cargadas con ese texto. Si querés que se vinculen, agregá esas empresas en ' +
+            'Configuración → El grupo → Empresas (podés dejarlas inactivas).');
+    }
+  } catch (e) { calStatus('Error: ' + e.message); }
 }
 
 // ══════════════════════════════════════════════════════════════
