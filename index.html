@@ -1113,6 +1113,16 @@ function aplicarIdentidad() {
 function aplicarLogo() {
   const id = DRIVE_CONFIG.logoFileId;
   const src = id ? `${API_BASE_DRIVE}?op=imagen&fileId=${encodeURIComponent(id)}` : '';
+  // Si el logo no se puede leer, la imagen vuelve al ícono de siempre y no se
+  // nota que algo está mal. Se comprueba aparte para poder decirlo en
+  // Configuración, en vez de dejar a alguien probando IDs a ciegas.
+  if (id) {
+    probarImagen(id)
+      .then(info => marcarFuente('logoFileId', 'ok', info.replace('Conectado ✓ · ', '')))
+      .catch(e => marcarFuente('logoFileId', 'error', e.message));
+  } else {
+    marcarFuente('logoFileId', 'falta');
+  }
   for (const [cont, tam] of [['brand-logo-side', 38], ['brand-logo-top', 32]]) {
     const el = document.getElementById(cont);
     if (!el) continue;
@@ -3102,7 +3112,7 @@ const DRIVE_SOURCES = [
     desc:'Carpeta que contiene una subcarpeta por empresa. El sitio las vincula automáticamente comparando el nombre de la carpeta con el de la empresa. Si indicás la carpeta de una empresa en su ficha, esa tiene prioridad.',
     donde:'Procesos · Dashboard (reuniones y actividad) · documentos de cada ficha',
     estructura:'Una carpeta de Drive con una subcarpeta por empresa. Adentro de cada una: «Presentaciones» y «Proceso» (donde va la bitácora).' },
-  { key:'logoFileId', tipo:'archivo', label:'Logo del grupo',
+  { key:'logoFileId', tipo:'archivo', prueba:'imagen', label:'Logo del grupo',
     desc:'Imagen del logo alojada en Drive. Se muestra en el menú y en el encabezado. No requiere ser pública: el sitio la sirve con la cuenta de servicio.',
     donde:'Menú lateral y barra superior',
     estructura:'Un archivo de imagen (PNG o JPG) en Drive. Para cambiar el logo, se reemplaza el archivo en Drive.' },
@@ -3768,6 +3778,13 @@ async function testDriveSource(key) {
   if (!id) { if (st) { st.textContent = 'Indicá primero un ID.'; st.className = 'src-status err'; } return; }
   if (st) { st.textContent = 'Probando…'; st.className = 'src-status'; }
   try {
+    // El logo es una imagen: probarlo contra el lector de planillas daba «no
+    // conecta» siempre, aun con el archivo bien compartido.
+    if (src.prueba === 'imagen') {
+      const info = await probarImagen(id);
+      if (st) { st.textContent = info; st.className = 'src-status ok'; }
+      return;
+    }
     const url = src.tipo === 'carpeta'
       ? `${API_BASE_DRIVE}?op=list&folderId=${encodeURIComponent(id)}`
       : `${API_BASE_SHEET}?fileId=${encodeURIComponent(id)}`;
@@ -3782,6 +3799,21 @@ async function testDriveSource(key) {
   } catch (e) {
     if (st) { st.textContent = 'No conecta: ' + e.message + ' (¿compartiste la carpeta/archivo con la cuenta de servicio?)'; st.className = 'src-status err'; }
   }
+}
+
+// Pide la imagen tal cual la va a pedir el sitio. Si el servidor contesta una
+// imagen, está; si contesta un error, ese error ya viene explicado y se muestra
+// como está, sin envolverlo en «no conecta».
+async function probarImagen(id) {
+  const r = await fetch(`${API_BASE_DRIVE}?op=imagen&fileId=${encodeURIComponent(id)}`);
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({}));
+    throw new Error(j.error || `HTTP ${r.status}`);
+  }
+  const tipo = r.headers.get('content-type') || '';
+  if (!/^image\//.test(tipo)) throw new Error('Lo que devolvió Drive no es una imagen.');
+  const kb = Math.max(1, Math.round((await r.blob()).size / 1024));
+  return `Conectado ✓ · ${tipo.replace('image/', '').toUpperCase()}, ${kb} KB`;
 }
 
 // ══════════════════════════════════════════════════════════════

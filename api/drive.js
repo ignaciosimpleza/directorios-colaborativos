@@ -79,6 +79,43 @@ function tipoArchivo(f) {
   return '';
 }
 
+// Por qué no se pudo servir un archivo como imagen, en castellano y con el dato
+// que hace falta para arreglarlo. Se llama solo cuando ya falló: en el camino
+// bueno no cuesta un pedido de más.
+async function porQueNoEsImagen(fileId, token, statusDescarga) {
+  const cuenta = loadCreds().client_email || 'la cuenta de servicio';
+  let f = null;
+  try {
+    const r = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=name,mimeType&supportsAllDrives=true`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (r.ok) f = await r.json();
+    else if (r.status === 404) return {
+      status: 404,
+      error: `En Drive no aparece ningún archivo con ese ID. Puede ser que el ID esté mal, o que el archivo no esté compartido con ${cuenta}. Compartilo (alcanza con «Lector») y probá de nuevo.`,
+    };
+    else if (r.status === 403) return {
+      status: 403,
+      error: `${cuenta} no tiene permiso para ver ese archivo. Compartíselo desde Drive, aunque sea como «Lector».`,
+    };
+  } catch { /* si ni siquiera se puede preguntar, se responde con lo que hay */ }
+
+  const nombre = f?.name ? `«${f.name}»` : 'Ese archivo';
+  const mime = f?.mimeType || '';
+
+  if (mime === FOLDER_MIME) {
+    return { status: 415, error: `${nombre} es una carpeta, no una imagen. Indicá el archivo del logo, no la carpeta que lo contiene.` };
+  }
+  if (mime.startsWith('application/vnd.google-apps.')) {
+    return { status: 415, error: `${nombre} es un documento de Google (${tipoArchivo(f) || mime.split('.').pop()}), y esos no se pueden usar como logo. Subí el logo a Drive como PNG o JPG e indicá ese archivo.` };
+  }
+  if (mime) {
+    return { status: 415, error: `${nombre} no es una imagen (es ${tipoArchivo(f) || mime}). El logo tiene que ser un PNG o un JPG.` };
+  }
+  return { status: statusDescarga || 502, error: `No se pudo leer la imagen desde Drive (${statusDescarga}). Revisá que el archivo exista y esté compartido con ${cuenta}.` };
+}
+
 function mapFile(f) {
   return {
     id: f.id,
@@ -281,12 +318,16 @@ export default async function handler(req, res) {
         `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folderId)}?alt=media&supportsAllDrives=true`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (!r.ok) return res.status(r.status).json({ error: `No se pudo leer la imagen (${r.status}).` });
-      const tipo = r.headers.get('content-type') || 'image/png';
-      if (!/^image\//.test(tipo)) return res.status(415).json({ error: 'Ese archivo de Drive no es una imagen.' });
-      res.setHeader('Content-Type', tipo);
-      res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
-      return res.send(Buffer.from(await r.arrayBuffer()));
+      const tipo = r.headers.get('content-type') || '';
+      if (r.ok && /^image\//.test(tipo)) {
+        res.setHeader('Content-Type', tipo);
+        res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
+        return res.send(Buffer.from(await r.arrayBuffer()));
+      }
+      // Recién cuando algo salió mal se pregunta qué es ese archivo, para poder
+      // decir qué pasa. «No se pudo leer la imagen (404)» no le sirve a nadie.
+      const { status, error } = await porQueNoEsImagen(folderId, token, r.status);
+      return res.status(status).json({ error });
     }
 
     // Descubrir el contenido de la carpeta del grupo y proponer qué es cada cosa
