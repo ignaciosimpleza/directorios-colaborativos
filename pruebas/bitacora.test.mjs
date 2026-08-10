@@ -3,7 +3,7 @@
 // otra forma, esta prueba es el lugar donde sumarla.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { desdeEncabezados, desdeLineas, esRenglonDeFecha, fechaDeTexto, reunionesDesdeHtml, reunionesDesdeDocxXml } from '../api/_bitacora.js';
+import { desdeEncabezados, desdeLineas, esRenglonDeFecha, fechaDeTexto, reunionesDesdeHtml, reunionesDesdeDocxXml, reunionesDesdeTextoPlano } from '../api/_bitacora.js';
 
 const MACSA = [
   'Grupo Estratégico: MACSA AGRO',                                   // título del doc: no es reunión
@@ -225,4 +225,57 @@ test('la frase larga se corta en un punto, no en la mitad de una palabra', () =>
   assert.ok(f.length <= 241, `no se pasa del largo máximo (dio ${f.length})`);
   assert.ok(/[.…]$/.test(f), 'termina en punto o en puntos suspensivos');
   assert.ok(largo.startsWith(f.replace(/…$/, '')), 'es una cita textual, sin agregarle nada');
+});
+
+// ── Texto plano ──
+// Google no exporta a HTML un documento cuyo resultado pasa los 10 MB, y las
+// bitácoras con videos embebidos lo pasan. Ahí se cae al texto plano, que no
+// trae encabezados: las fechas tienen que reconocerse igual. Los renglones de
+// abajo son los de «Proceso | Agropecuaria El Sueño», el documento que destapó
+// el problema: 31 MB de archivo para 99 KB de texto.
+const EL_SUENO = `Proceso | Agropecuaria El Sueño
+
+6 de junio de 2026 - Crecimiento, diversificación y el futuro de Ag. El Sueño 1
+
+13 de Octubre de 2022 LÍNEA ESTRATÉGICA Y OKRs 37
+
+# 6 de junio de 2026 - Crecimiento, diversificación y el futuro de Ag. El Sueño
+
+Video: [Grupo IV - Recording](https://drive.google.com/file/d/1w-CG/view)
+
+1. RESUMEN EJECUTIVO
+
+La reunión estuvo centrada en presentar la nueva etapa estratégica de la empresa luego de haber alcanzado gran parte de los objetivos planteados en su Visión 2027.
+
+# 13 de Octubre de 2022 LÍNEA ESTRATÉGICA Y OKRs
+
+Se repasaron los objetivos del trimestre y se acordó revisar el tablero de indicadores en la reunión siguiente, con foco en la unidad agrícola.
+`;
+
+test('sin encabezados, las fechas se reconocen igual', () => {
+  const { reuniones } = reunionesDesdeTextoPlano(EL_SUENO);
+  assert.deepEqual(reuniones.map(r => r.fecha), ['2026-06-06', '2022-10-13']);
+});
+
+test('el índice y el cuerpo no cuentan la misma reunión dos veces', () => {
+  const { reuniones } = reunionesDesdeTextoPlano(EL_SUENO);
+  assert.equal(reuniones.length, 2, 'cada fecha aparece dos veces en el documento');
+  assert.equal(reuniones.at(-1).numero, 1, 'la más vieja es la primera de la empresa');
+});
+
+test('el mes en mayúscula se entiende', () => {
+  const { reuniones } = reunionesDesdeTextoPlano('13 de Octubre de 2022 Repaso\n');
+  assert.equal(reuniones[0].fecha, '2022-10-13');
+});
+
+test('del texto plano también sale la frase de lo que se vio', () => {
+  const { reuniones } = reunionesDesdeTextoPlano(EL_SUENO);
+  const ultima = reuniones[0];
+  assert.ok(ultima.frase.length > 40, 'trae una frase');
+  assert.ok(EL_SUENO.includes(ultima.frase.replace(/…$/, '')), 'es una cita textual del documento');
+});
+
+test('los renglones vacíos y los espacios de más no generan reuniones fantasma', () => {
+  const { reuniones } = reunionesDesdeTextoPlano('\n\n   \n6 de junio de 2026\n\n   \n\n');
+  assert.equal(reuniones.length, 1);
 });

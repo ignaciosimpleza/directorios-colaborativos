@@ -328,6 +328,18 @@ export function desdeEncabezados(encabezados) {
   return desdeLineas(encabezados);
 }
 
+// ── Texto plano ──
+// El último recurso, para las bitácoras que Google no exporta a HTML por
+// tamaño. No hay encabezados: cada renglón vale por sí mismo, y las fechas se
+// reconocen igual porque cada reunión arranca en su propio renglón.
+export function reunionesDesdeTextoPlano(txt) {
+  const lineas = String(txt || '')
+    .split(/\r?\n/)
+    .map(t => ({ nivel: 0, texto: t.replace(/\s+/g, ' ').trim() }))
+    .filter(l => l.texto);
+  return desdeLineas(lineas);
+}
+
 // ── .docx ──
 // Igual que el HTML: se leen todos los párrafos en orden, marcando cuáles
 // llevan estilo de encabezado.

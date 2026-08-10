@@ -12,7 +12,7 @@
 
 import { GoogleAuth } from 'google-auth-library';
 import { inflateRawSync } from 'node:zlib';
-import { reunionesDesdeHtml, reunionesDesdeDocxXml } from './_bitacora.js';
+import { reunionesDesdeHtml, reunionesDesdeDocxXml, reunionesDesdeTextoPlano } from './_bitacora.js';
 import { bloqueaPorLogin } from './_auth.js';
 
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
@@ -48,10 +48,18 @@ async function driveGet(path, params) {
   const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
   if (!r.ok) {
     const body = await r.text();
-    throw Object.assign(new Error(`Drive API ${r.status}: ${body.slice(0, 200)}`), { status: 502 });
+    throw Object.assign(new Error(`Drive API ${r.status}: ${body.slice(0, 200)}`), {
+      status: 502, httpDrive: r.status, cuerpoDrive: body,
+    });
   }
   return r;
 }
+
+// Google se niega a exportar un documento cuyo resultado pasa los 10 MB. Pasa
+// con las bitácoras que tienen videos o presentaciones embebidas: el texto son
+// unos cientos de kilobytes, pero el HTML arrastra todo lo demás.
+const esDemasiadoGrande = e =>
+  e && e.httpDrive === 403 && /too large to be exported/i.test(String(e.cuerpoDrive || ''));
 
 const CAMPOS = 'files(id,name,mimeType,modifiedTime,webViewLink,shortcutDetails(targetId,targetMimeType))';
 
@@ -118,10 +126,19 @@ async function leerReuniones(archivo) {
   const mime = esAtajo ? archivo.shortcutDetails.targetMimeType : archivo.mimeType;
 
   if (mime === DOC_MIME) {
-    // Se exporta a HTML porque el texto plano pierde los encabezados, que son
-    // justamente lo que marca cada reunión.
-    const r = await driveGet(`files/${id}/export`, { mimeType: 'text/html' });
-    return reunionesDesdeHtml(await r.text());
+    // Se exporta a HTML porque conserva los encabezados, que ayudan a separar
+    // una reunión de la siguiente.
+    try {
+      const r = await driveGet(`files/${id}/export`, { mimeType: 'text/html' });
+      return reunionesDesdeHtml(await r.text());
+    } catch (e) {
+      if (!esDemasiadoGrande(e)) throw e;
+      // Sin el HTML se pierden los encabezados, pero las fechas se reconocen
+      // igual: cada reunión arranca en su propio renglón. Vale mucho más leer
+      // la bitácora sin esa ayuda que no leerla.
+      const r = await driveGet(`files/${id}/export`, { mimeType: 'text/plain' });
+      return reunionesDesdeTextoPlano(await r.text());
+    }
   }
   if (mime === DOCX_MIME) {
     const r = await driveGet(`files/${id}`, { alt: 'media' });
