@@ -2140,20 +2140,13 @@ function calSinReunion(fechaStr) {
 }
 
 // ¿La empresa puede presentar esa fecha? (columna no_disponible)
+// Quién puede presentar y cuándo lo decide reglas.js, el mismo archivo que usan
+// las funciones del servidor: si acá hubiera una segunda versión, tarde o
+// temprano una de las dos quedaría vieja.
 function calEmpresaDisponible(empresa, fechaStr) {
   const reglas = empresa.noDisponibleReglas || [];
-  if (!reglas.length) return true;
-  const [anio, mes] = [+fechaStr.slice(0, 4), +fechaStr.slice(5, 7)];
-  for (const r of reglas) {
-    if (r.tipo === 'rango') {
-      if (fechaStr >= r.desde && fechaStr <= r.hasta) return false;
-    } else if (r.tipo === 'meses') {
-      if (r.anio && r.anio !== anio) continue;
-      const dentro = r.desde <= r.hasta ? (mes >= r.desde && mes <= r.hasta) : (mes >= r.desde || mes <= r.hasta);
-      if (dentro) return false;
-    }
-  }
-  return true;
+  if (!reglas.length || !window.Reglas) return true;
+  return Reglas.disponibleEn(reglas, fechaStr);
 }
 
 function calLocalStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -2728,7 +2721,7 @@ const ESQUEMA_CONFIG = [
   },
   {
     id: 'disponibilidad', titulo: 'Disponibilidad de las empresas', icono: '🏢',
-    desc: 'Períodos en los que cada empresa no puede presentar. Al generar la agenda, esas fechas se le asignan a otra empresa.',
+    desc: 'Cuándo no puede presentar cada empresa: épocas del año (enero, la cosecha) y también semanas del mes, para las que no pueden en las primeras o en las últimas. Al generar la agenda, esas fechas se le asignan a otra empresa.',
     tipo: 'disponibilidad', ruta: 'empresas',
   },
   {
@@ -3069,7 +3062,10 @@ function bloqueDisponibilidadHtml(b) {
     <div class="disp-encab"><span>Empresa</span><span>Períodos en los que no puede presentar</span></div>
     ${filas}
   </div>
-  <div class="cfg-ayuda" style="margin-top:10px">Separá los períodos con comas. Formatos admitidos: «enero», «diciembre a febrero», «julio 2026», «06/07/2026», «01/09/2026 a 20/09/2026».</div>`;
+  <div class="cfg-ayuda" style="margin-top:10px">Separá los períodos con comas.
+    <strong>Épocas del año:</strong> «enero», «diciembre a febrero», «julio 2026», «06/07/2026», «01/09/2026 a 20/09/2026».
+    <strong>Semanas del mes</strong> (se repiten todos los meses): «primera semana del mes», «primera y segunda semana»,
+    «primera a tercera semana», «primeras dos semanas», «última semana del mes».</div>`;
 }
 
 // Un bloque completo del esquema

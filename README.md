@@ -257,10 +257,20 @@ técnicas.
 - **`activa` = FALSE** → la empresa dejó de participar. Sale de la rotación y de
   los números del tablero, pero conserva su ficha, su carpeta y su historial.
 - **`no_disponible`** → la empresa participa, pero hay fechas en las que no puede
-  presentar. Se escribe en criollo, separando con comas: `enero`,
-  `diciembre a febrero`, `julio 2026`, `6/7/2026`, `1/9/2026 a 20/9/2026`. Lo que
-  no se entienda, el sitio lo lista en *Configuración → Revisión de la planilla*
-  en vez de ignorarlo en silencio.
+  presentar. Se escribe en criollo, separando con comas, y admite dos cosas
+  distintas:
+  - **Épocas del año**, que pasan y no vuelven o vuelven una vez al año:
+    `enero`, `diciembre a febrero`, `julio 2026`, `6/7/2026`,
+    `1/9/2026 a 20/9/2026`.
+  - **Semanas del mes**, que se repiten todos los meses: `primera semana del mes`,
+    `primera y segunda semana`, `primera a tercera semana`, `primeras dos semanas`,
+    `última semana del mes`. Como el grupo se reúne siempre el mismo día, la
+    enésima semana y la enésima reunión del mes son lo mismo. `última` se cuenta
+    desde el final, no como «la quinta»: el último miércoles de marzo de 2026 es
+    el 25, y los días 29 al 31 de ese mes no tienen ninguno.
+
+  Lo que no se entienda, el sitio lo lista en *Configuración → Revisión de la
+  planilla* en vez de ignorarlo en silencio.
 
 Las reglas se cargan en *Configuración → Agenda* y se ven en el Calendario. Las
 mismas reglas las aplican el navegador y las funciones del servidor porque

@@ -42,6 +42,55 @@ test('combina varias reglas en la misma celda', () => {
   assert.equal(disponibleEn(r, '2026-05-04'), true);
 });
 
+// Los miércoles de marzo de 2026 son 4, 11, 18 y 25; los de abril, 1, 8, 15,
+// 22 y 29. Marzo tiene 31 días y su última semana (29 al 31) no tiene ninguno:
+// por eso «la última» se cuenta desde el final del mes y no como «la quinta».
+test('«no puede la primera semana del mes» vale todos los meses', () => {
+  const r = noDisp('primera semana del mes');
+  assert.equal(disponibleEn(r, '2026-03-04'), false);
+  assert.equal(disponibleEn(r, '2026-04-01'), false);
+  assert.equal(disponibleEn(r, '2026-03-11'), true);
+  assert.equal(disponibleEn(r, '2026-04-29'), true);
+});
+
+test('acepta varias semanas, un rango y una cantidad', () => {
+  const dos = noDisp('primera y segunda semana');
+  assert.equal(disponibleEn(dos, '2026-03-04'), false);
+  assert.equal(disponibleEn(dos, '2026-03-11'), false);
+  assert.equal(disponibleEn(dos, '2026-03-18'), true);
+
+  const rango = noDisp('primera a tercera semana del mes');
+  assert.equal(disponibleEn(rango, '2026-03-18'), false);
+  assert.equal(disponibleEn(rango, '2026-03-25'), true);
+
+  const cantidad = noDisp('primeras dos semanas');
+  assert.equal(disponibleEn(cantidad, '2026-03-11'), false);
+  assert.equal(disponibleEn(cantidad, '2026-03-18'), true);
+});
+
+test('«la última semana» es la última reunión del mes, no la número cinco', () => {
+  const r = noDisp('última semana del mes');
+  assert.equal(disponibleEn(r, '2026-03-25'), false, 'último miércoles de marzo');
+  assert.equal(disponibleEn(r, '2026-03-18'), true);
+  assert.equal(disponibleEn(r, '2026-02-25'), false, 'febrero tiene una semana menos');
+  assert.equal(disponibleEn(r, '2026-04-29'), false, 'abril tiene cinco miércoles');
+  assert.equal(disponibleEn(r, '2026-04-22'), true);
+});
+
+test('la semana del mes convive con los meses y las fechas', () => {
+  const r = noDisp('enero, primera semana del mes, 18/3/2026');
+  assert.equal(disponibleEn(r, '2026-01-14'), false, 'enero entero');
+  assert.equal(disponibleEn(r, '2026-03-04'), false, 'primera semana');
+  assert.equal(disponibleEn(r, '2026-03-18'), false, 'esa fecha suelta');
+  assert.equal(disponibleEn(r, '2026-03-11'), true);
+});
+
+test('si la semana no se entiende, se avisa en vez de adivinar', () => {
+  const { reglas, noEntendido } = parseNoDisponible('la semana de la cosecha');
+  assert.equal(reglas.length, 0);
+  assert.deepEqual(noEntendido, ['la semana de la cosecha']);
+});
+
 test('avisa lo que no entiende en vez de ignorarlo en silencio', () => {
   const { reglas, noEntendido } = parseNoDisponible('enero, cuando termine la cosecha');
   assert.equal(reglas.length, 1);
