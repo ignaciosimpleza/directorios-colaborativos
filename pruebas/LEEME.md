@@ -58,7 +58,6 @@ node --test pruebas/bitacora.test.mjs    # el parser, contra encabezados reales
 node --test pruebas/calendario.test.mjs  # las reglas de la agenda y los intervalos entre reuniones
 node --test pruebas/plantilla.test.mjs   # la plantilla que se entrega, leída por el parser del sitio
 node --test pruebas/correo.test.mjs      # que sin configurar no rompa, y que el envío se arme bien
-node --test pruebas/importar.test.mjs    # traer el calendario de un sitio anterior: nombres de empresa y reglas
 ```
 
 `plantilla.test.mjs` es la que sostiene que la herramienta sea estandarizable:
