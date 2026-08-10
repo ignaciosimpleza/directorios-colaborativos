@@ -774,10 +774,6 @@ canvas { display:block; }
         <button class="btn-cal-primary" onclick="calGenerate()">↻ Generar reuniones</button>
         <button class="btn-cal-danger" onclick="calResetAll()">Borrar todo</button>
       </div>
-      <div class="cal-config-actions" style="margin-top:10px">
-        <button class="btn-cal-add" onclick="calImportarAnterior()">⇩ Traer el calendario anterior</button>
-        <span class="cfg-pie" style="margin:0">Copia las fechas y las reglas del sitio anterior del grupo. Se puede repetir.</span>
-      </div>
     </div>
 
     <!-- Barra de filtros / acciones -->
@@ -2144,20 +2140,13 @@ function calSinReunion(fechaStr) {
 }
 
 // ¿La empresa puede presentar esa fecha? (columna no_disponible)
+// Quién puede presentar y cuándo lo decide reglas.js, el mismo archivo que usan
+// las funciones del servidor: si acá hubiera una segunda versión, tarde o
+// temprano una de las dos quedaría vieja.
 function calEmpresaDisponible(empresa, fechaStr) {
   const reglas = empresa.noDisponibleReglas || [];
-  if (!reglas.length) return true;
-  const [anio, mes] = [+fechaStr.slice(0, 4), +fechaStr.slice(5, 7)];
-  for (const r of reglas) {
-    if (r.tipo === 'rango') {
-      if (fechaStr >= r.desde && fechaStr <= r.hasta) return false;
-    } else if (r.tipo === 'meses') {
-      if (r.anio && r.anio !== anio) continue;
-      const dentro = r.desde <= r.hasta ? (mes >= r.desde && mes <= r.hasta) : (mes >= r.desde || mes <= r.hasta);
-      if (dentro) return false;
-    }
-  }
-  return true;
+  if (!reglas.length || !window.Reglas) return true;
+  return Reglas.disponibleEn(reglas, fechaStr);
 }
 
 function calLocalStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -2482,36 +2471,6 @@ async function calResetAll() {
   catch (e) { calStatus('Error: ' + e.message); }
 }
 
-// El grupo tenía sus reuniones en un sitio anterior. Traerlas es una copia por
-// fecha: pisa la reunión de ese día si ya existe acá y deja el resto como está.
-// El trabajo lo hace /api/importar-calendario, porque el otro sitio está en otro
-// dominio y el navegador no puede leerlo.
-async function calImportarAnterior() {
-  if (!confirm('Se van a traer las fechas y las reglas de la agenda del sitio anterior del grupo.\n\n' +
-               'Las reuniones que ya estén cargadas en esas mismas fechas se reemplazan. ¿Confirmás?')) return;
-  calStatus('Trayendo…');
-  try {
-    const r = await fetch('/api/importar-calendario', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ group_id: GROUP_ID, password: ADMIN_PASSWORD }),
-    });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
-    await loadContentFromDB();
-    CALCFG = Object.assign({}, CALCFG, (CONFIG && CONFIG.calendario) || {});
-    renderCalendarNative();
-    renderReglasCalendario();
-    calStatus(`Listo ✓ · ${j.reuniones} reunion${j.reuniones === 1 ? '' : 'es'}`);
-    if ((j.sinEmpresa || []).length) {
-      alert('Se copió todo, pero estos nombres del calendario anterior no coinciden con ninguna empresa del grupo:\n\n' +
-            j.sinEmpresa.join('\n') +
-            '\n\nLas fechas quedaron cargadas con ese texto. Si querés que se vinculen, agregá esas empresas en ' +
-            'Configuración → El grupo → Empresas (podés dejarlas inactivas).');
-    }
-  } catch (e) { calStatus('Error: ' + e.message); }
-}
-
 // ══════════════════════════════════════════════════════════════
 // ORIGEN DE LOS DATOS (no hay formularios: todo sale de Drive)
 // ══════════════════════════════════════════════════════════════
@@ -2762,7 +2721,7 @@ const ESQUEMA_CONFIG = [
   },
   {
     id: 'disponibilidad', titulo: 'Disponibilidad de las empresas', icono: '🏢',
-    desc: 'Períodos en los que cada empresa no puede presentar. Al generar la agenda, esas fechas se le asignan a otra empresa.',
+    desc: 'Cuándo no puede presentar cada empresa: épocas del año (enero, la cosecha) y también semanas del mes, para las que no pueden en las primeras o en las últimas. Al generar la agenda, esas fechas se le asignan a otra empresa.',
     tipo: 'disponibilidad', ruta: 'empresas',
   },
   {
@@ -3103,7 +3062,10 @@ function bloqueDisponibilidadHtml(b) {
     <div class="disp-encab"><span>Empresa</span><span>Períodos en los que no puede presentar</span></div>
     ${filas}
   </div>
-  <div class="cfg-ayuda" style="margin-top:10px">Separá los períodos con comas. Formatos admitidos: «enero», «diciembre a febrero», «julio 2026», «06/07/2026», «01/09/2026 a 20/09/2026».</div>`;
+  <div class="cfg-ayuda" style="margin-top:10px">Separá los períodos con comas.
+    <strong>Épocas del año:</strong> «enero», «diciembre a febrero», «julio 2026», «06/07/2026», «01/09/2026 a 20/09/2026».
+    <strong>Semanas del mes</strong> (se repiten todos los meses): «primera semana del mes», «primera y segunda semana»,
+    «primera a tercera semana», «primeras dos semanas», «última semana del mes».</div>`;
 }
 
 // Un bloque completo del esquema

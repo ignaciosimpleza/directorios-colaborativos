@@ -2,7 +2,8 @@
 // de la agenda. Si cambia el criterio, acá se ve.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { empresaDestino, traducirReuniones, traducirReglas } from '../api/_importar.js';
+import { empresaDestino, traducirReuniones, traducirReglas, restriccionesDesdeMatriz } from '../api/_importar.js';
+import { parseNoDisponible, disponibleEn } from '../reglas.js';
 
 const EMPRESAS = [
   { nombre: 'Altuy' },
@@ -75,6 +76,37 @@ test('las reglas pasan de días a semanas', () => {
   assert.equal(r.cadenciaSemanas, 1, 'el grupo se reúne todas las semanas');
   assert.equal(r.proporcionRonda, 1);
   assert.equal(r.proporcionTecnica, 1);
+});
+
+// El sitio viejo guardaba las semanas del mes como cinco casilleros por empresa.
+// Lo que se escribe acá tiene que poder volver a leerse: si el texto no lo
+// entiende `parseNoDisponible`, la restricción se pierde en silencio.
+test('los casilleros de semanas se escriben como los lee el sitio', () => {
+  assert.equal(restriccionesDesdeMatriz([true, true, true, true, true]), '');
+  assert.equal(restriccionesDesdeMatriz([false, true, true, true, true]), 'primera semana del mes');
+  assert.equal(restriccionesDesdeMatriz([false, false, true, true, true]), 'primera y segunda semana del mes');
+  assert.equal(restriccionesDesdeMatriz([false, false, false, true, true]), 'primera a tercera semana del mes');
+  assert.equal(restriccionesDesdeMatriz([false, true, false, true, true]), 'primera y tercera semana del mes');
+  assert.equal(restriccionesDesdeMatriz(null), '', 'sin casilleros, sin restricción');
+});
+
+test('y lo escrito se vuelve a leer con las mismas reglas del sitio', () => {
+  // Simpleza, en el calendario anterior: no presenta la primera semana del mes.
+  const texto = restriccionesDesdeMatriz([false, true, true, true, true]);
+  const { reglas, noEntendido } = parseNoDisponible(texto);
+  assert.deepEqual(noEntendido, [], 'el sitio entiende el texto que escribimos');
+  assert.equal(disponibleEn(reglas, '2026-03-04'), false, 'primer miércoles de marzo');
+  assert.equal(disponibleEn(reglas, '2026-03-11'), true);
+
+  const dos = parseNoDisponible(restriccionesDesdeMatriz([false, false, true, true, true]));
+  assert.deepEqual(dos.noEntendido, []);
+  assert.equal(disponibleEn(dos.reglas, '2026-03-11'), false);
+  assert.equal(disponibleEn(dos.reglas, '2026-03-18'), true);
+
+  const tres = parseNoDisponible(restriccionesDesdeMatriz([false, false, false, true, true]));
+  assert.deepEqual(tres.noEntendido, []);
+  assert.equal(disponibleEn(tres.reglas, '2026-03-18'), false);
+  assert.equal(disponibleEn(tres.reglas, '2026-03-25'), true);
 });
 
 test('sin reglas cargadas usa valores razonables en vez de romper', () => {

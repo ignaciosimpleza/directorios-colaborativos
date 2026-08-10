@@ -69,6 +69,26 @@ export function traducirReuniones(reuniones, empresas) {
   return { reuniones: traducidas, sinEmpresa: [...sinEmpresa] };
 }
 
+// El sitio viejo guarda «en qué semana del mes puede presentar» como cinco
+// casilleros por empresa. Acá eso se escribe en criollo en «cuándo no puede
+// presentar», así que se traduce a esa frase. El texto vuelve a leerse con
+// Reglas.parseNoDisponible, por eso no lleva comas: la coma separa períodos.
+const ORDINALES = ['primera', 'segunda', 'tercera', 'cuarta', 'quinta'];
+
+export function restriccionesDesdeMatriz(matrix) {
+  if (!Array.isArray(matrix)) return '';
+  const bloqueadas = [];
+  matrix.slice(0, 5).forEach((puede, i) => { if (puede === false) bloqueadas.push(i + 1); });
+  if (!bloqueadas.length) return '';
+
+  const seguidas = bloqueadas.every((s, i) => i === 0 || s === bloqueadas[i - 1] + 1);
+  const nombres = bloqueadas.map(s => ORDINALES[s - 1]);
+  const cuales = seguidas && bloqueadas.length >= 3
+    ? `${nombres[0]} a ${nombres[nombres.length - 1]}`
+    : nombres.join(' y ');
+  return `${cuales} semana del mes`;
+}
+
 // Las reglas de la agenda. El sitio viejo mide el descanso entre dos
 // presentaciones de la misma empresa en días (42) y acá se mide en semanas (6);
 // el día de la semana y las proporciones de ronda y técnica son los mismos

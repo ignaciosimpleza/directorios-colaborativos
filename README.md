@@ -259,40 +259,55 @@ técnicas.
 - **`activa` = FALSE** → la empresa dejó de participar. Sale de la rotación y de
   los números del tablero, pero conserva su ficha, su carpeta y su historial.
 - **`no_disponible`** → la empresa participa, pero hay fechas en las que no puede
-  presentar. Se escribe en criollo, separando con comas: `enero`,
-  `diciembre a febrero`, `julio 2026`, `6/7/2026`, `1/9/2026 a 20/9/2026`. Lo que
-  no se entienda, el sitio lo lista en *Configuración → Revisión de la planilla*
-  en vez de ignorarlo en silencio.
+  presentar. Se escribe en criollo, separando con comas, y admite dos cosas
+  distintas:
+  - **Épocas del año**, que pasan y no vuelven o vuelven una vez al año:
+    `enero`, `diciembre a febrero`, `julio 2026`, `6/7/2026`,
+    `1/9/2026 a 20/9/2026`.
+  - **Semanas del mes**, que se repiten todos los meses: `primera semana del mes`,
+    `primera y segunda semana`, `primera a tercera semana`, `primeras dos semanas`,
+    `última semana del mes`. Como el grupo se reúne siempre el mismo día, la
+    enésima semana y la enésima reunión del mes son lo mismo. `última` se cuenta
+    desde el final, no como «la quinta»: el último miércoles de marzo de 2026 es
+    el 25, y los días 29 al 31 de ese mes no tienen ninguno.
+
+  Lo que no se entienda, el sitio lo lista en *Configuración → Revisión de la
+  planilla* en vez de ignorarlo en silencio.
 
 Las reglas se cargan en *Configuración → Agenda* y se ven en el Calendario. Las
 mismas reglas las aplican el navegador y las funciones del servidor porque
 las dos importan **el mismo archivo**, `reglas.js`: no hay dos versiones.
 
-### Traer el calendario de un sitio anterior
+### Mudanza: traer el calendario de un sitio anterior
 
-Si el grupo ya venía llevando sus reuniones en otro sitio, no hace falta
-cargarlas de nuevo: en *Calendario → Cómo se arma la agenda* (en modo edición)
-está el botón **«Traer el calendario anterior»**. Copia las fechas —con su
-empresa, su tema, sus observaciones y las que estaban fijadas 📌— y las reglas
-de la agenda.
+Si el grupo venía llevando sus reuniones en otro sitio, `GET /api/importar-calendario`
+las trae de una vez: las fechas —con su empresa, su tema, sus observaciones y las
+que estaban fijadas 📌—, las reglas de la agenda y las semanas del mes en las que
+cada empresa no puede presentar.
 
-Lo hace `POST /api/importar-calendario`, del lado del servidor, porque el otro
-sitio está en otro dominio y el navegador no puede leerlo. Cuál es ese sitio no
-está escrito en el código: sale de la variable `CALENDARIO_ANTERIOR_URL` del
-proyecto en Vercel. Si falta, el botón lo dice con todas las letras.
+Corre en el servidor porque el otro sitio está en otro dominio y el navegador no
+puede leerlo. De dónde se trae sale de `CALENDARIO_ANTERIOR_URL`, no del código.
 
-Dos detalles al traducir, que están probados en `pruebas/importar.test.mjs`:
+**No pide clave, y no hace falta: solo funciona con el calendario vacío.** Si el
+grupo ya tiene aunque sea una reunión cargada, no toca nada y lo dice. Así no hay
+forma de que pise trabajo hecho.
+
+Tres cosas hay que traducir, y están en `api/_importar.js` —sin red ni base, para
+poder probarlas sueltas (`pruebas/importar.test.mjs`):
 
 - **Los nombres de las empresas** casi nunca coinciden letra por letra
   («Sacfil» / «SACFIL», «Berardo» / «Berardo Agropecuaria»), así que se comparan
   sin mirar mayúsculas, tildes ni palabras como *S.A.* o *Agropecuaria*. Si un
   nombre no corresponde a ninguna empresa del grupo, la fecha se copia igual con
-  ese texto y el sitio **lo avisa** en vez de asignársela a cualquiera.
+  ese texto y la respuesta **lo avisa** en vez de asignársela a cualquiera.
 - **Las reglas** vienen en días y acá se miden en semanas: 42 días entre dos
   presentaciones de la misma empresa son 6 semanas.
+- **Las semanas del mes** vienen como cinco casilleros por empresa y acá se
+  escriben en criollo: `primera semana del mes`. Una prueba comprueba que ese
+  texto lo entienda el mismo parser del sitio, para que la restricción no se
+  pierda en el camino.
 
-Es una copia por fecha: pisa la reunión de ese día si ya existe acá y no borra
-nada más. Se puede repetir sin romper nada.
+Es un archivo de mudanza: una vez hecha, se borra.
 
 ### Qué se muestra
 
@@ -402,8 +417,8 @@ iframe, que se carga con la sesión de quien mira el sitio.
   - `?folderId=…` → busca el documento en la subcarpeta `Proceso`/`Bitácora`/`Minutas`
 - `GET /api/db?group_id=…` → `{ env, config, companies, meetings, content }`
 - `POST /api/db` → escrituras del calendario y la configuración (requiere la clave)
-- `POST /api/importar-calendario` → copia el calendario de un sitio anterior del
-  grupo (requiere la clave). Devuelve `{ reuniones, sinEmpresa, reglas }`
+- `GET /api/importar-calendario` → mudanza de una sola vez: copia el calendario
+  de un sitio anterior del grupo. Solo funciona con el calendario vacío
 - `GET /api/auth` → `{ requireLogin, grupo, usuario }`
 - `POST /api/auth` → `registro`, `login`, `logout`, `yo`, `pedirReset`,
   `resetear` y, con la clave de edición, `adminLogin`, `usuarios`, `estado`,
