@@ -146,6 +146,19 @@ Reglas del parser (`api/_bitacora.js`):
 directo) y devuelve `{ reuniones, sinFecha }`. Cada reunión trae `fecha`, `numero`
 (la enésima de esa empresa, contando desde la primera), `titulo` y `frase`.
 
+#### Bitácoras que Google se niega a exportar
+
+Google no exporta un documento cuyo resultado supera los **10 MB**, y responde
+`403 This file is too large to be exported`. Le pasa a las bitácoras con videos o
+presentaciones embebidas: `Proceso | Agropecuaria El Sueño` pesa 31 MB de archivo
+para 99 KB de texto, y el HTML se lleva todo lo demás por delante.
+
+Cuando eso pasa, el sitio vuelve a pedir el documento **en texto plano**, que no
+arrastra las imágenes. Se pierden los encabezados, pero no las reuniones: el
+parser trabaja por renglón, así que las fechas se reconocen igual. Lo único que
+se resigna es el listado de secciones sin fecha. Leer la bitácora sin esa ayuda
+vale mucho más que no leerla.
+
 #### La frase de lo que se vio
 
 Debajo de la fecha, el facilitador ya escribe el contenido. El sitio **cita** la
