@@ -185,19 +185,41 @@ Cada tarjeta tiene los cuatro datos que sirven para seguir a una empresa:
 | Última reunión | Su bitácora |
 | Próxima reunión | El Calendario |
 
-Las tarjetas se ordenan por quién hace más tiempo que no presenta. La empresa que
-ya tiene su próxima fecha lleva el verde de marca arriba y la fecha en verde
-oscuro: es el único lugar del bloque donde aparece el acento, y significa algo.
-La que no tiene fecha dice «Sin agendar» en vez de quedar en blanco.
+Las tarjetas arrancan ordenadas por quién hace más tiempo que no presenta, que es
+como se lee la rotación. El selector **Ordenar por** cambia ese criterio sin
+recargar nada: última reunión (la más reciente primero), próxima fecha (la más
+cercana primero), antigüedad en el grupo, más reuniones o nombre A–Z. La empresa
+a la que le falta ese dato —nunca presentó, no tiene fecha asignada— va siempre
+al final, porque ordenar por una fecha que no existe no dice nada; a igualdad de
+fecha, alfabético, para que el orden no baile entre repintados.
 
-La empresa sin bitácora conectada tiene su propia tarjeta, con borde punteado y
-el link directo a donde se indica el documento. El número de reuniones se toca y
-despliega las fechas que el sitio leyó, para poder auditarlas contra el documento.
-Al pie, cada tarjeta lleva a la **ficha** de la empresa, a su **bitácora** en
-Drive y al **Calendario**.
+La empresa que ya tiene su próxima fecha lleva el verde de marca arriba y la
+fecha en verde oscuro: es el único lugar del bloque donde aparece el acento, y
+significa algo. La que no tiene fecha dice «Sin agendar» en vez de quedar en
+blanco.
+
+El número de reuniones se toca y despliega las fechas que el sitio leyó, para
+poder auditarlas contra el documento. Al pie, cada tarjeta lleva a la **ficha**
+de la empresa, a su **bitácora** en Drive y al **Calendario**.
 
 El selector de período recorta los tres datos de la bitácora a un año; la próxima
 fecha siempre es la que viene.
+
+#### Lo que solo ve quien edita
+
+Un dato que falta y una nota de mantenimiento no son lo mismo. El grupo entra al
+tablero a mirar la rotación, no a enterarse de qué documento quedó sin conectar;
+así que **en modo edición** aparecen tres cosas que el resto no ve:
+
+- La nota al pie que explica de dónde salen las reuniones y qué se puede tocar.
+- La tarjeta punteada de la empresa **sin bitácora conectada**, con el link
+  directo a donde se indica el documento. Para el usuario común esa empresa
+  simplemente no tiene tarjeta todavía.
+- El plegado de **secciones sin fecha reconocida**, que hay que corregir en el
+  documento.
+
+Al entrar o salir de edición el bloque se repinta solo, así que el cambio se ve
+en el momento sin recargar la página.
 
 #### Actividad reciente
 

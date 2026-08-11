@@ -443,7 +443,8 @@ textarea.cfg-input { resize:vertical; line-height:1.5; }
   --linea: rgba(97,106,107,0.14);
   --linea-fuerte: #D9CCC1;
 }
-.rp-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+.rp-head { display:flex; align-items:center; gap:20px; flex-wrap:wrap; margin-bottom:18px; }
+.rp-campo { display:flex; align-items:center; gap:10px; }
 .rp-anio-lbl { font-size:10px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--gris-medio); }
 .rp-anio { font-size:12.5px; font-family:inherit; padding:6px 10px; border:1px solid var(--linea-fuerte); border-radius:8px; background:#fff; color:var(--navy); font-weight:600; }
 
@@ -1459,9 +1460,32 @@ function fechaDeArchivo(nombre, fechaISO) {
 }
 
 let REUNIONES_ANIO = 'todos';
+let REUNIONES_ORDEN = 'rotacion';
 let REUNIONES_DATA = null;   // { porEmpresa: [{empresa, reuniones, aviso}], tecnicas: [fechas] }
 
+// ── Cómo se ordenan las tarjetas ──
+// La empresa a la que le falta un dato (nunca presentó, no tiene fecha
+// asignada) va siempre al final: ordenar por una fecha que no existe no dice
+// nada. A igualdad de fecha, alfabético, para que el orden sea estable.
+const rpPorNombre = (a, b) => a.empresa.nombre.localeCompare(b.empresa.nombre, 'es');
+const rpPorFecha = (campo, dir) => (a, b) => {
+  if (!a[campo] && !b[campo]) return rpPorNombre(a, b);
+  if (!a[campo]) return 1;
+  if (!b[campo]) return -1;
+  if (a[campo] === b[campo]) return rpPorNombre(a, b);
+  return a[campo] < b[campo] ? -dir : dir;
+};
+const REUNIONES_ORDENES = {
+  rotacion: { label: 'Hace más que no presenta', fn: rpPorFecha('ultima', 1) },
+  reciente: { label: 'Última reunión (más reciente)', fn: rpPorFecha('ultima', -1) },
+  proxima:  { label: 'Próxima fecha (más cercana)', fn: rpPorFecha('proxima', 1) },
+  primera:  { label: 'Antigüedad en el grupo', fn: rpPorFecha('primera', 1) },
+  cantidad: { label: 'Más reuniones', fn: (a, b) => (b.n - a.n) || rpPorNombre(a, b) },
+  nombre:   { label: 'Nombre (A–Z)', fn: rpPorNombre },
+};
+
 function setReunionesAnio(v) { REUNIONES_ANIO = v; pintarReuniones(); }
+function setReunionesOrden(v) { REUNIONES_ORDEN = REUNIONES_ORDENES[v] ? v : 'rotacion'; pintarReuniones(); }
 
 async function renderReuniones() {
   const el = document.getElementById('reuniones-metricas');
@@ -1528,33 +1552,37 @@ function pintarReuniones() {
     return;
   }
   if (!conectadas.some(f => f.n)) {
-    el.innerHTML = `<div class="act-empty">Todavía no se leyó ninguna reunión.<br>
-      <small>En la bitácora, cada reunión tiene que arrancar en un renglón con su fecha; por ejemplo «13 de abril de 2026 – Avance de líneas estratégicas» o «Reunión 14/04/26».</small></div>` +
-      (pendientes.length ? avisosPendientesHtml(pendientes) : '');
+    el.innerHTML = dashEditing
+      ? `<div class="act-empty">Todavía no se leyó ninguna reunión.<br>
+          <small>En la bitácora, cada reunión tiene que arrancar en un renglón con su fecha; por ejemplo «13 de abril de 2026 – Avance de líneas estratégicas» o «Reunión 14/04/26».</small></div>` +
+        (pendientes.length ? avisosPendientesHtml(pendientes) : '')
+      : `<div class="act-empty">Todavía no hay reuniones registradas.</div>`;
     aplicarVisibilidad();
     return;
   }
 
-  // Primero la que hace más que no presenta: así se lee la rotación.
-  const orden = filas.slice().sort((a, b) => {
-    if (!a.ultima && !b.ultima) return a.empresa.nombre.localeCompare(b.empresa.nombre);
-    if (!a.ultima) return 1;
-    if (!b.ultima) return -1;
-    return a.ultima < b.ultima ? -1 : 1;
-  });
+  // La empresa sin bitácora conectada es algo que falta configurar, no algo que
+  // el grupo tenga que leer: su tarjeta vacía solo se muestra a quien edita.
+  const visibles = dashEditing ? filas : conectadas;
+  const orden = visibles.slice().sort((REUNIONES_ORDENES[REUNIONES_ORDEN] || REUNIONES_ORDENES.rotacion).fn);
 
   const opciones = ['todos'].concat(listaAnios)
     .map(a => `<option value="${esc(a)}"${a === REUNIONES_ANIO ? ' selected' : ''}>${a === 'todos' ? 'Todo el recorrido' : esc(a)}</option>`)
     .join('');
+  const opcionesOrden = Object.entries(REUNIONES_ORDENES)
+    .map(([k, o]) => `<option value="${k}"${k === REUNIONES_ORDEN ? ' selected' : ''}>${esc(o.label)}</option>`)
+    .join('');
 
   el.innerHTML = `
     <div class="rp-head">
-      <span class="rp-anio-lbl">Período</span>
-      <select class="rp-anio" onchange="setReunionesAnio(this.value)">${opciones}</select>
+      <label class="rp-campo"><span class="rp-anio-lbl">Período</span>
+        <select class="rp-anio" onchange="setReunionesAnio(this.value)">${opciones}</select></label>
+      <label class="rp-campo"><span class="rp-anio-lbl">Ordenar por</span>
+        <select class="rp-anio" onchange="setReunionesOrden(this.value)">${opcionesOrden}</select></label>
     </div>
     <div class="rp-grid">${orden.map(tarjetaEmpresaHtml).join('')}</div>
-    <div class="rp-note">Las reuniones salen de la bitácora de cada empresa; la próxima fecha, del Calendario. Hacé click en el número para ver las fechas leídas, o en el nombre para abrir la bitácora.</div>
-    ${sinFechar.length ? seccionesSinFechaHtml(sinFechar) : ''}`;
+    ${dashEditing ? `<div class="rp-note">Las reuniones salen de la bitácora de cada empresa; la próxima fecha, del Calendario. Hacé click en el número para ver las fechas leídas, o en el nombre para abrir la bitácora.</div>` : ''}
+    ${dashEditing && sinFechar.length ? seccionesSinFechaHtml(sinFechar) : ''}`;
   aplicarVisibilidad();
 }
 
@@ -2500,6 +2528,9 @@ const DRIVE_SECTIONS = {
 };
 
 function onEditingChange(on) {
+  // Reuniones y rotación muestra sus notas de mantenimiento solo en edición:
+  // hay que repintarla al entrar y al salir.
+  pintarReuniones();
   document.querySelectorAll('.drive-hint').forEach(b => b.remove());
   if (!on) return;
   for (const [sec, info] of Object.entries(DRIVE_SECTIONS)) {
