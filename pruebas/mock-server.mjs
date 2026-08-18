@@ -78,6 +78,9 @@ const ARBOL_HERR = {
     { id: 'herr1', nombre: 'Matrices', ruta: ['Matrices'],
       archivos: [{ id: 'h1', nombre: 'Matriz de riesgos.xlsx', tipo: 'XLS', fecha: '2026-05-04', url: '#' }],
       carpetas: [] },
+    // Subcarpeta armada pero todavía sin nada adentro. Es lo normal en Drive, y
+    // alcanzaba para que la tarjeta entera desapareciera.
+    { id: 'herr2', nombre: 'Plantillas', ruta: ['Plantillas'], archivos: [], carpetas: [] },
   ],
 };
 

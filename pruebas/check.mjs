@@ -69,6 +69,19 @@ ok(rec.herrIframes === 0, 'y ya no depende del visor embebido de Drive');
 ok(rec.herrArchivos.includes('Tablero de comando.xlsx'), 'lista los archivos de la carpeta');
 ok(rec.herrCarpetas.some(c => /Matrices/.test(c)), 'y también sus subcarpetas');
 
+// El bug que dejó la tarjeta invisible aun después de leerla bien: el árbol
+// escribe «Carpeta vacía» por cada subcarpeta sin archivos, y auto-ocultar leía
+// ese cartel anidado como «este bloque no tiene datos». Una sola subcarpeta
+// vacía —lo más común en Drive— borraba la tarjeta entera.
+const anidado = await p.evaluate(() => ({
+  subcarpetasVacias: document.querySelectorAll('#card-herr-drive .proc-vacio').length,
+  archivos: document.querySelectorAll('#herramientas-carpeta .arb-file').length,
+  visible: getComputedStyle(document.getElementById('card-herr-drive')).display !== 'none',
+}));
+ok(anidado.subcarpetasVacias > 0, 'la carpeta de prueba tiene una subcarpeta vacía adentro');
+ok(anidado.archivos > 0, 'y archivos de verdad');
+ok(anidado.visible, 'una subcarpeta vacía NO hace desaparecer la tarjeta');
+
 // Una carpeta cargada que el sitio no puede leer no se puede ocultar: si se
 // ocultara, el problema quedaría invisible justo para quien lo tiene que ver.
 await p.evaluate(async () => {
@@ -86,14 +99,25 @@ ok(roto.visible, 'una carpeta que no se puede leer NO se oculta');
 ok(/no puede leerla/.test(roto.texto), 'y la tarjeta dice qué pasa');
 ok(/Lector/.test(roto.texto), 'y qué hay que hacer para arreglarlo');
 
-// En cambio, una carpeta vacía sí se oculta sola: no hay nada que mostrar.
+// Una carpeta cargada y vacía tampoco desaparece: si alguien pegó ese id,
+// tiene que ver qué pasó con él.
 await p.evaluate(async () => {
   DRIVE_CONFIG.herramientasFolderId = 'vacia';
   await renderHerramientas();
 });
 await p.waitForTimeout(400);
+const vacia = await p.evaluate(() => ({
+  visible: getComputedStyle(document.getElementById('card-herr-drive')).display !== 'none',
+  texto: (document.getElementById('herramientas-carpeta') || {}).textContent || '',
+}));
+ok(vacia.visible, 'una carpeta vinculada y vacía tampoco se oculta');
+ok(/todavía no tiene archivos/.test(vacia.texto), 'y dice que está vacía, no deja el hueco mudo');
+
+// Sin carpeta cargada sí se oculta: ahí no hay nada que decir.
+await p.evaluate(async () => { DRIVE_CONFIG.herramientasFolderId = ''; await renderHerramientas(); });
+await p.waitForTimeout(400);
 ok(await p.evaluate(() => getComputedStyle(document.getElementById('card-herr-drive')).display === 'none'),
-   'una carpeta vacía sí se oculta sola');
+   'sin carpeta cargada sí se oculta sola');
 
 await p.evaluate(async () => { DRIVE_CONFIG.herramientasFolderId = 'herr'; await renderHerramientas(); });
 await p.waitForTimeout(400);
@@ -122,9 +146,15 @@ await p.evaluate(() => toggleBloque('dash.actividad', false));
 await p.evaluate(() => navigate('dashboard'));
 await p.waitForTimeout(600);
 console.log('actividad oculta →', await p.evaluate(() => getComputedStyle(document.getElementById('card-actividad')).display));
+ok(await p.evaluate(() => getComputedStyle(document.getElementById('card-actividad')).display !== 'none'),
+   'en modo edición un bloque apagado a mano se ve igual');
+ok(await p.evaluate(() => /apagado/.test((document.querySelector('#card-actividad .vis-apagado') || {}).textContent || '')),
+   'y dice que está apagado, con dónde prenderlo');
 await p.evaluate(() => toggleBloque('dash.actividad', true));
 await p.waitForTimeout(300);
 console.log('actividad de vuelta →', await p.evaluate(() => getComputedStyle(document.getElementById('card-actividad')).display));
+ok(await p.evaluate(() => !document.querySelector('#card-actividad .vis-apagado')),
+   'al prenderlo, el cartel se va');
 
 // ── Sello CREA: apagado por defecto, se prende desde modo edición ──
 const creaOff = await p.evaluate(() => getComputedStyle(document.getElementById('sidebar-crea')).display);
