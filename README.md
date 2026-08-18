@@ -90,7 +90,7 @@ completar.
 | Dashboard · Ronda de novedades | Carpeta de Drive de novedades (última pieza subida) |
 | Recursos · Marco conceptual | Configuración → El grupo → Marco conceptual |
 | Recursos · Reuniones técnicas | Carpeta de Drive de material técnico (con subcarpetas) |
-| Recursos · Herramientas | Carpeta de Drive embebida + URL del facilitador |
+| Recursos · Herramientas | Carpeta de Drive de herramientas (con subcarpetas) + URL del facilitador |
 | Quién puede crear cuenta | Planilla base: pestaña `ACCESOS` (no se edita en el sitio: son emails) |
 | A quién avisar de cuentas nuevas | Configuración → El grupo → Equipo (columna Email). Si nadie tiene, la variable `AVISOS_A` |
 | Reglas de la agenda | Calendario (en modo edición) |
@@ -396,10 +396,22 @@ A mano, paso por paso:
    archivo del Marco Conceptual.
 6. En el Calendario, usá **Generar futuras** para armar la agenda.
 
-La carpeta de **Herramientas del grupo** se muestra embebida (iframe), así que
-además tiene que estar compartida como *«Cualquiera con el enlace · Lector»*:
-compartirla con la cuenta de servicio alcanza para todo lo demás, pero no para el
-iframe, que se carga con la sesión de quien mira el sitio.
+Todas las carpetas se leen igual: con la cuenta de servicio. Alcanza con
+compartirlas con ella, con rol *Lector*. (Hasta agosto de 2026, la carpeta de
+**Herramientas del grupo** iba en un iframe de Drive y además tenía que estar
+publicada como *«Cualquiera con el enlace»*; si no, la tarjeta se veía vacía
+aunque el id estuviera bien cargado. Ya no hace falta.)
+
+Si una carpeta está cargada pero el sitio no puede leerla, la tarjeta **no se
+oculta**: se muestra el motivo, para que el problema no quede invisible.
+
+## Sello CREA
+
+Los grupos que son de la red CREA pueden mostrar el sello en el menú lateral:
+se prende con una casilla en modo edición, en **Configuración → El sitio →
+Sello CREA**, y queda guardado con el resto de la configuración del sitio. Está
+apagado por defecto. El sello (`assets/crea-logo.svg`) va deliberadamente por
+debajo de las otras dos marcas: nunca supera al logo del grupo ni al de Simpleza.
 
 ## API
 

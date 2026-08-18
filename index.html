@@ -66,6 +66,13 @@ body.editing .edit-toggle { background:var(--verde-menta); color:#1E2A2E; }
 .sidebar-simpleza-label { font-size:9px; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,0.35); }
 .simpleza-logo { width:132px; max-width:100%; height:auto; opacity:.95; background:transparent; }
 
+/* ── SELLO CREA (opcional: se prende en Configuración → El sitio) ──
+   Va deliberadamente por debajo de las otras dos marcas: nunca supera al logo
+   del grupo (38×38) ni al de Simpleza (132×36). */
+.sidebar-crea { padding:10px 16px 12px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; gap:10px; }
+.sidebar-crea-label { font-size:9px; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,0.35); line-height:1.35; }
+.crea-logo { height:25px; width:auto; max-width:38px; display:block; flex-shrink:0; }
+
 /* ── MODAL LOGIN ── */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(30,42,46,0.55); z-index:200; align-items:center; justify-content:center; padding:20px; }
 .modal-overlay.open { display:flex; }
@@ -281,7 +288,15 @@ td { padding: 10px 14px; vertical-align: middle; }
 .rec-note { font-size:11.5px; color:var(--gris-medio); line-height:1.55; margin-top:10px; }
 .rec-empty { font-size:12.5px; color:var(--gris-oscuro,#616A6B); line-height:1.6; background:#fcfaf7; border:1px dashed var(--beige-suave); border-radius:10px; padding:16px; }
 .rec-empty a { color:var(--azul-pizarra); font-weight:700; text-decoration:underline; cursor:pointer; }
-.drive-embed { width:100%; height:440px; border:1px solid var(--beige-suave); border-radius:10px; background:#fff; display:block; }
+/* Una fuente que SÍ está cargada pero no se puede leer. Es distinto de «vacío»
+   (.rec-empty), que se oculta solo: esto se muestra siempre, porque si no la
+   tarjeta desaparece y nadie se entera de que hay algo para arreglar. */
+.rec-falla { font-size:12.5px; color:#7d4b3f; line-height:1.6; background:#fdf5f2; border:1px solid #f0dbd3; border-radius:10px; padding:14px 16px; }
+.rec-falla small { color:var(--gris-medio); }
+.rec-falla .rec-note { margin-top:8px; }
+.rec-cargando { font-size:12px; color:var(--gris-medio); padding:12px 2px; line-height:1.5; }
+.cfg-crea-muestra { display:flex; align-items:center; gap:12px; margin-top:12px; padding:12px 14px; background:var(--crema-fondo); border:1px solid var(--beige-suave); border-radius:10px; font-size:12px; color:var(--gris-medio); line-height:1.55; }
+.cfg-crea-muestra .crea-logo { height:25px; width:auto; max-width:38px; }
 
 /* ── EVENTOS ── */
 .evento-timeline { position:relative; padding-left:26px; }
@@ -606,6 +621,11 @@ canvas { display:block; }
   <div class="sidebar-simpleza">
     <span class="sidebar-simpleza-label">Facilitado por</span>
     <img src="assets/simpleza-logo.png" alt="Simpleza" class="simpleza-logo" onerror="this.style.display='none'">
+  </div>
+  <!-- Sello CREA: apagado por defecto. Se prende en Configuración → El sitio. -->
+  <div class="sidebar-crea" id="sidebar-crea" style="display:none">
+    <img src="assets/crea-logo.svg" alt="CREA" class="crea-logo" onerror="this.style.display='none'">
+    <span class="sidebar-crea-label">Grupo de la<br>red CREA</span>
   </div>
   <nav>
     <div class="nav-group-label">Principal</div>
@@ -2026,55 +2046,85 @@ function renderRecursosSec() {
       : vacioHtml('Falta la dirección del sitio de herramientas.', true);
   }
 
-  const elF = document.getElementById('herramientas-carpeta');
-  if (elF) {
-    const fid = DRIVE_CONFIG.herramientasFolderId;
-    elF.innerHTML = fid
-      ? `<iframe class="drive-embed" src="https://drive.google.com/embeddedfolderview?id=${encodeURIComponent(fid)}#grid" title="Herramientas del grupo"></iframe>
-         <div class="rec-note">Se ve el contenido en vivo de la carpeta: lo que suban a Drive aparece acá. Para que se vea desde cualquier navegador, la carpeta tiene que estar compartida como «Cualquiera con el enlace · Lector».
-         <a class="src-link" href="https://drive.google.com/drive/folders/${esc(fid)}" target="_blank" rel="noopener">Abrir en Drive ↗</a></div>`
-      : `<div class="rec-empty">Aún no hay carpeta vinculada. Armá una carpeta en Drive con las herramientas del grupo (tableros, matrices, plantillas) y pegá su id o su link en <a onclick="navigate('config')">Configuración → Herramientas del grupo</a>.</div>`;
-  }
-
   renderTecnicas();
+  renderHerramientas();
   aplicarVisibilidad();
 }
 
-// Reuniones Técnicas: material teórico y técnico del grupo. Va dentro de
-// Recursos y sale de su propia carpeta de Drive (con subcarpetas).
-async function renderTecnicas() {
-  const el = document.getElementById('tecnicas-box');
+// Reuniones Técnicas: material teórico y técnico del grupo.
+function renderTecnicas() {
+  return renderCarpetaRecurso({
+    elId: 'tecnicas-box',
+    key: 'tecnicasFolderId',
+    que: 'el material de las reuniones técnicas',
+    vacia: 'Todavía no hay material técnico cargado en la carpeta.',
+    sinCarpeta: 'Aún no hay carpeta vinculada. Pegá el id o el link de la carpeta de material técnico en <a onclick="navigate(\'config\')">Configuración → Reuniones Técnicas</a>.',
+  });
+}
+
+// Herramientas del grupo: tableros, matrices y plantillas.
+//
+// Antes esta tarjeta era un <iframe> de embeddedfolderview de Drive. Ese visor
+// solo funciona si la carpeta está publicada como «Cualquiera con el enlace»;
+// con la carpeta compartida únicamente con la cuenta de servicio —que es como
+// se comparte todo lo demás en este sitio— el iframe queda en blanco, y el
+// grupo veía una tarjeta vacía aunque el id estuviera bien cargado. Ahora se
+// lee por /api/drive, igual que las Reuniones técnicas.
+function renderHerramientas() {
+  return renderCarpetaRecurso({
+    elId: 'herramientas-carpeta',
+    key: 'herramientasFolderId',
+    que: 'las herramientas del grupo',
+    vacia: 'Todavía no hay herramientas cargadas en la carpeta.',
+    sinCarpeta: 'Aún no hay carpeta vinculada. Armá una carpeta en Drive con las herramientas del grupo (tableros, matrices, plantillas) y pegá su id o su link en <a onclick="navigate(\'config\')">Configuración → Herramientas del grupo</a>.',
+  });
+}
+
+// Una carpeta de Drive mostrada como árbol dentro de Recursos. Las dos tarjetas
+// que muestran carpetas usan esto, así que las dos leen con la cuenta de
+// servicio y se comportan igual ante un error.
+//
+// Sobre qué se ve y qué no: una carpeta que todavía no se cargó se muestra como
+// vacía (.rec-empty) y auto-ocultar la esconde, que es lo correcto. Una carpeta
+// que SÍ está cargada pero no se puede leer se muestra como falla (.rec-falla),
+// que no se oculta nunca: si no, la tarjeta desaparece y el problema queda
+// invisible justo para quien lo tiene que arreglar.
+async function renderCarpetaRecurso({ elId, key, que, vacia, sinCarpeta }) {
+  const el = document.getElementById(elId);
   if (!el) return;
-  const fid = DRIVE_CONFIG.tecnicasFolderId;
+  const fid = DRIVE_CONFIG[key];
   if (!fid) {
-    el.innerHTML = `<div class="rec-empty">Aún no hay carpeta vinculada. Pegá el id o el link de la carpeta de material técnico en <a onclick="navigate('config')">Configuración → Reuniones Técnicas</a>.</div>`;
+    marcarFuente(key, 'falta');
+    el.innerHTML = `<div class="rec-empty">${sinCarpeta}</div>`;
     aplicarVisibilidad();
     return;
   }
-  el.innerHTML = '<div class="act-empty">Cargando el material de las reuniones técnicas…</div>';
+  const enDrive = `<a class="src-link" href="https://drive.google.com/drive/folders/${esc(fid)}" target="_blank" rel="noopener">Abrir la carpeta en Drive ↗</a>`;
+  el.innerHTML = `<div class="rec-cargando">Leyendo ${esc(que)}…</div>`;
+  aplicarVisibilidad();
   try {
     const r = await fetch(`${API_BASE_DRIVE}?op=arbol&folderId=${encodeURIComponent(fid)}&depth=3`);
     const j = await r.json().catch(() => ({}));
     if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
     const arbol = j.arbol || {};
     const total = contarArchivos(arbol);
-    if (!total) {
-      marcarFuente('tecnicasFolderId', 'ok', 'carpeta vacía');
-      el.innerHTML = '<div class="rec-empty">La carpeta de reuniones técnicas está vacía.</div>';
-      aplicarVisibilidad();
-      return;
-    }
-    marcarFuente('tecnicasFolderId', 'ok', `${total} archivos`);
-    el.innerHTML = arbolHtml(arbol, true) +
-      `<div class="rec-note">${total} archivo${total === 1 ? '' : 's'} · <a class="src-link" href="https://drive.google.com/drive/folders/${esc(fid)}" target="_blank" rel="noopener">Abrir la carpeta en Drive ↗</a></div>`;
+    marcarFuente(key, 'ok', total ? `${total} archivos` : 'carpeta vacía');
+    el.innerHTML = total
+      ? arbolHtml(arbol, true) +
+        `<div class="rec-note">${total} archivo${total === 1 ? '' : 's'} · ${enDrive}</div>`
+      : `<div class="rec-empty">${esc(vacia)} <span class="rec-note">${enDrive}</span></div>`;
   } catch (e) {
-    marcarFuente('tecnicasFolderId', 'error', e.message);
-    el.innerHTML = `<div class="act-empty">No se pudo leer la carpeta.<br><small>${esc(e.message)}</small></div>`;
+    marcarFuente(key, 'error', e.message);
+    el.innerHTML = `<div class="rec-falla">
+      <strong>La carpeta está vinculada, pero el sitio no puede leerla.</strong><br>
+      <small>${esc(e.message)}</small><br>
+      <small>Casi siempre falta compartirla en Drive con la cuenta de servicio del sitio, con rol «Lector». El email está en <a onclick="navigate('config')">Configuración → Archivos</a>.</small>
+      <div class="rec-note">${enDrive}</div></div>`;
   }
   aplicarVisibilidad();
 }
 
-// ── Árbol de carpetas de Drive (se usa en Reuniones Técnicas) ──
+// ── Árbol de carpetas de Drive (se usa en Reuniones Técnicas y Herramientas) ──
 function contarArchivos(nodo) {
   if (!nodo) return 0;
   return (nodo.archivos || []).length + (nodo.carpetas || []).reduce((s, c) => s + contarArchivos(c), 0);
@@ -2121,8 +2171,9 @@ async function loadContentFromDB() {
       CONFIG = Object.assign(CONFIG_VACIA(), c.config_grupo);
     }
     if (c.ui_config && typeof c.ui_config === 'object') {
-      UI_CONFIG = Object.assign({ autoHide: true, ocultos: [] }, c.ui_config);
+      UI_CONFIG = Object.assign({ autoHide: true, ocultos: [], crea: false }, c.ui_config);
       if (!Array.isArray(UI_CONFIG.ocultos)) UI_CONFIG.ocultos = [];
+      aplicarSelloCrea();
     }
     // Reuniones y configuración del calendario (tablas meetings/config de Turso).
     // El calendario es lo único que se edita en el sitio: no hay reuniones
@@ -3166,9 +3217,9 @@ const DRIVE_SOURCES = [
     donde:'Dashboard → tarjeta «Ronda de novedades» (se puede apagar en «Qué se muestra»)',
     estructura:'Una carpeta de Drive con la gaceta. La más reciente es la que se muestra.' },
   { key:'herramientasFolderId', tipo:'carpeta', label:'Herramientas del grupo',
-    desc:'Carpeta con las herramientas, tableros y matrices que comparte el grupo. Se muestra embebida: el contenido que se suba a esa carpeta aparece en el sitio.',
+    desc:'Carpeta con las herramientas, tableros y matrices que comparte el grupo. Se lista con sus subcarpetas: lo que se suba a esa carpeta aparece en el sitio.',
     donde:'Recursos del grupo → tarjeta «Herramientas del grupo»',
-    estructura:'Una carpeta de Drive compartida como «Cualquiera con el enlace · Lector» (si no, el iframe no se ve desde otros navegadores).' },
+    estructura:'Una carpeta de Drive compartida con la cuenta de servicio (rol Lector), igual que el resto. Puede tener subcarpetas: se muestran anidadas.' },
   { key:'herramientasUrl', tipo:'enlace', label:'Herramientas del facilitador (web)',
     desc:'Dirección del sitio de herramientas de la organización que facilita el grupo.',
     donde:'Recursos del grupo → tarjeta «Herramientas»',
@@ -3213,7 +3264,7 @@ const MAPA_SITIO = [
     { que:'Marco conceptual',         fuente:'Archivo Marco Conceptual · pestaña CONCEPTOS', key:'marcoFileId' },
     { que:'Reuniones técnicas',       fuente:'Carpeta de Drive «Reuniones Técnicas» (con subcarpetas)', key:'tecnicasFolderId' },
     { que:'Herramientas del facilitador', fuente:'URL configurada en Configuración', key:'herramientasUrl' },
-    { que:'Herramientas del grupo',   fuente:'Carpeta de Drive embebida', key:'herramientasFolderId' },
+    { que:'Herramientas del grupo',   fuente:'Carpeta de Drive «Herramientas» (con subcarpetas)', key:'herramientasFolderId' },
   ]},
 ];
 
@@ -3426,7 +3477,7 @@ async function renderConfig() {
         <div class="src-estructura">El sitio identifica la carpeta de cada empresa por nombre dentro de la «Carpeta de las empresas». Si alguna no se resuelve, indicá su carpeta en <a onclick="configPestana('contenido')">El grupo → Empresas → Más datos</a>.</div>
         <div class="mapa">${configVinculosHtml()}</div></div>`;
   } else {
-    cont.innerHTML = configMapaHtml() + configVisibilidadHtml();
+    cont.innerHTML = configMapaHtml() + configVisibilidadHtml() + configCreaHtml();
     renderAccesos();
   }
 }
@@ -3449,7 +3500,7 @@ const CARPETAS_ESPERADAS = [
   { nombre: 'Empresas', obligatoria: true, detalle: 'Una subcarpeta por empresa, con el nombre de la empresa. Adentro de cada una: <code>Presentaciones</code> y <code>Proceso</code>.' },
   { nombre: 'Material técnico', obligatoria: false, detalle: 'Lo que se ve en Recursos → Reuniones técnicas. Admite subcarpetas (por año, por tema).' },
   { nombre: 'Novedades', obligatoria: false, detalle: 'La gaceta o pieza periódica. El sitio muestra la última.' },
-  { nombre: 'Herramientas', obligatoria: false, detalle: 'Se muestra embebida, así que además tiene que estar compartida como «Cualquiera con el enlace · Lector».' },
+  { nombre: 'Herramientas', obligatoria: false, detalle: 'Lo que se ve en Recursos → Herramientas del grupo (tableros, matrices, plantillas). Admite subcarpetas.' },
   { nombre: 'Logo', obligatoria: false, detalle: 'Una imagen. Se sube a Drive y se conecta; no se pega una URL externa.' },
 ];
 
@@ -3852,7 +3903,7 @@ async function probarImagen(id) {
 // ══════════════════════════════════════════════════════════════
 // Ocultar lo que no tiene datos es OPCIONAL: se activa con «auto» (por defecto)
 // y además cada bloque se puede apagar a mano. Se guarda en Turso (ui_config).
-let UI_CONFIG = { autoHide: true, ocultos: [] };
+let UI_CONFIG = { autoHide: true, ocultos: [], crea: false };
 
 const UI_BLOQUES = [
   { key:'dash.grupo',      el:'home-grupo',      sec:'Dashboard', label:'Descripción del grupo' },
@@ -3931,6 +3982,7 @@ function aplicarVisibilidad() {
     const auto = UI_CONFIG.autoHide && !dashEditing && !bloqueTieneDatos(el);
     el.style.display = (oculto || auto) ? 'none' : '';
   }
+  aplicarSelloCrea();
   avisarSeccionesVacias();
 }
 
@@ -3950,6 +4002,36 @@ async function toggleAutoHide(on) {
   UI_CONFIG.autoHide = !!on;
   aplicarVisibilidad();
   await guardarUIConfig();
+}
+
+// ── Sello CREA ──
+// Muchos de estos grupos son grupos de la red CREA y otros no, así que el sello
+// no puede estar escrito en el HTML: es una casilla que se prende desde modo
+// edición y se guarda con el resto de la configuración del sitio (ui_config).
+// Apagado por defecto: un grupo que no es CREA no muestra nada.
+function aplicarSelloCrea() {
+  const el = document.getElementById('sidebar-crea');
+  if (el) el.style.display = UI_CONFIG.crea ? '' : 'none';
+}
+
+async function toggleCrea(on) {
+  UI_CONFIG.crea = !!on;
+  aplicarSelloCrea();
+  await guardarUIConfig();
+}
+
+function configCreaHtml() {
+  return `<div class="card">
+    <div class="card-title" style="margin-bottom:10px">5) Sello CREA</div>
+    <label class="vis-row">
+      <input type="checkbox" ${UI_CONFIG.crea ? 'checked' : ''} onchange="toggleCrea(this.checked)">
+      <span><strong>Este grupo es de la red CREA</strong></span>
+    </label>
+    <div class="cfg-crea-muestra">
+      <img src="assets/crea-logo.svg" alt="CREA" class="crea-logo">
+      <span>Con la casilla tildada, el sello aparece en el menú lateral, debajo del logo del grupo y del de Simpleza. Va en ese tamaño: nunca más grande que ninguno de los dos.</span>
+    </div>
+  </div>`;
 }
 
 function configVisibilidadHtml() {
@@ -4207,10 +4289,10 @@ async function renderAccesos() {
   const el = document.getElementById('config-accesos');
   if (!el) return;
   if (!ADMIN_PASSWORD) {
-    el.innerHTML = `<div class="card"><div class="card-title">5) Quién puede entrar</div><div class="act-empty">Ingresá con la clave de edición para ver y autorizar las cuentas.</div></div>`;
+    el.innerHTML = `<div class="card"><div class="card-title">6) Quién puede entrar</div><div class="act-empty">Ingresá con la clave de edición para ver y autorizar las cuentas.</div></div>`;
     return;
   }
-  el.innerHTML = `<div class="card"><div class="card-title">5) Quién puede entrar</div><div class="act-empty">Cargando cuentas…</div></div>`;
+  el.innerHTML = `<div class="card"><div class="card-title">6) Quién puede entrar</div><div class="act-empty">Cargando cuentas…</div></div>`;
   try {
     const [u, a] = await Promise.all([
       authPost('usuarios', { password: ADMIN_PASSWORD }),
@@ -4250,7 +4332,7 @@ async function renderAccesos() {
 
     el.innerHTML = `
       <div class="card">
-        <div class="card-title" style="margin-bottom:10px">5) Quién puede entrar</div>
+        <div class="card-title" style="margin-bottom:10px">6) Quién puede entrar</div>
         <label class="vis-row" style="margin-bottom:8px">
           <input type="checkbox" ${AUTH_REQUIRED ? 'checked' : ''} onchange="cambiarRequerirLogin(this.checked)">
           <span><strong>Pedir cuenta para entrar al sitio</strong></span>
@@ -4264,7 +4346,7 @@ async function renderAccesos() {
         ${log}
       </div>`;
   } catch (e) {
-    el.innerHTML = `<div class="card"><div class="card-title">5) Quién puede entrar</div><div class="act-empty">No se pudo leer la lista de cuentas.<br><small>${esc(e.message)}</small></div></div>`;
+    el.innerHTML = `<div class="card"><div class="card-title">6) Quién puede entrar</div><div class="act-empty">No se pudo leer la lista de cuentas.<br><small>${esc(e.message)}</small></div></div>`;
   }
 }
 

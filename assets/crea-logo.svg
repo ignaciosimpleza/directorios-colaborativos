@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 22 384 256" role="img" aria-label="CREA">
+  <title>CREA</title>
+  <rect x="8" y="22" width="384" height="256" rx="46" fill="#00A651"/>
+  <rect x="32" y="62" width="336" height="176" rx="16" fill="#0D0D0D"/>
+  <g fill="#FFD400" fill-rule="nonzero">
+    <path d="M115.96 124 A34 55 0 1 0 115.96 176 L96.95 176 A17 34 0 1 1 96.95 124 Z"/>
+    <path d="M125 95 H151 V205 H125 Z
+             M145 95 H162 C181 95 193 106 193 126 C193 147 181 158 162 158 H145 Z
+             M151 116 V136 H162 C170 136 174 132 174 126 C174 120 170 116 162 116 Z
+             M143 150 H174 L193 205 H162 Z"/>
+    <path d="M197 95 H253 V118 H223 V139 H248 V161 H223 V182 H253 V205 H197 Z"/>
+    <path d="M258 205 L296 95 H310 L348 205 H326 L321.5 192 H284.5 L280 205 Z
+             M303 138.3 L292.1 170 H313.9 Z"/>
+  </g>
+</svg>
