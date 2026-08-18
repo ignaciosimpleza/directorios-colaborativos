@@ -71,6 +71,16 @@ const ARBOL_TEC = {
   ],
 };
 
+const ARBOL_HERR = {
+  id: 'herr', nombre: '', ruta: [],
+  archivos: [{ id: 'h0', nombre: 'Tablero de comando.xlsx', tipo: 'XLS', fecha: '2026-06-01', url: '#' }],
+  carpetas: [
+    { id: 'herr1', nombre: 'Matrices', ruta: ['Matrices'],
+      archivos: [{ id: 'h1', nombre: 'Matriz de riesgos.xlsx', tipo: 'XLS', fecha: '2026-05-04', url: '#' }],
+      carpetas: [] },
+  ],
+};
+
 const TEC_ACT = [
   { id: 't1', nombre: 'Costos 2026-04-15.pdf', tipo: 'PDF', fecha: '2026-04-15', url: '#', carpeta: 'Material teórico 2026', ruta: ['Material teórico 2026'], empresaFolderId: 'tec' },
   { id: 't2', nombre: 'Margen bruto 2026-05-10.xlsx', tipo: 'XLS', fecha: '2026-05-10', url: '#', carpeta: 'Material teórico 2026', ruta: ['Material teórico 2026'], empresaFolderId: 'tec' },
@@ -133,7 +143,7 @@ const DB = {
   ],
   env: { baseFileId: '' },
   content: {
-    drive_config: { baseFileId: 'base', empresasFolderId: 'emp', tecnicasFolderId: 'tec', novedadesFolderId: 'nov', herramientasUrl: 'https://www.simpleza.com.ar/' },
+    drive_config: { baseFileId: 'base', empresasFolderId: 'emp', tecnicasFolderId: 'tec', novedadesFolderId: 'nov', herramientasFolderId: 'herr', herramientasUrl: 'https://www.simpleza.com.ar/' },
   },
 };
 
@@ -203,7 +213,7 @@ function authHandler(req, res, body, token) {
     // solo para las pruebas: deja el mock como recién arrancado
     case '_reset': {
       AUTH.requireLogin = false; AUTH.users = []; AUTH.sessions = {}; AUTH.log = []; AUTH.faltaGrupoId = false;
-      DB.content = { drive_config: { baseFileId: 'base', empresasFolderId: 'emp', tecnicasFolderId: 'tec', novedadesFolderId: 'nov', herramientasUrl: 'https://www.simpleza.com.ar/' } };
+      DB.content = { drive_config: { baseFileId: 'base', empresasFolderId: 'emp', tecnicasFolderId: 'tec', novedadesFolderId: 'nov', herramientasFolderId: 'herr', herramientasUrl: 'https://www.simpleza.com.ar/' } };
       return json(res, { ok: true });
     }
     default: return json(res, { error: 'Acción desconocida' }, 400);
@@ -262,7 +272,14 @@ http.createServer((req, res) => {
       if (ids.includes('tec')) return json(res, { items: TEC_ACT });
       return json(res, { items: ACT.filter(i => ids.includes(i.empresaFolderId)) });
     }
-    if (op === 'arbol') return json(res, { arbol: ARBOL_TEC });
+    if (op === 'arbol') {
+      const fid = u.searchParams.get('folderId');
+      // carpeta cargada pero que el sitio no puede leer (no se compartió)
+      if (fid === 'roto') return json(res, { error: 'Drive API 404: File not found: roto' }, 502);
+      if (fid === 'vacia') return json(res, { arbol: { id: fid, nombre: '', ruta: [], archivos: [], carpetas: [] } });
+      if (fid === 'herr') return json(res, { arbol: ARBOL_HERR });
+      return json(res, { arbol: ARBOL_TEC });
+    }
     if (op === 'descubrir') return json(res, {
       carpetas: [{ id: 'tec', nombre: '1. Material teórico' }, { id: 'emp', nombre: '2. Empresas y procesos' }],
       archivos: [], 
@@ -285,7 +302,7 @@ http.createServer((req, res) => {
   const f = path.join(ROOT, u.pathname === '/' ? 'index.html' : u.pathname.slice(1));
   if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end('no'); }
   const ext = path.extname(f);
-  const ct = { '.html': 'text/html', '.png': 'image/png', '.js': 'text/javascript', '.mjs': 'text/javascript', '.xlsx': 'application/octet-stream' }[ext] || 'text/plain';
+  const ct = { '.html': 'text/html', '.png': 'image/png', '.svg': 'image/svg+xml', '.js': 'text/javascript', '.mjs': 'text/javascript', '.xlsx': 'application/octet-stream' }[ext] || 'text/plain';
   res.writeHead(200, { 'Content-Type': ct });
   res.end(fs.readFileSync(f));
 }).listen(8099, () => console.log('mock server en http://localhost:8099'));
