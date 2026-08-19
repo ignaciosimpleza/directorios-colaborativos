@@ -220,6 +220,34 @@ export default async function handler(req, res) {
           return res.status(200).json({ ok: true });
         }
 
+        // Qué hay en la base a la que está conectado ESTE despliegue.
+        // Cuando un sitio apunta a una base equivocada se ve vacío y no dice
+        // nada, y desde afuera no hay forma de distinguir «no hay datos» de
+        // «estás mirando la base que no es». Devuelve nombres de grupo y
+        // cuánto tiene cada uno; ningún dato de las empresas y ninguna
+        // credencial: de la base, solo el servidor al que se conecta.
+        case 'grupos': {
+          const [cnt, cfg, cos, mtg] = await Promise.all([
+            client.execute('SELECT group_id, COUNT(*) AS n FROM content GROUP BY group_id'),
+            client.execute('SELECT group_id, group_name FROM config'),
+            client.execute('SELECT group_id, COUNT(*) AS n FROM companies GROUP BY group_id'),
+            client.execute('SELECT group_id, COUNT(*) AS n FROM meetings GROUP BY group_id'),
+          ]);
+          const grupos = {};
+          const tomar = (id) => (grupos[id] = grupos[id] || { group_id: id, nombre: '', claves: 0, empresas: 0, reuniones: 0 });
+          for (const r of cnt.rows) tomar(r.group_id).claves = Number(r.n);
+          for (const r of cfg.rows) tomar(r.group_id).nombre = r.group_name || '';
+          for (const r of cos.rows) tomar(r.group_id).empresas = Number(r.n);
+          for (const r of mtg.rows) tomar(r.group_id).reuniones = Number(r.n);
+          let servidor = '';
+          try { servidor = new URL(process.env.TURSO_DATABASE_URL || '').host; } catch { servidor = '(no se pudo leer)'; }
+          return res.status(200).json({
+            servidor,
+            esteGrupo: grupoPorDefecto(),
+            grupos: Object.values(grupos).sort((a, b) => a.group_id.localeCompare(b.group_id)),
+          });
+        }
+
         default:
           return res.status(400).json({ error: `Acción desconocida: ${action}` });
       }

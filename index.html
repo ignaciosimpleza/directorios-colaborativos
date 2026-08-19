@@ -307,6 +307,14 @@ td { padding: 10px 14px; vertical-align: middle; }
 .rec-cargando { font-size:12px; color:var(--gris-medio); padding:12px 2px; line-height:1.5; }
 .vis-apagado { font-size:12px; color:#7a6a3f; background:#fdf9ec; border:1px solid #eadfc0; border-radius:8px; padding:9px 12px; margin-bottom:12px; line-height:1.5; }
 .vis-apagado a { color:var(--azul-pizarra); font-weight:700; text-decoration:underline; cursor:pointer; }
+.base-tabla { margin-top:12px; border:1px solid var(--linea,var(--beige-suave)); border-radius:10px; overflow:hidden; }
+.base-fila { display:grid; grid-template-columns:1fr 1.2fr auto; gap:12px; align-items:center; padding:9px 13px; font-size:12.5px; border-top:1px solid var(--beige-suave); }
+.base-fila:first-child { border-top:0; }
+.base-fila-mio { background:#f2fbf7; font-weight:600; }
+.base-id { font-family:ui-monospace,monospace; font-size:12px; color:var(--navy); }
+.base-id em { font-family:inherit; font-style:normal; font-weight:400; color:var(--gris-medio); }
+.base-nom { color:var(--gris-oscuro,#616A6B); }
+.base-num { color:var(--gris-medio); font-size:11.5px; white-space:nowrap; }
 .cfg-crea-muestra { display:flex; align-items:center; gap:12px; margin-top:12px; padding:12px 14px; background:var(--crema-fondo); border:1px solid var(--beige-suave); border-radius:10px; font-size:12px; color:var(--gris-medio); line-height:1.55; }
 .cfg-crea-muestra .crea-logo { height:28px; width:auto; max-width:38px; }
 
@@ -3545,8 +3553,10 @@ async function renderConfig() {
         <div class="src-estructura">El sitio identifica la carpeta de cada empresa por nombre dentro de la «Carpeta de las empresas». Si alguna no se resuelve, indicá su carpeta en <a onclick="configPestana('contenido')">El grupo → Empresas → Más datos</a>.</div>
         <div class="mapa">${configVinculosHtml()}</div></div>`;
   } else {
-    cont.innerHTML = configMapaHtml() + configVisibilidadHtml() + configCreaHtml();
+    cont.innerHTML = configMapaHtml() + configVisibilidadHtml() + configCreaHtml() +
+      '<div class="card" id="cfg-base"></div>';
     renderAccesos();
+    revisarBase();
   }
 }
 
@@ -4133,6 +4143,56 @@ async function toggleCrea(on) {
   await guardarUIConfig();
 }
 
+// ── Qué hay en la base ──
+// Si un despliegue apunta a una base que no es la suya, el sitio se ve vacío y
+// no dice nada: es igual a «todavía no cargaron nada». Esta tarjeta muestra a
+// qué servidor está conectado, con qué identificador de grupo busca, y qué
+// grupos hay realmente ahí. Con eso, «no aparece nada» deja de ser un misterio.
+let BASE_ESTADO = null;
+
+async function revisarBase() {
+  const el = document.getElementById('cfg-base');
+  if (el) el.innerHTML = '<div class="rec-cargando">Revisando la base…</div>';
+  try {
+    BASE_ESTADO = await apiWrite({ action: 'grupos' });
+  } catch (e) {
+    BASE_ESTADO = { error: e.message };
+  }
+  pintarBase();
+}
+
+function pintarBase() {
+  const el = document.getElementById('cfg-base');
+  if (!el) return;
+  const d = BASE_ESTADO;
+  if (!d) { el.innerHTML = '<div class="rec-cargando">Revisando la base…</div>'; return; }
+  if (d.error) {
+    el.innerHTML = `<div class="rec-falla"><strong>No se pudo leer la base.</strong><br><small>${esc(d.error)}</small></div>`;
+    return;
+  }
+  const mio = (d.grupos || []).find(g => g.group_id === d.esteGrupo);
+  const filas = (d.grupos || []).map(g => `
+    <div class="base-fila${g.group_id === d.esteGrupo ? ' base-fila-mio' : ''}">
+      <span class="base-id">${esc(g.group_id)}${g.group_id === d.esteGrupo ? ' <em>(este sitio)</em>' : ''}</span>
+      <span class="base-nom">${esc(g.nombre || '—')}</span>
+      <span class="base-num">${g.empresas} empresas · ${g.reuniones} reuniones</span>
+    </div>`).join('');
+
+  const aviso = mio
+    ? `<div class="rec-note">Este sitio encuentra sus datos. Todo en orden.</div>`
+    : `<div class="rec-falla"><strong>Este sitio busca el grupo «${esc(d.esteGrupo)}», y en esta base ese grupo no está.</strong><br>
+       <small>Los datos no se borran solos: lo más probable es que este proyecto esté conectado a una base distinta de la que los tiene.
+       Se arregla en Vercel, en las variables <code>TURSO_DATABASE_URL</code> y <code>TURSO_AUTH_TOKEN</code> de este proyecto:
+       tienen que ser las mismas que las del sitio donde los datos sí aparecen.</small></div>`;
+
+  el.innerHTML = `
+    <div class="card-title" style="margin-bottom:10px">6) La base de datos</div>
+    <div class="src-estructura">Servidor: <strong>${esc(d.servidor || '—')}</strong> · Identificador de este sitio: <strong>${esc(d.esteGrupo)}</strong></div>
+    ${aviso}
+    <div class="base-tabla">${filas || '<div class="rec-empty">En esta base no hay ningún grupo cargado.</div>'}</div>
+    <button class="btn-cal-add" style="margin-top:12px" onclick="revisarBase()">Volver a revisar</button>`;
+}
+
 function configCreaHtml() {
   return `<div class="card">
     <div class="card-title" style="margin-bottom:10px">5) Sello CREA</div>
@@ -4402,10 +4462,10 @@ async function renderAccesos() {
   const el = document.getElementById('config-accesos');
   if (!el) return;
   if (!ADMIN_PASSWORD) {
-    el.innerHTML = `<div class="card"><div class="card-title">6) Quién puede entrar</div><div class="act-empty">Ingresá con la clave de edición para ver y autorizar las cuentas.</div></div>`;
+    el.innerHTML = `<div class="card"><div class="card-title">7) Quién puede entrar</div><div class="act-empty">Ingresá con la clave de edición para ver y autorizar las cuentas.</div></div>`;
     return;
   }
-  el.innerHTML = `<div class="card"><div class="card-title">6) Quién puede entrar</div><div class="act-empty">Cargando cuentas…</div></div>`;
+  el.innerHTML = `<div class="card"><div class="card-title">7) Quién puede entrar</div><div class="act-empty">Cargando cuentas…</div></div>`;
   try {
     const [u, a] = await Promise.all([
       authPost('usuarios', { password: ADMIN_PASSWORD }),
@@ -4445,7 +4505,7 @@ async function renderAccesos() {
 
     el.innerHTML = `
       <div class="card">
-        <div class="card-title" style="margin-bottom:10px">6) Quién puede entrar</div>
+        <div class="card-title" style="margin-bottom:10px">7) Quién puede entrar</div>
         <label class="vis-row" style="margin-bottom:8px">
           <input type="checkbox" ${AUTH_REQUIRED ? 'checked' : ''} onchange="cambiarRequerirLogin(this.checked)">
           <span><strong>Pedir cuenta para entrar al sitio</strong></span>
@@ -4459,7 +4519,7 @@ async function renderAccesos() {
         ${log}
       </div>`;
   } catch (e) {
-    el.innerHTML = `<div class="card"><div class="card-title">6) Quién puede entrar</div><div class="act-empty">No se pudo leer la lista de cuentas.<br><small>${esc(e.message)}</small></div></div>`;
+    el.innerHTML = `<div class="card"><div class="card-title">7) Quién puede entrar</div><div class="act-empty">No se pudo leer la lista de cuentas.<br><small>${esc(e.message)}</small></div></div>`;
   }
 }
 
