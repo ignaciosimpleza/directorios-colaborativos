@@ -110,9 +110,51 @@ const anid = await p.evaluate(() => ({
   nota: (document.querySelector('#herramientas-carpeta .rec-note') || {}).textContent || '',
 }));
 ok(anid.visible, 'una carpeta con todo en subcarpetas se ve');
-ok(anid.archivos.some(n => /Análisis de negocios/.test(n)), 'muestra el archivo que está a un nivel de profundidad');
+ok(anid.archivos.some(n => /Análisis de negocios/.test(n)), 'trae el archivo que está a un nivel de profundidad');
 ok(anid.archivos.some(n => /Costos febrero/.test(n)), 'y el que está a dos niveles');
 ok(/2 archivos/.test(anid.nota), 'y los cuenta bien, sin contar carpetas como archivos');
+
+// Las subcarpetas arrancan contraídas: con una carpeta por año y por mes,
+// abiertas todas de entrada la tarjeta es una pared de nombres.
+const plegado = await p.evaluate(() => {
+  const carpetas = [...document.querySelectorAll('#herramientas-carpeta details.arb-carpeta')];
+  const visible = el => !!el.offsetParent;
+  return {
+    cuantas: carpetas.length,
+    abiertas: carpetas.filter(d => d.open).length,
+    // los archivos sueltos de la raíz no cuelgan de ninguna subcarpeta: se ven siempre
+    archivoDeRaizVisible: [...document.querySelectorAll('#herramientas-carpeta > .arb-file')].some(visible),
+    archivoAnidadoVisible: [...document.querySelectorAll('#herramientas-carpeta details .arb-file')].some(visible),
+    titulosVisibles: carpetas.filter(d => visible(d.querySelector('.arb-carpeta-tit'))).length,
+  };
+});
+ok(plegado.cuantas > 0, 'las subcarpetas se dibujan como bloques que se pliegan');
+ok(plegado.abiertas === 0, 'y arrancan todas contraídas');
+ok(plegado.titulosVisibles > 0, 'los nombres de las subcarpetas de primer nivel se ven igual');
+ok(!plegado.archivoAnidadoVisible, 'lo que está adentro de una subcarpeta queda plegado');
+
+// Y se abren: al desplegar una aparece SU contenido, pero sus propias
+// subcarpetas siguen plegadas. Se abre de a un nivel por vez.
+const abierto = await p.evaluate(async () => {
+  const vis = el => !!el.offsetParent;
+  // Solo las de primer nivel, para no abrir sin querer una anidada y medir mal.
+  const raiz = [...document.querySelectorAll('#herramientas-carpeta > details.arb-carpeta')];
+  const conArchivo = raiz.find(d => d.querySelector(':scope > .arb-carpeta-body > .arb-file'));
+  const conSubs = raiz.find(d => d.querySelector(':scope > .arb-carpeta-body > details'));
+  conArchivo.querySelector('.arb-carpeta-tit').click();
+  conSubs.querySelector('.arb-carpeta-tit').click();
+  await new Promise(r => setTimeout(r, 200));
+  return {
+    open: conArchivo.open,
+    archivos: [...conArchivo.querySelectorAll(':scope > .arb-carpeta-body > .arb-file')].filter(vis).length,
+    subsVisibles: [...conSubs.querySelectorAll(':scope > .arb-carpeta-body > details > .arb-carpeta-tit')].filter(vis).length,
+    subsAbiertas: [...conSubs.querySelectorAll(':scope > .arb-carpeta-body > details')].filter(d => d.open).length,
+    nietos: [...conSubs.querySelectorAll(':scope > .arb-carpeta-body > details .arb-file')].filter(vis).length,
+  };
+});
+ok(abierto.open && abierto.archivos > 0, 'al desplegar una carpeta aparecen sus archivos');
+ok(abierto.subsVisibles > 0, 'y los nombres de sus subcarpetas');
+ok(abierto.subsAbiertas === 0 && abierto.nietos === 0, 'pero lo que hay dentro de esas subcarpetas sigue plegado: se abre de a un nivel');
 
 // Una carpeta cargada y vacía tampoco desaparece: si alguien pegó ese id,
 // tiene que ver qué pasó con él.
@@ -208,6 +250,26 @@ await p.evaluate(() => toggleCrea(false));
 await p.waitForTimeout(300);
 ok(await p.evaluate(() => getComputedStyle(document.getElementById('sidebar-crea')).display === 'none'),
    'y se puede volver a apagar');
+
+// ── Botón «ir arriba» ── el scroll lo tiene #main, no la ventana.
+await p.evaluate(() => { setEditing(true); navigate('config'); configPestana('archivos'); });
+await p.waitForTimeout(800);
+const arriba = await p.evaluate(async () => {
+  const m = document.getElementById('main'), b = document.getElementById('ir-arriba');
+  const vis = () => getComputedStyle(b).visibility !== 'hidden' && +getComputedStyle(b).opacity > 0;
+  const alTope = vis();
+  m.scrollTop = 1200;
+  await new Promise(r => setTimeout(r, 250));
+  const abajo = { visible: vis(), scroll: m.scrollTop };
+  b.click();
+  await new Promise(r => setTimeout(r, 700));
+  return { alTope, abajo, despues: m.scrollTop, hayScroll: m.scrollHeight > m.clientHeight + 400 };
+});
+console.log('IR ARRIBA', JSON.stringify(arriba));
+ok(arriba.hayScroll, 'Configuración es lo bastante larga como para necesitarlo');
+ok(!arriba.alTope, 'arriba de todo el botón no se muestra');
+ok(arriba.abajo.visible, 'al bajar aparece');
+ok(arriba.despues === 0, 'y al tocarlo vuelve al principio');
 
 console.log('ERRORES:', errores.length ? errores : 'ninguno');
 await b.close();

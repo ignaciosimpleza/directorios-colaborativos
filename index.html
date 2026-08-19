@@ -59,6 +59,16 @@ nav .nav-group-label { font-size: 10px; font-weight: 700; color: rgba(255,255,25
 /* ── BOTÓN MODO EDICIÓN ── */
 .edit-toggle { display:flex; align-items:center; gap:6px; background:var(--navy,#1E2A2E); color:#fff; border:0; font-size:11px; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; transition:all .18s; font-family:inherit; }
 .edit-toggle:hover { opacity:.9; }
+
+/* ── IR ARRIBA ── Configuración es larguísima y volver al principio a mano
+   cuesta. Aparece recién cuando se bajó lo suficiente como para que haga falta. */
+.ir-arriba { position:fixed; right:26px; bottom:26px; z-index:80; width:42px; height:42px; border-radius:50%; border:0;
+  background:var(--navy,#1E2A2E); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 14px rgba(0,0,0,0.22); opacity:0; visibility:hidden; transform:translateY(8px);
+  transition:opacity .18s ease, transform .18s ease, visibility .18s; }
+.ir-arriba.visible { opacity:1; visibility:visible; transform:none; }
+.ir-arriba:hover { background:var(--verde-menta); color:#1E2A2E; }
+@media (max-width:900px) { .ir-arriba { right:16px; bottom:16px; } }
 body.editing .edit-toggle { background:var(--verde-menta); color:#1E2A2E; }
 
 /* ── LOGO SIMPLEZA (sidebar oscuro) ── */
@@ -94,7 +104,7 @@ body.editing .edit-toggle { background:var(--verde-menta); color:#1E2A2E; }
 /* ── MAIN ── */
 /* El sidebar es un item flex (ocupa sus 220px en el flujo): #main NO lleva
    margin-left, si no queda un espacio vacío del ancho del sidebar. */
-#main { margin-top: 56px; flex: 1; min-width: 0; overflow-y: auto; padding: 24px 28px; }
+#main { margin-top: 56px; flex: 1; min-width: 0; overflow-y: auto; padding: 24px 28px 84px; }  /* el aire de abajo deja lugar al botón «ir arriba» */
 .section { display: none; animation: fadeIn 0.22s ease; }
 .section.active { display: block; }
 /* ── CALENDARIO NATIVO ── */
@@ -445,9 +455,18 @@ textarea.cfg-input { resize:vertical; line-height:1.5; }
 .arb-nombre { flex:1; font-size:12.5px; color:#3a4a4b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .arb-fecha { font-size:11px; color:var(--gris-medio); flex-shrink:0; }
 .arb-carpeta { margin-top:8px; }
-.arb-carpeta-tit { font-size:12.5px; font-weight:700; color:var(--navy); padding:6px 0 4px; display:flex; align-items:center; gap:8px; }
+.arb-carpeta-tit { font-size:12.5px; font-weight:700; color:var(--navy); padding:6px 8px 5px 6px; display:flex; align-items:center; gap:7px; cursor:pointer; border-radius:var(--radius-sm); list-style:none; user-select:none; }
+.arb-carpeta-tit::-webkit-details-marker { display:none; }
+.arb-carpeta-tit:hover { background:var(--crema-fondo); }
+.arb-carpeta-tit:focus-visible { outline:2px solid var(--azul-pizarra); outline-offset:1px; }
+.arb-flecha { flex-shrink:0; width:9px; font-size:10px; line-height:1; color:var(--gris-medio); transition:transform .15s ease; }
+.arb-carpeta[open] > .arb-carpeta-tit .arb-flecha { transform:rotate(90deg); }
 .arb-count { font-size:10px; font-weight:700; color:var(--gris-medio); background:#f1f1f1; padding:1px 7px; border-radius:10px; }
 .arb-carpeta-body { border-left:2px solid var(--beige-suave); padding-left:10px; margin-left:4px; }
+/* El plegado se controla acá y no se deja librado al <details>: al darle
+   display:flex al <summary> (para alinear flecha, nombre y contador), Chromium
+   deja de ocultar solo el contenido y la carpeta cerrada seguía mostrando todo. */
+.arb-carpeta:not([open]) > .arb-carpeta-body { display:none; }
 
 /* ── REUNIONES Y ROTACIÓN ──
    Identidad Simpleza: Sora en todos los pesos, fondo crema, tinta gris oscuro
@@ -870,6 +889,10 @@ canvas { display:block; }
 
 </div><!-- /main -->
 
+<button id="ir-arriba" class="ir-arriba" onclick="irArriba()" title="Ir arriba" aria-label="Volver al principio de la página">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
 <!-- ═══════════ MODAL LOGIN (edición unificada) ═══════════ -->
 <div id="login-modal" class="modal-overlay" onclick="if(event.target===this) closeDashLogin()">
   <div class="modal-box">
@@ -1071,7 +1094,29 @@ function navigate(section, data) {
   if (section === 'recursos') renderRecursosSec();
   if (section === 'config') renderConfig();
   aplicarVisibilidad();
+  actualizarIrArriba();
 }
+
+// ── Ir arriba ──
+// El scroll del sitio no lo tiene la ventana: lo tiene #main. Por eso el botón
+// no puede usar window.scrollTo, y también por eso hace falta escuchar el
+// scroll de ese contenedor y no el del documento.
+function irArriba() {
+  const m = document.getElementById('main');
+  if (m) m.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function actualizarIrArriba() {
+  const m = document.getElementById('main');
+  const b = document.getElementById('ir-arriba');
+  if (m && b) b.classList.toggle('visible', m.scrollTop > 400);
+}
+
+(function engancharIrArriba() {
+  const m = document.getElementById('main');
+  if (m) m.addEventListener('scroll', actualizarIrArriba, { passive: true });
+  actualizarIrArriba();
+})();
 
 function openEmpresa(id) {
   currentEmpresaId = id;
@@ -2156,11 +2201,15 @@ function arbolHtml(nodo, esRaiz) {
        <span class="arb-nombre">${esc(f.nombre)}</span>
        <span class="arb-fecha">${esc(fechaCorta(f.fecha))}</span>
      </div>`).join('');
+  // Las subcarpetas son <details> sin `open`: arrancan contraídas. Una carpeta
+  // ordenada por año y por mes son decenas de subcarpetas anidadas, y abiertas
+  // todas de entrada la tarjeta es una pared de nombres. Se usa <details> y no
+  // un click propio para que abrir y cerrar funcione igual con el teclado.
   const hijas = (nodo.carpetas || []).map(c => `
-    <div class="arb-carpeta">
-      <div class="arb-carpeta-tit">📁 ${esc(c.nombre)} <span class="arb-count">${contarArchivos(c)}</span></div>
+    <details class="arb-carpeta">
+      <summary class="arb-carpeta-tit"><span class="arb-flecha" aria-hidden="true">▸</span>📁 ${esc(c.nombre)} <span class="arb-count">${contarArchivos(c)}</span></summary>
       <div class="arb-carpeta-body">${arbolHtml(c)}</div>
-    </div>`).join('');
+    </details>`).join('');
   const vacio = !archivos && !hijas && !esRaiz ? '<div class="proc-vacio">Carpeta vacía</div>' : '';
   return archivos + hijas + vacio;
 }
