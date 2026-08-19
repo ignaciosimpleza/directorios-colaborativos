@@ -405,6 +405,13 @@ aunque el id estuviera bien cargado. Ya no hace falta.)
 Si una carpeta está cargada pero el sitio no puede leerla, la tarjeta **no se
 oculta**: se muestra el motivo, para que el problema no quede invisible.
 
+Las subcarpetas se pliegan y arrancan **contraídas**: una carpeta ordenada por
+año y por mes son decenas de subcarpetas anidadas, y abiertas todas de entrada
+la tarjeta es una pared de nombres. Se abren de a un nivel por vez.
+
+En cualquier sección larga —Configuración sobre todo— hay un botón flotante
+para volver al principio, que aparece recién cuando se bajó lo suficiente.
+
 **Cómo se le pregunta a Drive.** El contenido de las carpetas se pide de a una
 carpeta por consulta. Preguntar por varias a la vez (`'A' in parents or 'B' in
 parents`) no funciona y, peor, no avisa: Drive responde 200 con la lista vacía.

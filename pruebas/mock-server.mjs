@@ -269,6 +269,14 @@ http.createServer((req, res) => {
         try {
           const p = JSON.parse(b || '{}');
           if (p.action === 'saveContent') DB.content[p.key] = p.data;
+          if (p.action === 'grupos') return json(res, {
+            servidor: 'base-de-prueba.turso.io',
+            esteGrupo: AUTH.grupoQueBusca || 'grupo4',
+            grupos: AUTH.gruposEnLaBase || [
+              { group_id: 'grupo4', nombre: 'Grupo El Faro', claves: 3, empresas: 9, reuniones: 41 },
+              { group_id: 'grupo6', nombre: 'Distribuidoras', claves: 2, empresas: 6, reuniones: 12 },
+            ],
+          });
         } catch {}
         json(res, { ok: true });
       });
