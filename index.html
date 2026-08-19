@@ -2144,6 +2144,11 @@ function contarArchivos(nodo) {
   return (nodo.archivos || []).length + (nodo.carpetas || []).reduce((s, c) => s + contarArchivos(c), 0);
 }
 
+function contarCarpetas(nodo) {
+  if (!nodo) return 0;
+  return (nodo.carpetas || []).reduce((s, c) => s + 1 + contarCarpetas(c), 0);
+}
+
 function arbolHtml(nodo, esRaiz) {
   const archivos = (nodo.archivos || []).map(f =>
     `<div class="arb-file" onclick="openLink('${jsq(f.url)}')">
@@ -3881,14 +3886,26 @@ async function testDriveSource(key) {
       if (st) { st.textContent = info; st.className = 'src-status ok'; }
       return;
     }
+    // Una carpeta se prueba con la MISMA consulta que arma la tarjeta (el árbol
+    // completo), no con el listado del primer nivel. Con `op=list` esto decía
+    // «Conectado ✓ · 4 archivos» sobre una carpeta cuyo primer nivel son cuatro
+    // subcarpetas por año: contaba carpetas como si fueran archivos, y daba por
+    // bueno lo que en la pantalla se veía vacío.
     const url = src.tipo === 'carpeta'
-      ? `${API_BASE_DRIVE}?op=list&folderId=${encodeURIComponent(id)}`
+      ? `${API_BASE_DRIVE}?op=arbol&folderId=${encodeURIComponent(id)}&depth=3`
       : `${API_BASE_SHEET}?fileId=${encodeURIComponent(id)}`;
     const r = await fetch(url);
     const j = await r.json();
     if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
     let info = 'Conectado ✓';
-    if (src.tipo === 'carpeta') info = `Conectado ✓ · ${(j.files || []).length} archivos`;
+    if (src.tipo === 'carpeta') {
+      const archivos = contarArchivos(j.arbol);
+      const carpetas = contarCarpetas(j.arbol);
+      const donde = carpetas ? ` en ${carpetas} subcarpeta${carpetas === 1 ? '' : 's'}` : '';
+      info = archivos
+        ? `Conectado ✓ · ${archivos} archivo${archivos === 1 ? '' : 's'}${donde}`
+        : `Se abre, pero no tiene ningún archivo adentro ⚠${carpetas ? ` (${carpetas} subcarpeta${carpetas === 1 ? '' : 's'}, todas vacías)` : ''}. La tarjeta va a verse vacía.`;
+    }
     else if (Array.isArray(j.empresas) && j.empresas.length) info = `Conectado ✓ · ${j.empresas.length} empresas`;
     else if (Array.isArray(j.conceptos) && j.conceptos.length) info = `Conectado ✓ · ${j.conceptos.length} conceptos`;
     if (st) { st.textContent = info; st.className = 'src-status ok'; }

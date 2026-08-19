@@ -84,6 +84,25 @@ const ARBOL_HERR = {
   ],
 };
 
+// Calcada de la carpeta real de Reuniones Técnicas del Grupo El Faro: la raíz
+// NO tiene archivos sueltos, todo cuelga de subcarpetas por año y por mes. Es
+// la forma que dejaba la tarjeta vacía.
+const ARBOL_ANIDADO = {
+  id: 'anidado', nombre: '', ruta: [], archivos: [],
+  carpetas: [
+    { id: 'a2025', nombre: '2025', ruta: ['2025'], archivos: [],
+      carpetas: [
+        { id: 'a2025-02', nombre: '02. Febrero', ruta: ['2025', '02. Febrero'],
+          archivos: [{ id: 'x1', nombre: 'Costos febrero.pdf', tipo: 'PDF', fecha: '2025-02-11', url: '#' }],
+          carpetas: [] },
+        { id: 'a2025-03', nombre: '03. Marzo', ruta: ['2025', '03. Marzo'], archivos: [], carpetas: [] },
+      ] },
+    { id: 'a2026', nombre: '2026', ruta: ['2026'],
+      archivos: [{ id: 'x2', nombre: 'Análisis de negocios e inversiones.pptx', tipo: 'PPTX', fecha: '2026-06-02', url: '#' }],
+      carpetas: [{ id: 'a2026-cal', nombre: 'Calendarios en imagen', ruta: ['2026', 'Calendarios en imagen'], archivos: [], carpetas: [] }] },
+  ],
+};
+
 const TEC_ACT = [
   { id: 't1', nombre: 'Costos 2026-04-15.pdf', tipo: 'PDF', fecha: '2026-04-15', url: '#', carpeta: 'Material teórico 2026', ruta: ['Material teórico 2026'], empresaFolderId: 'tec' },
   { id: 't2', nombre: 'Margen bruto 2026-05-10.xlsx', tipo: 'XLS', fecha: '2026-05-10', url: '#', carpeta: 'Material teórico 2026', ruta: ['Material teórico 2026'], empresaFolderId: 'tec' },
@@ -281,6 +300,7 @@ http.createServer((req, res) => {
       if (fid === 'roto') return json(res, { error: 'Drive API 404: File not found: roto' }, 502);
       if (fid === 'vacia') return json(res, { arbol: { id: fid, nombre: '', ruta: [], archivos: [], carpetas: [] } });
       if (fid === 'herr') return json(res, { arbol: ARBOL_HERR });
+      if (fid === 'anidado') return json(res, { arbol: ARBOL_ANIDADO });
       return json(res, { arbol: ARBOL_TEC });
     }
     if (op === 'descubrir') return json(res, {

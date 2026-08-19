@@ -99,6 +99,21 @@ ok(roto.visible, 'una carpeta que no se puede leer NO se oculta');
 ok(/no puede leerla/.test(roto.texto), 'y la tarjeta dice qué pasa');
 ok(/Lector/.test(roto.texto), 'y qué hay que hacer para arreglarlo');
 
+// La forma que rompía en los grupos de verdad: la raíz sin ningún archivo
+// suelto y todo colgando de subcarpetas por año y por mes. El sitio la mostraba
+// vacía porque el servidor le contestaba 0 archivos.
+await p.evaluate(async () => { DRIVE_CONFIG.herramientasFolderId = 'anidado'; await renderHerramientas(); });
+await p.waitForTimeout(600);
+const anid = await p.evaluate(() => ({
+  visible: getComputedStyle(document.getElementById('card-herr-drive')).display !== 'none',
+  archivos: [...document.querySelectorAll('#herramientas-carpeta .arb-file .arb-nombre')].map(e => e.textContent),
+  nota: (document.querySelector('#herramientas-carpeta .rec-note') || {}).textContent || '',
+}));
+ok(anid.visible, 'una carpeta con todo en subcarpetas se ve');
+ok(anid.archivos.some(n => /Análisis de negocios/.test(n)), 'muestra el archivo que está a un nivel de profundidad');
+ok(anid.archivos.some(n => /Costos febrero/.test(n)), 'y el que está a dos niveles');
+ok(/2 archivos/.test(anid.nota), 'y los cuenta bien, sin contar carpetas como archivos');
+
 // Una carpeta cargada y vacía tampoco desaparece: si alguien pegó ese id,
 // tiene que ver qué pasó con él.
 await p.evaluate(async () => {
