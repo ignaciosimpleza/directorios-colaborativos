@@ -71,7 +71,7 @@ body.editing .edit-toggle { background:var(--verde-menta); color:#1E2A2E; }
    del grupo (38×38) ni al de Simpleza (132×36). */
 .sidebar-crea { padding:10px 16px 12px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; gap:10px; }
 .sidebar-crea-label { font-size:9px; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,0.35); line-height:1.35; }
-.crea-logo { height:25px; width:auto; max-width:38px; display:block; flex-shrink:0; }
+.crea-logo { height:28px; width:auto; max-width:38px; display:block; flex-shrink:0; }
 
 /* ── MODAL LOGIN ── */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(30,42,46,0.55); z-index:200; align-items:center; justify-content:center; padding:20px; }
@@ -295,8 +295,10 @@ td { padding: 10px 14px; vertical-align: middle; }
 .rec-falla small { color:var(--gris-medio); }
 .rec-falla .rec-note { margin-top:8px; }
 .rec-cargando { font-size:12px; color:var(--gris-medio); padding:12px 2px; line-height:1.5; }
+.vis-apagado { font-size:12px; color:#7a6a3f; background:#fdf9ec; border:1px solid #eadfc0; border-radius:8px; padding:9px 12px; margin-bottom:12px; line-height:1.5; }
+.vis-apagado a { color:var(--azul-pizarra); font-weight:700; text-decoration:underline; cursor:pointer; }
 .cfg-crea-muestra { display:flex; align-items:center; gap:12px; margin-top:12px; padding:12px 14px; background:var(--crema-fondo); border:1px solid var(--beige-suave); border-radius:10px; font-size:12px; color:var(--gris-medio); line-height:1.55; }
-.cfg-crea-muestra .crea-logo { height:25px; width:auto; max-width:38px; }
+.cfg-crea-muestra .crea-logo { height:28px; width:auto; max-width:38px; }
 
 /* ── EVENTOS ── */
 .evento-timeline { position:relative; padding-left:26px; }
@@ -624,7 +626,7 @@ canvas { display:block; }
   </div>
   <!-- Sello CREA: apagado por defecto. Se prende en Configuración → El sitio. -->
   <div class="sidebar-crea" id="sidebar-crea" style="display:none">
-    <img src="assets/crea-logo.svg" alt="CREA" class="crea-logo" onerror="this.style.display='none'">
+    <img src="assets/LOGO-CREA-con-filete_RGB_3.png" alt="CREA" class="crea-logo" onerror="this.style.display='none'">
     <span class="sidebar-crea-label">Grupo de la<br>red CREA</span>
   </div>
   <nav>
@@ -2084,22 +2086,30 @@ function renderHerramientas() {
 // que muestran carpetas usan esto, así que las dos leen con la cuenta de
 // servicio y se comportan igual ante un error.
 //
-// Sobre qué se ve y qué no: una carpeta que todavía no se cargó se muestra como
-// vacía (.rec-empty) y auto-ocultar la esconde, que es lo correcto. Una carpeta
-// que SÍ está cargada pero no se puede leer se muestra como falla (.rec-falla),
-// que no se oculta nunca: si no, la tarjeta desaparece y el problema queda
-// invisible justo para quien lo tiene que arreglar.
+// Sobre qué se ve y qué no: la regla es una sola y no se adivina. Si la carpeta
+// NO está cargada, no hay nada que mostrar y la tarjeta se oculta sola. Si SÍ
+// está cargada, la tarjeta se muestra siempre — con sus archivos, o diciendo que
+// la carpeta está vacía, o diciendo que no se pudo leer. Alguien se tomó el
+// trabajo de pegar ese id: que después no aparezca nada y sin explicación es
+// justamente lo que hay que evitar.
+//
+// El estado se declara en el contenedor (data-estado) en vez de dejar que
+// auto-ocultar lo deduzca del HTML. Deducirlo fallaba: el árbol escribe
+// «Carpeta vacía» por cada subcarpeta sin archivos, y ese cartel anidado daba
+// por vacía una tarjeta llena.
 async function renderCarpetaRecurso({ elId, key, que, vacia, sinCarpeta }) {
   const el = document.getElementById(elId);
   if (!el) return;
   const fid = DRIVE_CONFIG[key];
   if (!fid) {
     marcarFuente(key, 'falta');
+    el.dataset.estado = 'vacio';
     el.innerHTML = `<div class="rec-empty">${sinCarpeta}</div>`;
     aplicarVisibilidad();
     return;
   }
   const enDrive = `<a class="src-link" href="https://drive.google.com/drive/folders/${esc(fid)}" target="_blank" rel="noopener">Abrir la carpeta en Drive ↗</a>`;
+  el.dataset.estado = 'cargando';
   el.innerHTML = `<div class="rec-cargando">Leyendo ${esc(que)}…</div>`;
   aplicarVisibilidad();
   try {
@@ -2109,12 +2119,16 @@ async function renderCarpetaRecurso({ elId, key, que, vacia, sinCarpeta }) {
     const arbol = j.arbol || {};
     const total = contarArchivos(arbol);
     marcarFuente(key, 'ok', total ? `${total} archivos` : 'carpeta vacía');
+    el.dataset.estado = total ? 'datos' : 'carpeta-vacia';
     el.innerHTML = total
       ? arbolHtml(arbol, true) +
         `<div class="rec-note">${total} archivo${total === 1 ? '' : 's'} · ${enDrive}</div>`
-      : `<div class="rec-empty">${esc(vacia)} <span class="rec-note">${enDrive}</span></div>`;
+      : `<div class="rec-falla"><strong>${esc(vacia)}</strong><br>
+         <small>La carpeta está vinculada y el sitio la lee bien: todavía no tiene archivos adentro. Lo que suban a Drive aparece acá.</small>
+         <div class="rec-note">${enDrive}</div></div>`;
   } catch (e) {
     marcarFuente(key, 'error', e.message);
+    el.dataset.estado = 'falla';
     el.innerHTML = `<div class="rec-falla">
       <strong>La carpeta está vinculada, pero el sitio no puede leerla.</strong><br>
       <small>${esc(e.message)}</small><br>
@@ -2128,6 +2142,11 @@ async function renderCarpetaRecurso({ elId, key, que, vacia, sinCarpeta }) {
 function contarArchivos(nodo) {
   if (!nodo) return 0;
   return (nodo.archivos || []).length + (nodo.carpetas || []).reduce((s, c) => s + contarArchivos(c), 0);
+}
+
+function contarCarpetas(nodo) {
+  if (!nodo) return 0;
+  return (nodo.carpetas || []).reduce((s, c) => s + 1 + contarCarpetas(c), 0);
 }
 
 function arbolHtml(nodo, esRaiz) {
@@ -3867,14 +3886,26 @@ async function testDriveSource(key) {
       if (st) { st.textContent = info; st.className = 'src-status ok'; }
       return;
     }
+    // Una carpeta se prueba con la MISMA consulta que arma la tarjeta (el árbol
+    // completo), no con el listado del primer nivel. Con `op=list` esto decía
+    // «Conectado ✓ · 4 archivos» sobre una carpeta cuyo primer nivel son cuatro
+    // subcarpetas por año: contaba carpetas como si fueran archivos, y daba por
+    // bueno lo que en la pantalla se veía vacío.
     const url = src.tipo === 'carpeta'
-      ? `${API_BASE_DRIVE}?op=list&folderId=${encodeURIComponent(id)}`
+      ? `${API_BASE_DRIVE}?op=arbol&folderId=${encodeURIComponent(id)}&depth=3`
       : `${API_BASE_SHEET}?fileId=${encodeURIComponent(id)}`;
     const r = await fetch(url);
     const j = await r.json();
     if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);
     let info = 'Conectado ✓';
-    if (src.tipo === 'carpeta') info = `Conectado ✓ · ${(j.files || []).length} archivos`;
+    if (src.tipo === 'carpeta') {
+      const archivos = contarArchivos(j.arbol);
+      const carpetas = contarCarpetas(j.arbol);
+      const donde = carpetas ? ` en ${carpetas} subcarpeta${carpetas === 1 ? '' : 's'}` : '';
+      info = archivos
+        ? `Conectado ✓ · ${archivos} archivo${archivos === 1 ? '' : 's'}${donde}`
+        : `Se abre, pero no tiene ningún archivo adentro ⚠${carpetas ? ` (${carpetas} subcarpeta${carpetas === 1 ? '' : 's'}, todas vacías)` : ''}. La tarjeta va a verse vacía.`;
+    }
     else if (Array.isArray(j.empresas) && j.empresas.length) info = `Conectado ✓ · ${j.empresas.length} empresas`;
     else if (Array.isArray(j.conceptos) && j.conceptos.length) info = `Conectado ✓ · ${j.conceptos.length} conceptos`;
     if (st) { st.textContent = info; st.className = 'src-status ok'; }
@@ -3926,12 +3957,36 @@ const UI_BLOQUES = [
 
 const bloqueOculto = key => (UI_CONFIG.ocultos || []).includes(key);
 
+// Cartel para el bloque que está apagado a mano. Solo se ve en modo edición.
+function marcarApagado(el, poner) {
+  let aviso = el.querySelector(':scope > .vis-apagado');
+  if (!poner) { if (aviso) aviso.remove(); return; }
+  if (!aviso) {
+    aviso = document.createElement('div');
+    aviso.className = 'vis-apagado';
+    aviso.innerHTML = 'Este bloque está <strong>apagado</strong>: no se ve para el grupo. Se prende en ' +
+      '<a onclick="navigate(\'config\')">Configuración → El sitio → Qué se muestra</a>.';
+    el.insertBefore(aviso, el.firstChild);
+  }
+}
+
 // Un bloque "tiene datos" si su cuerpo tiene contenido y no muestra un cartel de
 // vacío (.act-empty, .rec-empty, .proc-vacio).
 function bloqueTieneDatos(el) {
   if (!el) return false;
-  if (el.querySelector('.act-empty, .rec-empty, .proc-vacio, .cal-empty')) return false;
-  const cuerpo = Array.from(el.children).filter(c => !c.classList.contains('card-title'));
+  const cuerpo = Array.from(el.children)
+    .filter(c => !c.classList.contains('card-title') && !c.classList.contains('vis-apagado'));
+  // Si quien dibuja el bloque declaró su estado, se le cree. Adivinarlo leyendo
+  // el HTML se equivocaba: el árbol de Drive escribe «Carpeta vacía» por cada
+  // subcarpeta sin archivos, y ese cartel anidado alcanzaba para dar por vacía
+  // una tarjeta con veinte archivos adentro. Una sola subcarpeta vacía —lo más
+  // común del mundo en Drive— hacía desaparecer las Herramientas del grupo.
+  const declara = [el, ...cuerpo].find(c => c.dataset && c.dataset.estado);
+  if (declara) return declara.dataset.estado !== 'vacio';
+  // Bloques que todavía no declaran nada: se sigue mirando el HTML, pero solo
+  // los carteles de vacío que son del bloque, no los de adentro de un listado.
+  if (cuerpo.some(c => c.matches('.act-empty, .rec-empty, .proc-vacio, .cal-empty'))) return false;
+  if (!cuerpo.length && el.querySelector('.act-empty, .rec-empty, .proc-vacio, .cal-empty')) return false;
   const nodos = cuerpo.length ? cuerpo : [el];
   return nodos.some(c => c.textContent.trim().length > 0 || c.querySelector('img, iframe'));
 }
@@ -3977,10 +4032,19 @@ function aplicarVisibilidad() {
     }
     const el = document.getElementById(b.el);
     if (!el) continue;
+    // Apagado a mano en «Qué se muestra». En modo edición se muestra igual, con
+    // un cartel que lo dice: si no, «no veo la tarjeta» no tiene ninguna
+    // explicación posible desde la pantalla.
+    if (oculto) {
+      marcarApagado(el, dashEditing);
+      el.style.display = dashEditing ? '' : 'none';
+      continue;
+    }
+    marcarApagado(el, false);
     // En modo edición nunca se oculta nada: quien administra el sitio tiene que
     // ver qué bloques están vacíos y qué les falta.
     const auto = UI_CONFIG.autoHide && !dashEditing && !bloqueTieneDatos(el);
-    el.style.display = (oculto || auto) ? 'none' : '';
+    el.style.display = auto ? 'none' : '';
   }
   aplicarSelloCrea();
   avisarSeccionesVacias();
@@ -4028,7 +4092,7 @@ function configCreaHtml() {
       <span><strong>Este grupo es de la red CREA</strong></span>
     </label>
     <div class="cfg-crea-muestra">
-      <img src="assets/crea-logo.svg" alt="CREA" class="crea-logo">
+      <img src="assets/LOGO-CREA-con-filete_RGB_3.png" alt="CREA" class="crea-logo">
       <span>Con la casilla tildada, el sello aparece en el menú lateral, debajo del logo del grupo y del de Simpleza. Va en ese tamaño: nunca más grande que ninguno de los dos.</span>
     </div>
   </div>`;

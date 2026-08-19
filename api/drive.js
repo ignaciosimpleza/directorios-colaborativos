@@ -142,17 +142,36 @@ function findSubFolder(subs, keys) {
   return subs.find(c => keys.some(k => normName(c.name).includes(k)));
 }
 
-const parentsQuery = ids => '(' + ids.map(id => `'${id}' in parents`).join(' or ') + ')';
+// El contenido de UNA carpeta. Una consulta por carpeta, siempre.
+//
+// Antes se preguntaba por varias carpetas de una sola vez, uniéndolas con `or`:
+//   ('A' in parents or 'B' in parents) and trashed=false and mimeType!='...'
+// Esa consulta NO da error: Drive devuelve 200 con la lista VACÍA. Con una sola
+// carpeta anda bien, con dos o más no devuelve nada. Por eso una carpeta
+// organizada en subcarpetas —por año, por tema— se veía como vacía: el primer
+// nivel salía por una consulta de un solo padre y andaba, y del segundo nivel
+// para abajo no volvía nada, ni archivos ni subcarpetas. Afectaba a Recursos,
+// a la actividad reciente del tablero y al conteo de reuniones.
+export const queryHijos = (id, soloCarpetas) =>
+  `'${id}' in parents and trashed=false and mimeType${soloCarpetas ? '=' : '!='}'${FOLDER_MIME}'`;
 
-// Consulta por padres en tandas, para no armar una query gigante cuando hay
-// muchas carpetas (Drive corta las consultas demasiado largas).
-async function listInParents(ids, extraFields, soloCarpetas) {
-  const out = [];
-  for (let i = 0; i < ids.length; i += 25) {
-    const q = `${parentsQuery(ids.slice(i, i + 25))} and trashed=false and mimeType${soloCarpetas ? '=' : '!='}'${FOLDER_MIME}'`;
-    out.push(...await driveList(q, extraFields));
-  }
+// Varias promesas a la vez, pero no todas juntas: una carpeta con muchas
+// subcarpetas son muchos pedidos, y Drive limita el ritmo.
+async function enParalelo(items, limite, fn) {
+  const out = new Array(items.length);
+  let proximo = 0;
+  await Promise.all(Array.from({ length: Math.min(limite, items.length) }, async () => {
+    while (proximo < items.length) {
+      const i = proximo++;
+      out[i] = await fn(items[i]);
+    }
+  }));
   return out;
+}
+
+export async function listInParents(ids, extraFields, soloCarpetas, lista = driveList) {
+  const tandas = await enParalelo(ids, 10, id => lista(queryHijos(id, soloCarpetas), extraFields));
+  return tandas.flat();
 }
 
 // Recorre las carpetas raíz y sus subcarpetas hasta `depth` niveles (una

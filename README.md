@@ -405,12 +405,20 @@ aunque el id estuviera bien cargado. Ya no hace falta.)
 Si una carpeta está cargada pero el sitio no puede leerla, la tarjeta **no se
 oculta**: se muestra el motivo, para que el problema no quede invisible.
 
+**Cómo se le pregunta a Drive.** El contenido de las carpetas se pide de a una
+carpeta por consulta. Preguntar por varias a la vez (`'A' in parents or 'B' in
+parents`) no funciona y, peor, no avisa: Drive responde 200 con la lista vacía.
+Con eso, una carpeta organizada en subcarpetas —por año, por tema— se veía
+vacía en todo el sitio: el primer nivel salía por una consulta de un solo padre
+y andaba, y del segundo para abajo no volvía nada. La regla está cubierta por
+`pruebas/drive.test.mjs`: si alguien vuelve a agrupar padres, las pruebas fallan.
+
 ## Sello CREA
 
 Los grupos que son de la red CREA pueden mostrar el sello en el menú lateral:
 se prende con una casilla en modo edición, en **Configuración → El sitio →
 Sello CREA**, y queda guardado con el resto de la configuración del sitio. Está
-apagado por defecto. El sello (`assets/crea-logo.svg`) va deliberadamente por
+apagado por defecto. El sello (`assets/LOGO-CREA-con-filete_RGB_3.png`) va deliberadamente por
 debajo de las otras dos marcas: nunca supera al logo del grupo ni al de Simpleza.
 
 ## API
