@@ -43,7 +43,7 @@ variable de entorno.
 |---|---|
 | `GRUPO_ID` | **obligatoria, y hay que cargarla antes del primer despliegue.** Identificador corto y único (`grupo7`). Separa los datos de un grupo de los de otro. Si falta, el sitio no adivina: avisa en pantalla que no sabe a qué grupo pertenece, en vez de mostrarse vacío como si se hubieran borrado los datos |
 | `EDIT_PASSWORD` | obligatoria. La clave de coordinación de ese grupo, distinta para cada uno |
-| `TURSO_DATABASE_URL` · `TURSO_AUTH_TOKEN` | pueden ser los mismos: todas las tablas están particionadas por `group_id` |
+| `DB_URL` · `DB_TOKEN` | **cargalas a mano, no conectes la base desde el panel de Vercel.** Pueden ser las mismas para todos los grupos: las tablas están particionadas por `group_id`. Ver abajo por qué el nombre importa |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | la misma cuenta de servicio; lo que cambia es con qué carpetas de Drive se la comparte |
 | `SITIO_URL` | solo si se va a mandar correo |
 
@@ -51,6 +51,28 @@ Después: armar las carpetas de Drive del grupo y compartirlas con la cuenta de
 servicio, entrar con **«Ingresar como coordinación»** y cargar todo desde
 Configuración. El sitio arranca vacío: nada de lo que se cargue en un grupo
 aparece en otro, aunque compartan la base y la cuenta de servicio.
+
+### Por qué las credenciales de la base se llaman `DB_URL` y `DB_TOKEN`
+
+La base **no se conecta desde el panel de Vercel**: sus credenciales se cargan a
+mano, y con esos nombres. No es una preferencia de estilo, es lo que evita perder
+datos.
+
+Conectada desde el panel, la integración reescribe `TURSO_DATABASE_URL` y
+`TURSO_AUTH_TOKEN` **en cada despliegue**, pisando cualquier valor cargado a
+mano. Y si quedó activada la opción de crear una rama por despliegue, cada
+publicación manda el sitio a una copia vacía de la base: los datos parecen
+borrarse solos, y el sitio se vacía de nuevo en cada deploy. Se reconoce porque
+el servidor pasa a empezar con `dpl-`.
+
+`DB_URL` y `DB_TOKEN` son nombres que ninguna integración toca, y tienen
+prioridad sobre los otros dos (`api/_auth.js`, `credenciales()`). Los nombres
+viejos siguen funcionando como respaldo, así que un sitio que ya andaba no se
+rompe. La prioridad está probada en `pruebas/base.test.mjs`.
+
+En **Configuración → Qué se ve y de dónde sale → La base de datos** el sitio
+muestra a qué servidor está hablando, qué grupos hay en esa base y si encuentra
+los suyos. Si el servidor empieza con `dpl-`, lo dice y explica cómo salir.
 
 ## Estructura
 
@@ -350,8 +372,8 @@ sitio se embebe en un iframe y las cookies de terceros no son confiables ahí.
 curl -sSfL https://get.tur.so/install.sh | bash
 turso auth login
 turso db create migrupo
-turso db show migrupo --url          # TURSO_DATABASE_URL
-turso db tokens create migrupo       # TURSO_AUTH_TOKEN
+turso db show migrupo --url          # DB_URL
+turso db tokens create migrupo       # DB_TOKEN
 ```
 
 Las tablas se crean solas. `schema.sql` está como referencia.
@@ -360,8 +382,8 @@ Las tablas se crean solas. `schema.sql` está como referencia.
 
 | Variable | Para qué |
 | --- | --- |
-| `TURSO_DATABASE_URL` | base de datos |
-| `TURSO_AUTH_TOKEN` | token de la base |
+| `DB_URL` | base de datos |
+| `DB_TOKEN` | token de la base |
 | `EDIT_PASSWORD` | clave de edición del sitio. **Sin esto nadie puede editar** |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | JSON de la cuenta de servicio de Google |
 | `BASE_FILE_ID` | *(opcional)* id de la planilla base, si no se carga desde Configuración |

@@ -1,19 +1,18 @@
 // Vercel Serverless Function — capa de datos sobre Turso (libSQL).
 //
 // Lee las credenciales desde las variables de entorno de Vercel:
-//   - TURSO_DATABASE_URL   (ej: libsql://tu-base-tu-org.turso.io)
-//   - TURSO_AUTH_TOKEN     (token generado con: turso db tokens create <db>)
+//   - DB_URL               (ej: libsql://tu-base-tu-org.turso.io)
+//   - DB_TOKEN             (token generado con: turso db tokens create <db>)
+//     Se aceptan también TURSO_DATABASE_URL y TURSO_AUTH_TOKEN, pero DB_* gana:
+//     ver la explicación en api/_auth.js.
 //   - EDIT_PASSWORD        (opcional) si está seteada, se exige para escribir
 //
 // El token de Turso vive solo en el servidor, nunca llega al navegador.
 
 import { createClient } from '@libsql/client/web';
-import { bloqueaPorLogin, grupoPorDefecto } from './_auth.js';
+import { bloqueaPorLogin, grupoPorDefecto, credenciales, hayBase } from './_auth.js';
 
-const client = createClient({
-  url: process.env.TURSO_DATABASE_URL,
-  authToken: process.env.TURSO_AUTH_TOKEN,
-});
+const client = createClient(credenciales());
 
 // Crea las tablas si no existen (una sola vez por cold-start).
 let schemaReady;
@@ -102,9 +101,9 @@ const companyArgs = (gid, c) =>
    JSON.stringify(c.matrix ?? []), JSON.stringify(c.reps ?? []), c.sort_order ?? 0];
 
 export default async function handler(req, res) {
-  if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
+  if (!hayBase()) {
     return res.status(500).json({
-      error: 'Faltan las variables de entorno TURSO_DATABASE_URL y/o TURSO_AUTH_TOKEN en Vercel.'
+      error: 'Faltan las credenciales de la base en Vercel: cargá DB_URL y DB_TOKEN.'
     });
   }
 
@@ -240,7 +239,7 @@ export default async function handler(req, res) {
           for (const r of cos.rows) tomar(r.group_id).empresas = Number(r.n);
           for (const r of mtg.rows) tomar(r.group_id).reuniones = Number(r.n);
           let servidor = '';
-          try { servidor = new URL(process.env.TURSO_DATABASE_URL || '').host; } catch { servidor = '(no se pudo leer)'; }
+          try { servidor = new URL(credenciales().url || '').host; } catch { servidor = '(no se pudo leer)'; }
           return res.status(200).json({
             servidor,
             esteGrupo: grupoPorDefecto(),

@@ -3718,7 +3718,7 @@ La reunión se centró en revisar el trabajo del último trimestre…</pre>
             <span class="ins-det">Un identificador corto y único, por ejemplo <code>grupo7</code>. Es lo que separa los datos de un grupo de los de otro.</span></div>
           <div class="ins-fila"><span class="ins-nom"><code>EDIT_PASSWORD</code><em class="ins-obl">obligatoria</em></span>
             <span class="ins-det">La clave de coordinación de ese grupo. Distinta para cada uno.</span></div>
-          <div class="ins-fila"><span class="ins-nom"><code>TURSO_DATABASE_URL</code><br><code>TURSO_AUTH_TOKEN</code><em class="ins-opc">se comparten</em></span>
+          <div class="ins-fila"><span class="ins-nom"><code>DB_URL</code><br><code>DB_TOKEN</code><em class="ins-opc">se comparten</em></span>
             <span class="ins-det">Puede ser la misma base que los demás grupos: todas las tablas están separadas por <code>GRUPO_ID</code>.</span></div>
           <div class="ins-fila"><span class="ins-nom"><code>GOOGLE_SERVICE_ACCOUNT_JSON</code><em class="ins-opc">se comparte</em></span>
             <span class="ins-det">La misma cuenta de servicio. Lo que cambia es con qué carpetas de Drive se la comparte.</span></div>
@@ -4181,9 +4181,9 @@ function pintarBase() {
   const aviso = mio
     ? `<div class="rec-note">Este sitio encuentra sus datos. Todo en orden.</div>`
     : `<div class="rec-falla"><strong>Este sitio busca el grupo «${esc(d.esteGrupo)}», y en esta base ese grupo no está.</strong><br>
-       <small>Los datos no se borran solos: lo más probable es que este proyecto esté conectado a una base distinta de la que los tiene.
-       Se arregla en Vercel, en las variables <code>TURSO_DATABASE_URL</code> y <code>TURSO_AUTH_TOKEN</code> de este proyecto:
-       tienen que ser las mismas que las del sitio donde los datos sí aparecen.</small></div>`;
+       <small>Los datos no se borran solos: este proyecto está leyendo una base distinta de la que los tiene.
+       Se arregla en Vercel, cargando a mano <code>DB_URL</code> y <code>DB_TOKEN</code> con los mismos valores que el sitio donde los datos sí aparecen.
+       ${/^dpl-/.test(d.servidor || '') ? `<br><br><strong>Ojo con este servidor:</strong> empieza con <code>dpl-</code>, así que es una rama que Vercel crea de nuevo en cada publicación —por eso el sitio aparece vacío cada vez que se despliega—. Cargar <code>DB_URL</code> y <code>DB_TOKEN</code> lo saca de ahí: son nombres que la integración no toca.` : ''}</small></div>`;
 
   el.innerHTML = `
     <div class="card-title" style="margin-bottom:10px">6) La base de datos</div>
