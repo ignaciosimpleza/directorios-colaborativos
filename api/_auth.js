@@ -14,13 +14,30 @@ import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 // El cliente se crea recién cuando se usa. Si se creara al importar el archivo,
 // cualquier función que importe esto reventaría sin las variables de entorno
 // (y también las pruebas, que no tocan la base).
+// Las credenciales de la base pueden llegar con dos nombres, y DB_* gana.
+//
+// Cuando la base se conecta desde el panel de Vercel, la integración escribe
+// TURSO_DATABASE_URL y TURSO_AUTH_TOKEN por su cuenta en CADA despliegue, y pisa
+// lo que se haya cargado a mano. Si además quedó activada la opción de crear una
+// rama por despliegue, cada publicación manda el sitio a una copia vacía: los
+// datos parecen borrarse solos y no hay manera de evitarlo desde afuera.
+//
+// DB_URL y DB_TOKEN son nombres que ninguna integración toca. Cargados a mano,
+// mandan ellos y el sitio queda clavado a la base que se le indicó.
+export const credenciales = () => ({
+  url: process.env.DB_URL || process.env.TURSO_DATABASE_URL,
+  authToken: process.env.DB_TOKEN || process.env.TURSO_AUTH_TOKEN,
+});
+
+export const hayBase = () => {
+  const { url, authToken } = credenciales();
+  return !!(url && authToken);
+};
+
 let _db = null;
 function cliente() {
   if (!_db) {
-    _db = createClient({
-      url: process.env.TURSO_DATABASE_URL,
-      authToken: process.env.TURSO_AUTH_TOKEN,
-    });
+    _db = createClient(credenciales());
   }
   return _db;
 }
@@ -152,7 +169,7 @@ export const esAdmin = password =>
 const cacheReq = { v: null, hasta: 0 };
 
 export async function requiereLogin(groupId) {
-  if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) return false;
+  if (!hayBase()) return false;
   const t = Date.now();
   if (cacheReq.v !== null && t < cacheReq.hasta) return cacheReq.v;
   try {

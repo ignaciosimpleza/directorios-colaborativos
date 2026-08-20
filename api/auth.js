@@ -21,7 +21,7 @@
 import {
   db, ensureAuthSchema, ahora, normEmail, hashPassword, passwordOk, nuevoToken,
   tokenDeRequest, sesionDe, esAdmin, invalidarCacheAcceso, requiereLogin,
-  EMAIL_COORDINACION, grupoPorDefecto, hayGrupoConfigurado,
+  EMAIL_COORDINACION, grupoPorDefecto, hayGrupoConfigurado, hayBase,
 } from './_auth.js';
 import { leerBase } from './base.js';
 import { enviarMail, correoConfigurado, urlDelSitio } from './_mail.js';
@@ -109,8 +109,8 @@ function pedirAdmin(body) {
 }
 
 export default async function handler(req, res) {
-  if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
-    return res.status(500).json({ error: 'Faltan TURSO_DATABASE_URL y/o TURSO_AUTH_TOKEN en Vercel.' });
+  if (!hayBase()) {
+    return res.status(500).json({ error: 'Faltan las credenciales de la base en Vercel: cargá DB_URL y DB_TOKEN.' });
   }
 
   try {
