@@ -442,6 +442,24 @@ vacía en todo el sitio: el primer nivel salía por una consulta de un solo padr
 y andaba, y del segundo para abajo no volvía nada. La regla está cubierta por
 `pruebas/drive.test.mjs`: si alguien vuelve a agrupar padres, las pruebas fallan.
 
+## En el celular
+
+El sitio se adapta a pantallas chicas. Abajo de **900px** de ancho el menú
+lateral deja de estar siempre a la vista y pasa a ser un cajón que se abre con
+el botón de las tres rayas (arriba a la izquierda). Se cierra solo al elegir una
+sección, al tocar el fondo oscuro o con la tecla Escape.
+
+Además, en pantallas angostas:
+
+- todo lo que está en columnas (tarjetas de empresas, meses, configuración) se
+  apila en una sola;
+- la barra de arriba deja el título de la sección y esconde lo accesorio (fecha,
+  logo del grupo, texto del botón de modo edición);
+- los campos de texto usan letra de 16px, porque abajo de eso iOS agranda la
+  página sola al tocarlos.
+
+En pantalla ancha no cambia nada: el menú sigue fijo en sus 220px.
+
 ## Sello CREA
 
 Los grupos que son de la red CREA pueden mostrar el sello en el menú lateral:

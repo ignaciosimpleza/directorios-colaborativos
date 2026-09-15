@@ -618,6 +618,128 @@ canvas { display:block; }
 @media (max-width:680px) {
   .empresa-grid, .mes-grid, .concepto-grid, .stat-grid { grid-template-columns:1fr; }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   ── CELULARES Y TABLETS ──
+   El sitio está pensado para una pantalla ancha: menú lateral siempre
+   visible de 220px + contenido al lado. En un celular ese menú se come
+   media pantalla, así que abajo de 900px pasa a ser un cajón que se
+   abre con el botón de las tres rayas y se cierra solo al elegir una
+   sección. Todo lo que estaba en columnas se apila.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Botón de las tres rayas: sólo aparece cuando el menú está escondido. */
+.btn-menu { display:none; align-items:center; justify-content:center; width:38px; height:38px; flex-shrink:0;
+  background:transparent; border:1px solid var(--beige-suave); border-radius:10px; color:var(--navy);
+  cursor:pointer; padding:0; font-family:inherit; }
+.btn-menu:hover { background:var(--crema-fondo); }
+
+/* Fondo oscuro detrás del cajón abierto: tocarlo lo cierra. */
+#sidebar-backdrop { display:none; position:fixed; inset:0; z-index:140; background:rgba(30,42,46,0.5);
+  opacity:0; transition:opacity .2s ease; }
+
+@media (max-width:1100px) {
+  .rp-grid { grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); }
+}
+
+@media (max-width:900px) {
+  html, body { overflow-x:hidden; }
+  body { height:100dvh; }
+
+  .btn-menu { display:flex; }
+
+  /* El menú deja de ocupar lugar en el flujo y pasa a ser un cajón. */
+  #sidebar { position:fixed; top:0; bottom:0; left:0; width:270px; min-width:270px; max-width:84vw;
+    transform:translateX(-100%); transition:transform .22s ease; z-index:150; overflow-y:auto; }
+  body.menu-abierto #sidebar { transform:none; }
+  body.menu-abierto #sidebar-backdrop { display:block; opacity:1; }
+  nav { overflow-y:visible; }
+  nav a { padding:12px 18px; font-size:14px; }
+
+  /* La barra de arriba arranca en el borde: ya no hay menú a la izquierda. */
+  #topbar { left:0; padding:0 12px; gap:10px; }
+  #topbar .topbar-logo { display:none; }
+  #topbar-title { display:none; }
+  #topbar-sub { display:none; }
+  #topbar-section { font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .topbar-right { gap:8px; }
+  .topbar-date { display:none; }
+  .next-chip { display:none !important; }
+  .edit-toggle { padding:8px 10px; }
+  #edit-toggle-label { display:none; }
+  .sesion-chip { max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  #main { padding:18px 16px 84px; }
+  .page-header { margin-bottom:16px; }
+  .page-header h1 { font-size:18px; }
+
+  /* Los títulos de tarjeta llevan un texto de apoyo al costado: en angosto
+     va abajo, si no se pisan las dos cosas. */
+  .card-title { flex-wrap:wrap; gap:2px 10px; }
+  .card { padding:16px 15px; }
+
+  /* Todo lo que estaba en columnas, a una sola. */
+  .stat-grid, .empresa-grid, .mes-grid, .concepto-grid, .two-col,
+  .cfg-grid, .cfg-ficha-campos, .vis-grid, .cal-config-grid, .rp-grid { grid-template-columns:1fr; }
+  .disp-encab, .disp-fila { grid-template-columns:1fr; gap:4px; }
+  .disp-encab { display:none; }
+  .disp-fila { padding:10px 0; border-bottom:1px solid var(--linea); }
+  .base-fila { grid-template-columns:1fr; gap:3px; }
+
+  /* Banner de la próxima reunión: el contador pasa abajo. */
+  .proxima-banner { flex-wrap:wrap; gap:12px; padding:16px; }
+  .pb-days { margin-left:0; width:100%; padding:8px 14px; display:flex; align-items:baseline; justify-content:center; gap:8px; }
+
+  /* Filas del calendario: dejan de ser una línea y se apilan. */
+  .cal-row { flex-wrap:wrap; gap:8px 10px; }
+  .cal-date { flex:1 1 100%; }
+  .cal-assign, .cal-assign-sel { flex:1 1 auto; min-width:0; }
+  .cal-topic, .cal-topic-inp { flex:1 1 100%; }
+  .cal-row-actions { flex:1 1 100%; justify-content:flex-end; }
+  .cal-gap { margin-left:auto; text-align:right; }
+  .cal-status { margin-left:0; width:100%; }
+
+  .empresa-detalle-header { flex-wrap:wrap; padding:18px 16px; }
+  .pdf-item { flex-wrap:wrap; }
+  .pdf-item-action { margin-left:0; }
+  .mapa-que { flex:1 1 100%; }
+  .mapa-fuente { min-width:0; }
+  .src-row .cal-input { min-width:0; }
+  .acc-actions { margin-left:0; }
+  .peh-count { margin-left:0; }
+  .proceso-item { flex-wrap:wrap; gap:4px; }
+  .pi-fecha { min-width:0; }
+  .embed-frame { height:60vh; min-height:320px; }
+  .nov-frame { height:260px; }
+  .cfg-input.chico { max-width:100%; }
+  .acc-log { flex-wrap:wrap; gap:2px 10px; }
+  .acc-log-ts { min-width:0; }
+
+  /* Cualquier tabla ancha scrollea sola adentro de su tarjeta, en vez de
+     estirar la página entera. */
+  .card table, .pdf-section table { display:block; overflow-x:auto; white-space:nowrap; }
+
+  /* iOS agranda la página al tocar un campo con letra menor a 16px. */
+  input, select, textarea { font-size:16px; }
+  .cfg-input, .cal-input, .modal-input, .cal-config-grid input, .cal-config-grid select,
+  .cal-range input, .cal-row .cal-input, .cal-row select, .cal-row input[type=text] { font-size:16px; }
+}
+
+@media (max-width:520px) {
+  #main { padding:16px 12px 80px; }
+  .card { padding:14px 13px; }
+  .stat-card { padding:15px 16px; }
+  .stat-card .val { font-size:26px; }
+  .pb-empresa { font-size:15px; }
+  .rp-card { padding:15px 15px 13px; }
+  .rp-card-n { font-size:34px; }
+  .cfg-tabs, .gate-tabs { gap:5px; }
+  .cfg-tab { padding:8px 13px; font-size:12.5px; }
+  .cfg-tab-desc { flex-wrap:wrap; gap:6px; }
+  .cfg-estado { margin-left:0; }
+  .evento-timeline { padding-left:22px; }
+  .modal-actions { flex-wrap:wrap; }
+}
 </style>
 </head>
 <body>
@@ -713,8 +835,15 @@ canvas { display:block; }
   </div>
 </aside>
 
+<!-- Fondo oscuro del menú en celular: tocarlo lo cierra -->
+<div id="sidebar-backdrop" onclick="cerrarMenu()"></div>
+
 <!-- TOPBAR -->
 <div id="topbar">
+  <!-- Tres rayas: sólo se ve en pantallas angostas (ver CSS .btn-menu) -->
+  <button id="btn-menu" class="btn-menu" onclick="alternarMenu()" aria-label="Abrir menú" aria-expanded="false" aria-controls="sidebar">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
   <div class="topbar-logo" id="brand-logo-top">
     <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <circle cx="50" cy="50" r="46" fill="none" stroke="#1E2A2E" stroke-width="5"/>
@@ -1082,7 +1211,26 @@ function setEditing(on) {
 // ══════════════════════════════════════════════════════════════
 // NAVEGACIÓN
 // ══════════════════════════════════════════════════════════════
+// ── MENÚ EN CELULAR ──
+// En pantallas angostas el menú lateral está escondido fuera de la pantalla y
+// se abre con el botón de las tres rayas. En pantalla ancha nunca se usa: el
+// menú está siempre a la vista y estas funciones no hacen nada visible.
+function alternarMenu() {
+  const abierto = document.body.classList.toggle('menu-abierto');
+  const btn = document.getElementById('btn-menu');
+  if (btn) btn.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+}
+function cerrarMenu() {
+  document.body.classList.remove('menu-abierto');
+  const btn = document.getElementById('btn-menu');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarMenu(); });
+// Si se gira el teléfono o se agranda la ventana, el cajón deja de tener sentido.
+window.addEventListener('resize', () => { if (window.innerWidth > 900) cerrarMenu(); });
+
 function navigate(section, data) {
+  cerrarMenu();  // en celular el menú es un cajón: al elegir sección se cierra
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
   document.getElementById('sec-' + section).classList.add('active');
