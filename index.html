@@ -1057,7 +1057,16 @@ async function tryDashLogin() {
   if (!clave) return;
   err.classList.add('hidden');
   try {
-    await authPost('adminLogin', { password: clave });
+    // adminLogin también abre una sesión de coordinación. Hay que guardarla: con
+    // el portero prendido, sin ese token /api/drive y /api/base responden 401 y
+    // «Probar conexión» falla aunque la carpeta esté bien compartida.
+    const r = await authPost('adminLogin', { password: clave });
+    if (r && r.token) {
+      AUTH_TOKEN = r.token;
+      guardarToken(AUTH_TOKEN);
+      AUTH_USER = r.usuario || null;
+      pintarSesion();
+    }
     ADMIN_PASSWORD = clave;
     closeDashLogin();
     setEditing(true);
